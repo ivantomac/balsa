@@ -1,0 +1,46 @@
+(--
+	The Balsa Asynchronous Hardware Synthesis System
+	Copyright (C) 1995-2003 Department of Computer Science
+	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+	`basic.balsa'
+	Basic Balsa types
+
+	$Id: basic.balsa,v 1.5 2003/08/11 21:37:54 bardslea Exp $
+--)
+
+-- Common type declarations
+type boolean is enumeration false, true end
+type byte is 8 bits
+type nybble is 4 bits
+type nibble is nybble
+-- Signed types
+type sbyte is 8 signed bits
+type snybble is 4 signed bits
+type snibble is snybble
+
+-- cardinal : Arbitrary parameterising natural number [0..n]
+type cardinal is 32 bits
+-- long : Longer number for indexing into large structureS
+type long is 64 bits
+
+-- Constants for true and false in type bit
+constant true = 1 : bit
+constant false = 0 : bit
+
+type token is 1 bits
+constant token = (0 as token)

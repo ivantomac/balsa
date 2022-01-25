@@ -1,0 +1,63 @@
+(defines
+	(mux-style (style-option "mux" "tristate"))
+)
+(nodes
+	("muxOut" (param "width") 0 1)
+	("select" 1 0 1)
+	("nselect" 1 0 1)
+	("nwaySelect" (param "inputCount") 0 1)
+	("nwayMuxOut" (param "width") 0 (param "inputCount"))
+)
+(gates
+	(case (param "inputCount")
+		((2)
+			(cell "set-reset-flip-flop"
+				(req (bundle "inp" 1))
+				(req (bundle "inp" 0))
+				(node "select")
+				(node "nselect")
+			)
+			(and
+				(combine (ack (each "inp")))
+				(combine (node "nselect") (node "select"))
+				(combine (dup 2 (ack "out")))
+			)
+			(mux2 (req "out") (req (each "inp")) (node "select"))
+			(mux2 (data "out") (data (each "inp")) (combine (dup (param "width") (node "select"))))
+		)
+		(else
+			(or (req "out") (req (each "inp")))
+			(c-element
+				(combine (ack (each "inp")))
+				(combine (req (each "inp")))
+				(combine (dup (param "inputCount") (ack "out")))
+			)
+			(case mux-style
+				(("tristate")
+					(tri-inv
+						(combine (dup-each (param "width") (req (each "inp"))))
+						(combine (data (each "inp")))
+						(combine (dup (param "inputCount") (node "muxOut")))
+					)
+					(keeper-inv (data "out") (node "muxOut"))
+				)
+				(("gates")
+					(or
+						(node "nwaySelect")
+						(combine (ack (each "inp")))
+						(combine (req (each "inp")))
+					)
+					(nand
+						(combine (node (each "nwayMuxOut")))
+						(combine (data (each "inp")))
+						(combine (dup-each (param "width") (smash (node "nwaySelect"))))
+					)
+					(nand
+						(data "out")
+						(node (each "nwayMuxOut"))
+					)
+				)
+			)
+		)
+	)
+)

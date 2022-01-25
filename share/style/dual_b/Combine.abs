@@ -1,0 +1,7 @@
+(nodes)
+(gates)
+(connections
+	(connect (req "out") (req "LSInp") (req "MSInp"))
+	(connect (combine (ack0 "LSInp") (ack0 "MSInp")) (ack0 "out"))
+	(connect (combine (ack1 "LSInp") (ack1 "MSInp")) (ack1 "out"))
+)

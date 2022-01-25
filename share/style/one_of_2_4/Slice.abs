@@ -1,0 +1,130 @@
+(defines
+	(offset (param "lowIndex")) ;; base of mask
+	(width (param "outputWidth")) ;; cardinality of mask
+	(plural (> (param "outputWidth") 1))	;; not single bit
+	(half-offset (quotient offset 2)) ;;base of req.. slices
+	(even-width (quotient width 2))
+	(odd-width (quotient (+ width 1) 2))
+	(out-odd (= (modulo width 2) 1))
+	(slice-end (= (param "inputWidth") (+ offset width)))
+	(even-offset (= (modulo offset 2) 0))
+	(node-width (cond 
+		(even-offset 0)
+		((and slice-end (not out-odd)) even-width)
+		(else
+			(+ even-width 1)
+		)
+	))
+	(hi/lo-width (if even-offset 0 even-width))
+	
+)
+(nodes
+	("n0r" node-width 0 1)
+	("n1r" node-width 0 1)
+	("n2r" node-width 0 1)
+	("n3r" node-width 0 1)
+	("l0r" hi/lo-width 0 1)
+	("l1r" hi/lo-width 0 1)
+	("h0r" hi/lo-width 0 1)
+	("h1r" hi/lo-width 0 1)
+	
+)
+(gates
+	(connect (req "out") (req "inp"))
+	(if even-offset
+		(gates
+			(if plural ;; if output not length one
+				(gates
+					(connect (slice half-offset even-width (ack0 "inp")) (slice 0 even-width (ack0 "out")))
+					(connect (slice half-offset even-width (ack1 "inp")) (slice 0 even-width (ack1 "out")))
+					(connect (slice half-offset even-width (ack2 "inp")) (slice 0 even-width (ack2 "out")))
+					(connect (slice half-offset even-width (ack3 "inp")) (slice 0 even-width (ack3 "out")))
+				)
+			)
+			(if out-odd
+				(if slice-end
+					(gates
+						(connect (slice (+ half-offset even-width) 1 (ack0 "inp")) (slice even-width 1 (ack0 "out")))
+						(connect (slice (+ half-offset even-width) 1 (ack1 "inp")) (slice even-width 1 (ack1 "out")))
+					)
+					(gates ;; Extract low bit from end of mask
+						(or (slice even-width 1 (ack0 "out"))
+							(slice (+ half-offset even-width) 1 (ack0 "inp")) (slice (+ half-offset even-width) 1 (ack2 "inp")))
+						(or (slice even-width 1 (ack1 "out"))
+							(slice (+ half-offset even-width) 1 (ack1 "inp")) (slice (+ half-offset even-width) 1 (ack3 "inp")))
+					)
+				)
+			)
+		)
+		(gates ;;odd offset
+			(if plural ;; if output not length one
+				(gates
+					(connect (slice half-offset node-width (ack0 "inp")) (node "n0r"))
+					(connect (slice half-offset node-width (ack1 "inp")) (node "n1r"))
+					(connect (slice half-offset node-width (ack2 "inp")) (node "n2r"))
+					(connect (slice half-offset node-width (ack3 "inp")) (node "n3r"))
+					
+					(if (and slice-end (not out-odd))
+						(gates
+							(or (slice 0 (- even-width 1) (node "l0r"))
+								(slice 1 (- even-width 1)(node "n0r"))
+								(slice 1 (- even-width 1)(node "n2r"))
+							)
+							(or (slice 0 (- even-width 1) (node "l1r")) 
+								(slice 1 (- even-width 1) (node "n1r"))
+								(slice 1 (- even-width 1) (node "n3r"))
+							)
+							(connect 
+								(slice (+ half-offset even-width) 1 (ack0 "inp"))
+								(slice (- even-width 1) 1 (node "l0r"))
+							)
+							(connect 
+								(slice (+ half-offset even-width) 1 (ack1 "inp"))
+								(slice (- even-width 1) 1 (node "l1r"))
+							)
+						)
+						(gates
+							(or (node "l0r")
+								(slice 1 even-width (node "n0r"))
+								(slice 1 even-width (node "n2r"))
+							)
+							(or (node "l1r")
+								(slice 1 even-width (node "n1r"))
+								(slice 1 even-width (node "n3r"))
+							)
+						)
+					)
+					(or (node "h0r")
+						(slice 0 even-width (node "n0r"))
+						(slice 0 even-width (node "n1r"))
+					)
+					(or (node "h1r")
+						(slice 0 even-width (node "n2r"))
+						(slice 0 even-width (node "n3r")) ;; all upper bits
+					)
+					(c-element (slice 0 even-width (ack0 "out"))
+						(slice 0 even-width (node "h0r")) (node "l0r"))	
+					(c-element (slice 0 even-width (ack1 "out")) 
+						(slice 0 even-width (node "h1r")) (node "l0r"))
+					(c-element (slice 0 even-width (ack2 "out")) 
+						(slice 0 even-width (node "h0r")) (node "l1r"))
+					(c-element (slice 0 even-width (ack3 "out")) 
+						(slice 0 even-width (node "h1r")) (node "l1r"))
+				)
+			)
+			(if out-odd
+				(gates
+					(or (slice even-width 1 (ack0 "out"))
+						(slice (+ half-offset even-width) 1 (ack0 "inp"))
+						(slice (+ half-offset even-width) 1 (ack1 "inp"))
+					)
+					(or (slice even-width 1 (ack1 "out"))
+						(slice (+ half-offset even-width) 1 (ack2 "inp"))
+						(slice (+ half-offset even-width) 1 (ack3 "inp"))
+					)
+				)
+			)
+		)
+	)
+)
+(connections)

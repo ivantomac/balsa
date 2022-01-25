@@ -1,0 +1,51 @@
+(defines
+	(SEQstyle (style-option "SEQ" "ovlp"))
+	(seq-chain-macro (lambda (index specification)
+		`(gates
+			(if (= (substring ,specification 0 1) "S") 
+				(s-element
+					(slice ,index 1 (node "sreq"))
+					(slice (+ 1 ,index) 1 (node "sreq"))
+					(req (bundle "activateOut" ,index))
+					(ack (bundle "activateOut" ,index))
+				)
+				(cell "t-element-with-reset"
+					(slice ,index 1 (node "sreq"))
+					(slice (+ 1 ,index) 1 (node "sreq"))
+					(req (bundle "activateOut" ,index))
+					(ack (bundle "activateOut" ,index))
+				)
+			)
+			(if (/= (substring ,specification 1) "") 
+				(macro seq-chain-macro (+ 1 ,index) (substring ,specification 1))
+			)
+		)
+	))
+)
+(nodes
+	("sreq" (param "outputCount") 0 1)
+)
+(gates
+	(if (= 1 (param "outputCount")) 
+		(connect (req "activate") (req (bundle "activateOut" 0)))
+		(gates
+			(case SEQstyle
+				(("conv")
+					(s-element (slice 0 (- (param "outputCount") 1) (node "sreq"))
+						(slice 1 (- (param "outputCount") 1) (node "sreq"))
+						(combine (req (bundles "activateOut" 0 (- (param "outputCount") 1))))
+						(combine (ack (bundles "activateOut" 0 (- (param "outputCount") 1))))
+					)
+				)
+				(else
+					(macro seq-chain-macro 0 (param "specification"))
+				)
+			)
+			(connect (req "activate") (slice 0 1 (node "sreq")))
+			(connect (slice (- (param "outputCount") 1) 1 (node "sreq"))
+				(req (bundle "activateOut" (- (param "outputCount") 1)))
+			)
+		)
+	)
+	(connect (ack (bundle "activateOut" (- (param "outputCount") 1))) (ack "activate")) 
+)

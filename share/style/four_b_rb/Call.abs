@@ -1,0 +1,11 @@
+(nodes
+)
+(gates
+	(c-element
+		(combine (ack (each "inp")))
+		(combine (req (each "inp")))
+		(combine (dup (param "inputCount") (ack "out")))
+	)
+	(or (req "out") (req (each "inp")))
+)
+(connections)

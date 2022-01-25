@@ -1,0 +1,12 @@
+(nodes
+	("nWriteReq" 1 0 1)
+	("data" 64 0 1)
+)
+(gates
+	(latch (combine (dup 64 (req "write"))) (data "write") (node "data"))
+	(connect (node "data") (data (each "read")))
+	(inv (node "nWriteReq") (req "write"))
+	(unarrayed-cell "builtin-unref" (node "nWriteReq") (data "write"))
+	(connect (req "write") (ack "write"))
+	(connect (combine (req (each "read"))) (combine (ack (each "read"))))
+)

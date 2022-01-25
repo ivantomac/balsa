@@ -1,0 +1,185 @@
+;;;
+;;;	The Balsa Asynchronous Hardware Synthesis System
+;;;	Copyright (C) 1995-2008 School of Computer Science
+;;;	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+;;;	
+;;;	This program is free software; you can redistribute it and/or modify
+;;;	it under the terms of the GNU General Public License as published by
+;;;	the Free Software Foundation; either version 2 of the License, or
+;;;	(at your option) any later version.
+;;;	
+;;;	This program is distributed in the hope that it will be useful,
+;;;	but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;	GNU General Public License for more details.
+;;;	
+;;;	You should have received a copy of the GNU General Public License
+;;;	along with this program; if not, write to the Free Software
+;;;	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+;;;
+;;; `globals.scm'
+;;; Global definitions, this file only depends on misc.scm
+;;;
+;;; added extra global variables for buffer insertion support 2007/05/14 tarazonl
+
+;;;;; Misc.
+
+;;; balsa-version: Balsa release version
+(define balsa-version "@VERSION@")
+
+;;; breeze-{tech,style,style-options}: technology and style
+(define breeze-tech "common")
+(define breeze-style "four_b_rb")
+(define breeze-style-options '())
+
+;;; balsa-search-path: the search path for finding breeze files
+(define balsa-search-path '("." "@balsadatadir@"))
+
+;;; balsa-loaded-modules: hash of module-path => #t/#f
+;;;		identifying which Balsa Scheme source files have been loaded
+;;;		balsa-init initialises and balsa-scheme-import uses this
+;;;		variable.
+(define balsa-loaded-modules #f)
+
+;;;;; Balsa installation directories
+
+;;; balsa-home: Balsa home directory
+(define balsa-home "@prefix@/")
+
+;;; breeze-tech-dir: directory containing the current technology
+(define breeze-tech-dir "@balsadatadir@/tech/common/")
+
+;;; breeze-style-dir: directory containing the current style (if not builtin)
+(define breeze-style-dir "")
+
+;;; data-dir: directory containing architecture indep. data files
+(define data-dir "@balsadatadir@/")
+
+;;; scheme-src-dir: directory containing Scheme source for Balsa
+(define scheme-src-dir "@balsadatadir@/scheme/")
+
+;;; breeze-primitives-figures-dir: path to FIG figures of primitive components
+(define breeze-primitives-figures-dir (string-append balsa-home "/doc/figures/components/"))
+
+;;;;; Filenames/filename-lists in this technology
+
+;;; breeze-primitives-file: file containing Breeze component defns.
+(define breeze-primitives-file "@balsadatadir@/tech/common/components.abs")
+
+;;; breeze-gates-mapping-file: file containing Breeze back-end tech gate mapping defns.
+(define breeze-gates-mapping-file #f)
+;;; breeze-gates-drive-file: NOT USED.  Here just to prevent set!s in technology packages from raising an error
+(define breeze-gates-drive-file #f)
+
+;;; breeze-gates-net-files: list of files to read (from the tech. dir.) to populate breeze-gate-defns
+(define breeze-gates-net-files #f)
+
+;;;;; Global component/tech file contents variables
+
+;;; breeze-...: global primitives and gate definitions for this technology
+;;; breeze-primitives: list of (primitive-part ...)s for this tech.
+;;; breeze-primitives-definitions: list of (define ...)s for this tech.
+(define breeze-primitives #f)
+(define breeze-primitives-definitions #f)
+;;; breeze-gate-mappings: vector of port and name mappings for simple-gates -> technology gates
+(define breeze-gate-mappings #f)
+;;; breeze-gate-defns: list of (circuit ...)s for each gate and helper cell available in this tech
+(define breeze-gate-defns #f)
+
+;;;;; Technology definitions
+
+;;; tech-...-max-fan-in: gates/elements with 2..this-number of inputs are
+;;;		available in the target tech.
+(define tech-gate-max-fan-in #f)
+(define tech-c-element-max-fan-in #f)
+
+;;; Drive factor and drive threshold for buffer insertion
+;;;; drive factor of xN drive output (must be an integer > 0)
+(define tech-x-drive-factor 4)
+;;; Max load threshold for buffer insertion
+;;;; anything above this drive load will be buffered
+(define tech-load-threshold 4)
+(define tech-remove-aliases #f)
+
+;;; tech-map-cell-name{-import,-export,}: procedures for mapping cell names, importing and exporting
+;;;		cell-name mapping lists
+(define tech-map-cell-name id)
+(define tech-map-cell-name-import #f)
+(define tech-map-cell-name-export #f)
+
+;;; tech-cell-name-max-length: maximum cell name length, unmapped names will always be a few characters
+;;;		shorter than this, mapped names will never exceed this.  1024 is just an arbitrary start value,
+;;;		always use tech-map-cell-name
+(define tech-cell-name-max-length 1024)
+
+;;; tech-map-cell-name-{old,new}-names: structures containing
+;;;		old (imported) mappings and the newly created mappings (to be exported)
+;;;		These are currently imported by assoc lists
+(define tech-map-cell-name-old-names '())
+(define tech-map-cell-name-new-names '())
+;;; tech-map-cell-name-count: count of mapped names
+(define tech-map-cell-name-count 0)
+
+;;; tech-{sync,push,pull}-channel-portions: portions and order of portions
+;;;		for channels and ports for this technology/style
+;;;		Each portions list is a list of (portion-name direction is-wide-portion)
+;;;		Wide portions take their size from the channel cardinality, narrow
+;;;		ones are 1 bit.
+;;;		eg. Four single rail, push: '((req push #f) (ack pull #f) (data push #t))
+(define tech-sync-channel-portions '())
+(define tech-push-channel-portions '())
+(define tech-pull-channel-portions '())
+
+;;; all-portions: list of all portion lists for current technology
+;;; including tech-node-portions for node portions (non channelised portions)
+(define tech-node-portions '())
+(define tech-net-portions '())
+(define all-portions '())
+(define tech #f)
+
+;;; all-portion-names: list of names of portions, for checking whether expr is
+;;; single slice (req0, etc)or fun (smash ...) 
+(define all-portion-names '(net node req ack data req0 req1 req2 req3 ack0 ack1 ack2 ack3))
+
+;;; tech-...: global netlist technology parameters, set by net-signature-for-netlist-format
+(define tech-netlist-format-name #f)
+(define tech-write-netlist-file #f)
+(define tech-vcc-net-name #f)
+(define tech-vcc-component-name #f)
+(define tech-gnd-net-name #f)
+(define tech-gnd-component-name #f)
+(define tech-global-nets #f)
+(define tech-map-name #f)
+(define tech-bundle-name #f)
+(define tech-filename-suffix #f)
+(define tech-channel-name #f)
+(define tech-bus-suffix #f)
+(define tech-brz-prefix #f)
+(define tech-brz-core-prefix #f)
+(define tech-balsa-prefix #f)
+(define tech-write-symbol-file #f)
+(define tech-symbol-filename-suffix #f)
+
+;;; tech-...: miscellaneous technology variables
+;;; tech-netlist-test-includes: list of files to include at the top of generated test
+;;;		harnesses for netlists.  If a filename does not begin with '/', it is assumed
+;;;		to be relative to the technology directory.
+(define tech-netlist-test-includes '())
+
+;;; tech-single-rail-styles: list of all valid single rail styles.  Providing this here allows
+;;;		plug-in style packages to add single rail Balsa technology varients without adding their
+;;;		style name name through the existing codebase
+(define tech-single-rail-styles '("four_b_rb" "four_e_e"))
+
+;;; tech-builtin-styles: list of all valid styles provided by this package
+(define tech-builtin-styles '("dual_b" "one_of_2_4" "four_b_rb" "four_e_e"))
+
+;;; tech-dot-make-edge-style: procedure to produce edge style for breeze2ps.  Defaults in breeze2ps if #f
+;;;		takes (sense width) and returns a graphviz edge decoration string.  #f is passed for width if no
+;;;		width sensitive decoration is wanted
+(define tech-dot-make-edge-style #f)
+;;; tech-dot-default-edge-style: default edge style.  Overriding as above.
+(define tech-dot-default-edge-style #f)
+;;; tech-dot-default-node-style: default node style.
+(define tech-dot-default-node-style #f)
+(define tech-dot-other-node-style #f)

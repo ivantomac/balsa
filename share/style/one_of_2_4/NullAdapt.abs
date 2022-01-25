@@ -1,0 +1,50 @@
+(defines
+	(NAstyle (style-option "FV" "ovlp"))
+	(plural (> (param "inputWidth") 1)) ;; more than one
+	(width-even (quotient (param "inputWidth") 2))
+	(width-odd (quotient (+ (param "inputWidth") 1) 2))
+	(odd (not (= width-even width-odd)))
+)
+(nodes
+	("partAck" width-odd 0 1)
+	("cd" (case NAstyle (("ovlp") (if (> (param "inputWidth") 2) 1 0)) (else 1)) 0 1)
+	("sigAck" (case NAstyle (("ovlp") (if (> (param "inputWidth") 2) 1 0)) (else 0)) 0 1)
+)
+(gates
+	(if plural
+		(gates
+			(or (slice 0 width-even (node "partAck"))
+				(slice 0 width-even (req0 "inp"))
+				(slice 0 width-even (req1 "inp"))
+				(slice 0 width-even (req2 "inp"))
+				(slice 0 width-even (req3 "inp"))
+				
+			)
+			(if odd
+				(or (slice width-even 1 (node "partAck"))
+					(slice width-even 1 (req0 "inp"))
+					(slice width-even 1 (req1 "inp"))
+				)
+			)
+		)
+		(or (node "partAck") (req0 "inp") (req1 "inp"))
+	)
+	(case NAstyle
+		(("ovlp")
+			(if (> (param "inputWidth") 2)
+				(gates
+					(c-element (node "cd") (smash (slice 1 (- width-odd 1) (node "partAck"))))
+					(cell "t-element" (slice 0 1 (node "partAck")) (node "sigAck") (req "out") (ack "out"))
+					(c-element (ack "inp") (node "sigAck") (node "cd"))
+				)
+				(cell "t-element" (slice 0 1 (node "partAck")) (ack "inp") (req "out") (ack "out"))
+			)
+		)
+		(else
+			(c-element (node "cd") (smash (node "partAck")))
+			(s-element (node "cd") (ack "inp") (req "out") (ack "out"))
+		)
+	)
+)
+(connections
+)

@@ -1,0 +1,17 @@
+(nodes
+	("outReq" (param "outputCount") 0 1)
+)
+(gates
+	(connect (combine (req (each "out"))) (node "outReq"))
+	(c-element
+		(combine (ack0 (each "out")))
+		(combine (dup-each (param "width") (smash (node "outReq"))))
+		(combine (dup (param "outputCount") (ack0 "inp")))
+	)
+	(c-element
+		(combine (ack1 (each "out")))
+		(combine (dup-each (param "width") (smash (node "outReq"))))
+		(combine (dup (param "outputCount") (ack1 "inp")))
+	)
+	(or (req "inp") (smash (node "outReq")))
+)

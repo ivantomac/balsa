@@ -1,0 +1,7 @@
+(nodes)
+(gates)
+(connections
+	(connect (req "out") (req "inp"))
+	(connect (ack "inp") (ack "out"))
+	(connect (slice (param "lowIndex") (param "outputWidth") (data "inp")) (data "out"))
+)

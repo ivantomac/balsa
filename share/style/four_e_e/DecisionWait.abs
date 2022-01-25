@@ -1,0 +1,48 @@
+(nodes
+	("eactr" 1 0 1)
+	("eacta" 1 0 1)
+	("teacta0" 1 0 1)
+	("teacta1" 1 0 1)
+	("teacta2" 1 0 1)
+	("nteacta2" 1 0 1)
+	("inpa" (param "portCount") 0 1)
+	("neactr" 1 0 1)
+)
+(gates
+	(cell "assym-c2-rdown"
+		(node "eactr")
+		(node "nteacta2")
+		(req "activate")
+	)
+	(inv (node "nteacta2") (node "teacta2"))
+	(or (node "teacta2") (node "teacta1") (node "eacta"))
+	(and (node "teacta1") (node "teacta0") (node "teacta2"))
+	(cell "assym-c-element-inv1"
+		(node "teacta0")
+		(req "activate")
+		(node "eacta")
+	)
+	(cell "assym-c-element3-u0d2"
+		(ack "activate")
+		(node "eacta")
+		(node "eactr")
+		(req "activate")
+	)
+
+	(c-element
+		(combine (req (each "out")))
+		(combine (req (each "inp")))
+		(combine (dup (param "portCount") (node "eactr")))
+	)
+	
+	(cell "assym-c-element"
+		(node "inpa")
+		(combine (req (each "inp")))
+		(combine (ack (each "out")))
+	)
+	
+	(inv (node "neactr") (node "eactr"))
+  	(and (combine (ack (each "inp"))) (combine (dup (param "portCount") (node "neactr"))) (node "inpa"))
+	(or (node "eacta") (ack (each "out")))
+)
+(connections)

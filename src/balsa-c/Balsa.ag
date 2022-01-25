@@ -1,0 +1,3139 @@
+/*
+    The Balsa Asynchronous Hardware Synthesis System
+	Copyright (C) 1995-2003 Department of Computer Science
+	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+	`Balsa.ag'
+	Abstract syntax for `Balsa'
+	
+	$Id: Balsa.ag,v 1.64 2004/05/18 14:55:34 janinl Exp $
+*/
+
+MODULE AbstractSyntax
+
+TREE Tree
+
+EXPORT 
+{
+#include <string.h>
+#include "decls.h"
+#include "exprs.h"
+#include "lvalues.h"
+#include "channels.h"
+#include "commands.h"
+#include "block.h"
+#include "ports.h"
+#include "parts.h"
+#include "implicants.h"
+#include "Errors.h"
+#include "pretty.h"
+#include "callcontexts.h"
+
+#include "BreezeScanSource.h"
+#include "BreezeScan.h"
+
+extern void VisitTreeNode (tTree node);
+}
+
+EVAL Semantics
+
+GLOBAL 
+{
+  static void yyVisit1 (tTree node);
+
+  /* Export the tree node visiting routine */
+  void VisitTreeNode (tTree node)
+  {
+  	yyVisit1 (node);
+  }
+}
+
+BEGIN 
+{
+}
+
+PROPERTY INPUT
+
+RULE
+
+BalsaProgram = Decls .
+
+Decls = [position: tPosition] <
+	NullDecls	= .
+	Decl 		= next: Decls REVERSE <
+		ImportDecl		= Idents .
+		FileDecl		= Idents .
+		TypeDecl		= [ident: tIdent] AType .
+		ConstantDecl	= [ident: tIdent] CoercedExpr AType .
+		VariableDecl	= Idents AType .
+		InitVariableDecl = Idents CoercedExpr AType .
+		ChannelDecl		= Idents AType [multicast: bool] .
+		ChannelArrayDecl = Idents AType Range [multicast: bool] .
+		SyncDecl		= Idents [multicast: bool] . 
+		SyncArrayDecl 	= Idents Range [multicast: bool] .
+		ProcedureDecl	= [ident: tIdent] FormalPorts Block .
+		ProcAliasDecl	= [newName: tIdent] [oldName: tIdent] ProcedureParams .
+		FunctionDecl	= [ident: tIdent] FormalPorts CoercedExpr AType .
+		BuiltinFunctionDecl	= [ident: tIdent] FormalPorts AType .
+		SharedDecl		= [ident: tIdent] Block .
+		PartDecl		= [ident: tIdent] [attributes: PtrLispList] FormalPorts [channels: PtrWireArray]
+			[channelCount: unsigned] Comps [callcontexts: PtrCallContextList].
+		IfDecls			= DeclGuards .
+		IfElseDecls		= DeclGuards Decls .
+		PrintDecl		= Expr ExprLists .
+		NullDecl		= .
+	> .
+> .
+
+Range = [position: tPosition] <
+	SpecifiedRange	= Left: Expr Right: Expr .
+	TypeRange		= AType .
+> .
+
+AType = [position: tPosition] <
+	NullType		= .
+	NumericType 	= [signedness: bool] Expr . 
+	ExistingType	= [ident:tIdent] . 
+	BuiltinType		= .
+	ArrayType 		= AType Range . 
+	NewType			= AType . 
+	RecordType		= RecordElems AType . 
+	EnumType		= EnumElems AType . 
+> .
+
+CoercedExpr = Expr .
+
+Expr = [position: tPosition] <
+	NullExpr			= .
+	LiteralExpr			= [literal: PtrMP_INT] .
+	IdentExpr			= [ident: tIdent] .
+	StringExpr			= [string: Ptrconstchar] .
+	ImplicantExpr		= [implicant: Implicant] .
+	DontCareExpr		= .
+	AggregateConsExpr	= [ident: tIdent] ExprLists .
+	NamedEnumElemExpr	= [typeName: tIdent] [elemName: tIdent] .
+	UnaryExpr			= [operation: Operators] Expr .
+	BinaryExpr			= [operation: Operators] Left: Expr Right: Expr .
+	RecordElemExtractExpr 	= Expr [ident: tIdent] .
+	ArrayExtractExpr 	= Array: Expr Subscript: CoercedExpr .
+	ArraySliceExpr		= Expr Range .
+	AsExpr				= Expr AType .
+	BitArrayCastExpr	= Expr .
+	LetExpr				= ValDecls Expr .
+	FunctionCallExpr 	= [ident: tIdent] FunctionParams .
+	SizeofExpr			= [ident: tIdent] .
+	ArrayAppendExpr	= Left: Expr Right: Expr .
+	PrimedExpr			= [results: ExprAttributes] .
+> .
+
+FormalPorts = [position: tPosition] <
+	NullFormalPorts	= .
+	FormalPort = next: FormalPorts REVERSE <
+		ValuePort 		= Idents AType .
+		ParamPort		= Idents AType .
+		TypeParamPort	= Idents .
+		ChannelPort		= Idents AType [portSense: PortSense] [isOutput: bool] [options: PtrLispList] .
+		ChannelPortArray = Idents AType [portSense: PortSense] [isOutput: bool] Range [options: PtrLispList] .
+		SyncPort		= Idents [portSense: PortSense] [options: PtrLispList] .
+		SyncPortArray	= Idents [portSense: PortSense] Range [options: PtrLispList] .
+		IfPorts			= PortGuards .
+		IfElsePorts		= PortGuards FormalPorts .
+	> .
+> .
+
+Block = [position: tPosition] Decls Command .
+
+Parameters = [position: tPosition] <
+	NullParameters	= .
+	Parameter		= next: Parameters REVERSE <
+		NumberParameter	= [literal: PtrMP_INT] .
+		StringParameter	= [ident: tIdent] .		
+		TypeParameter	= AType .
+	> .
+> .
+
+BreezeParameters = [position: tPosition] <
+	NullBreezeParameters	= .
+	BreezeParameter		= next: BreezeParameters REVERSE <
+		BreezeExprParameter	= [ident: tIdent] AType .
+		BreezeTypeParameter	= [ident: tIdent] .
+	> .
+> .
+
+Comps = [position: tPosition] <
+	NullComps	= .
+	Comp = next: Comps <
+		NormalComp 	= [ident: tIdent] [internal: bool] Parameters [channelNos: PtrintList] [options: PtrLispList] .
+		UndeclaredComp 	= [ident: tIdent] Parameters [channelNos: PtrintList]
+			[componentType: tIdent] [baseComponentName: tIdent]
+			BreezeParameters FormalPorts [options: PtrLispList] .
+	> .
+> .
+
+Command = [position: tPosition] <
+	NullCommand			= .
+	ContinueCommand		= .
+	HaltCommand			= .
+	InputCommand		= LHS: Lvalue RHS: Lvalue .
+	InputEncloseCommand	= LvalueLists Command .
+	InputEncloseBangCommand	= LvalueLists Command .
+	OutputCommand		= Lvalue CoercedExpr .
+	SyncCommand			= Lvalue . 
+	AssignmentCommand	= Lvalue CoercedExpr .
+	BlockCommand		= Block .
+	SequentialCommand	= Left:Command Right:Command .
+	ParallelCommand		= [isPermissive: bool] Left:Command Right:Command .
+	LoopCommand			= Command .
+	WhileGuardsCommand		= Guards .
+	WhileGuardsAlsoCommand	= Guards Command .
+	CommandWhileExprCommand	= Command Expr .
+	CommandWhileGuardsCommand = Command Guards .
+	CommandWhileGuardsAlsoCommand	= FirstCommand:Command Guards AlsoCommand:Command .
+	IfCommand			= Guards .
+	IfElseCommand		= Guards Command .
+	CaseCommand			= Expr CaseGuards Command .
+	ForCommand			= [isParallel: bool] [isPermissive: bool] [ident: tIdent] Range Command .
+	ProcedureCallCommonCommand = [ident: tIdent] ProcedureParams . 
+	SelectCommand		= ChannelGuards .
+	SelectBangCommand	= ChannelGuards .
+	ArbitrateCommand	= ChannelGuards .
+	PrintCommand		= Expr ExprLists .
+	SinkCommand			= Expr .
+> .
+
+ProcedureParams = [position: tPosition] <
+	NullProcParams		= .
+	ProcParam = next: ProcedureParams REVERSE <
+		ExprProcParam	= CoercedExpr .
+		TypeProcParam	= AType .
+		VarReadProcParam = CoercedExpr .
+		VarWriteProcParam = Lvalue .
+		BlockProcParam	= Block .
+	> .
+> .
+
+FunctionParams = [position: tPosition] <
+	NullFuncParams		= .
+	FuncParam = next: FunctionParams REVERSE <
+		ExprFuncParam	= CoercedExpr .
+		TypeFuncParam	= AType .
+	> .
+> .
+
+Lvalue = [position : tPosition] <
+	IdentLvalue			= [ident:tIdent] .
+	RecordElemLvalue	= Lvalue [ident:tIdent] .
+	ArrayElemLvalue		= Lvalue CoercedExpr .
+	ArraySliceLvalue	= Lvalue Range .
+	ArrayAppendLvalue	= Left:Lvalue Right:Lvalue .
+	ArrayConsLvalue		= LvalueLists .
+	AsLvalue			= Lvalue AType .
+	BitArrayCastLvalue	= Lvalue .
+> .
+
+Guards = [position: tPosition] <
+	NullGuards	= .
+	Guard 		= next: Guards REVERSE Expr Command .
+> .	
+
+PortGuards = [position: tPosition] <
+	NullPortGuards	= .
+	PortGuard 		= next: PortGuards REVERSE Expr FormalPorts .
+> .	
+
+DeclGuards = [position: tPosition] <
+	NullDeclGuards	= .
+	DeclGuard 		= next: DeclGuards REVERSE Expr Decls .
+> .	
+
+CaseGuards = [position: tPosition] <
+	NullCaseGuards	= .
+	CaseGuard = next: CaseGuards REVERSE <
+		CaseMatchGuard	= CaseMatchs Command .
+		ForCaseGuard	= [ident:tIdent] CaseMatchs Command .
+	> .
+> .	
+
+ChannelGuards = [position: tPosition] <
+	NullChannelGuards	= .
+	ChannelGuard 		= next: ChannelGuards REVERSE LvalueLists Command .
+> .	
+
+Idents = [position: tPosition] <
+	NullIdents	= .
+	Ident = next: Idents REVERSE [ident: tIdent] .	
+> . 
+
+ExprLists = [position: tPosition] <
+	NullExprLists 	= . 
+	ExprList = next: ExprLists REVERSE CoercedExpr .
+> .
+
+LvalueLists = [position: tPosition] <
+	NullLvalueLists = . 
+	LvalueList = next: LvalueLists REVERSE <
+		LinkedBlock     		= Block .
+		LinkedChannel 			= [ident: tIdent] Lvalue .
+	> .
+> .
+
+CaseMatchs = [position: tPosition] <
+	NullCaseMatchs 	= . 
+	CaseMatch = next: CaseMatchs REVERSE <
+		CaseRange 		= Range .
+		CaseImplicant	= Expr .
+	> .
+> .
+
+EnumElems = [position: tPosition] <
+	NullEnumElems	= .
+	EnumElem	= next: EnumElems REVERSE [ident: tIdent] <
+		DefaultValuedEnumElem = .
+		ValuedEnumElem        = CoercedExpr .
+	> .
+> .
+
+RecordElems = [position: tPosition] <
+	NullRecordElems		= .
+	RecordElem 	= next: RecordElems REVERSE Idents AType .
+> .
+
+ValDecls = [position: tPosition] <
+	NullValDecls	= .
+	ValDecl			= next: ValDecls REVERSE [ident: tIdent] Expr .
+> .
+
+END AbstractSyntax
+
+/* Compilation - single pass */
+MODULE Compilation
+
+EVAL GLOBAL
+{ }
+
+BEGIN
+{ }
+
+PROPERTY OUTPUT 
+
+DECLARE
+
+/* Scope level indications */
+	Decls			= [scope: Scope INH] .
+	DeclGuards		= [scope: Scope INH] .
+
+/* Context bearing nodes */
+	BalsaProgram	= [context: PtrContext SYN] .
+	Decls			= [context: PtrContext THREAD] .
+	ValDecls		= [context: PtrContext THREAD] .
+	Range			= [context: PtrContext INH] .
+	AType			= [context: PtrContext INH] .
+	RecordElems		= [context: PtrContext INH] .
+	EnumElems		= [context: PtrContext INH] .
+	CoercedExpr		= [context: PtrContext INH] .
+	Expr			= [context: PtrContext INH] .
+	Lvalue			= [context: PtrContext INH] .
+	LvalueLists		= [context: PtrContext INH] .
+	ExprLists		= [context: PtrContext INH] .
+	CaseMatchs		= [context: PtrContext INH] .
+	Block			= [context: PtrContext INH] .
+	Command			= [context: PtrContext INH] .
+	Guards			= [context: PtrContext INH] .
+	PortGuards		= [context: PtrContext INH] .
+	DeclGuards		= [context: PtrContext THREAD] .
+	CaseGuards		= [context: PtrContext INH] .
+	ChannelGuards	= [context: PtrContext INH] .
+	FormalPorts		= [context: PtrContext INH] .
+	Comps			= [context: PtrContext INH] .
+	ProcedureParams = [context: PtrContext INH] .
+	FunctionParams  = [context: PtrContext INH] .
+	Parameters		= [context: PtrContext INH] .
+	BreezeParameters = [context: PtrContext INH] .
+
+/* Skipable nodes */
+	Decls			= [skip: bool INH] .
+	Block			= [skip: bool INH] .
+	Guards			= [skip: bool INH] .
+	PortGuards		= [skip: bool INH] .
+	DeclGuards		= [skip: bool INH] .
+	CaseGuards		= [skip: bool INH] .
+	ChannelGuards	= [skip: bool INH] .
+	Range			= [skip: bool INH] .
+	CaseMatchs		= [skip: bool INH] .
+	AType			= [skip: bool INH] .
+	EnumElems		= [skip: bool INH] .
+	RecordElems		= [skip: bool INH] .
+	CoercedExpr		= [skip: bool INH] .
+	Expr			= [skip: bool INH] .
+	ExprLists		= [skip: bool INH] .
+	Lvalue			= [skip: bool INH] .
+	LvalueLists		= [skip: bool INH] .
+	Command			= [skip: bool INH] .
+	FormalPorts		= [skip: bool INH] .
+	ValDecls		= [skip: bool INH] .
+	ProcedureParams = [skip: bool INH] .
+	FunctionParams  = [skip: bool INH] .
+	Parameters		= [skip: bool INH] .
+	BreezeParameters = [skip: bool INH] .
+	Comps			= [skip: bool INH] .
+
+/* Individual properties */
+	Range			= [range: Span SYN] 
+					  [expectedType: PtrType INH]
+		 			  [isSpan: bool INH] /* true: 5 == 5 .. 5, false:  5 == 0 .. 4 */ .
+	CaseMatchs		= [implicants: PtrImplicantList SYN] 
+				      [expectedType: PtrType INH]
+					  [allowOverlappingMatches: bool INH]
+				      [isSpan: bool INH] .
+	AType			= [type: PtrType SYN] .
+	EnumElems		= [elementValue: PtrMP_INT INH] 
+					  [type: PtrType THREAD] 
+					  [hasOverType: bool INH] 
+ 				 	  [elementsTail: PtrBindingList INH] .
+	RecordElems		= [type: PtrType THREAD] 
+				 	  [hasOverType: bool INH] 
+					  [elementsTail: PtrInstanceList INH] .
+	CoercedExpr		= [expectedType: PtrType INH] 
+				 	  [attributes: ExprAttributes SYN]
+					  [allowChannels : bool INH] /* true -> passed onto IdentExpr by ArrayExtractExpr
+					  		to allow IdentExpr to return a channel for the ExtractExpr's consideration */
+					  [position: tPosition SYN] .
+	Expr			= [expectedType: PtrType INH] 
+					  [allowChannels : bool INH] /* true -> passed onto IdentExpr by ArrayExtractExpr
+					  		to allow IdentExpr to return a channel for the ExtractExpr's consideration */
+				 	  [attributes: ExprAttributes SYN] .
+	Lvalue			= [attributes: ExprAttributes SYN] 
+					  [expectingChannel: bool INH] /* Channel or variable? */
+					  [expectingEither: bool INH] /* Expecting either type of lvalue */
+						/* Channel attributes */
+					  [isInput: bool INH] 
+					  [isPassive: bool INH] /* Used for passive input guards */
+					  [lockPassiveChannels: bool INH] /* true -> lock all passive channels encountered */ 
+						/* Variable attributes (instance is only used for convenience in channels) */
+					  [instance: PtrInstance SYN] 
+					  [partitions: PtrSpanList SYN] /* Do we need spans?, normal integers? */
+					  [indices: PtrSpanListList SYN]/* Indices for respective elements in partitions */
+					  [indexWire: PtrWire SYN]   	 /* Wire for index */
+					  [access: PtrAccess SYN] 		 /* An access to the variable */
+					  [expectedBaseType: PtrType INH] .	 /* Expected (enforced) type for array cons. lvalues */
+	LvalueLists			= [attributes: PtrExprAttributesList SYN] 
+				 	  [expectedType: PtrType INH]
+				 	  [elements: PtrInstanceList INH] 
+					  [idents: PtrIdentList SYN] /* channel names */
+				 	  [isInput: bool INH] 
+				 	  [isPassive: bool INH] /* Used for passive input guards */
+					  [lockPassiveChannels: bool INH] /* true -> lock all passive channels encountered */
+					  [isProcedurePorts INH] /* true -> Channels attributes for procedure ports */
+					  [allowArrayedChannels INH] . /* true -> allow lvalues which resolve to arrayed channels */
+	AggregateConsExpr = [actualType: PtrType SYN] /* Local attr */ .
+	ExprLists		= [expectedType: PtrType INH] 
+				 	  [elements: PtrInstanceList INH] 
+					  [attributes: PtrExprAttributesList SYN] 
+				 	  [expectConstants: bool INH] .
+	Command			= [attributes: CommandAttributes SYN] .
+	ForCommand		= [iterator: PtrInstance SYN] /* Local attr */
+					  [lastErrorCount: int SYN] /* Local attr */
+					  [errorContextString: Ptrchar SYN] /* Local attrs */
+					  [valueStringPtr: Ptrchar SYN] /* Local attrs */ .
+	Block			= [attributes: CommandAttributes SYN] .  
+	Guards			= [exprAttributes: PtrExprAttributesList SYN] 
+					  [commandAttributes: PtrCommandAttributesList SYN] .
+	CaseGuards		= [implicantss: PtrImplicantListList SYN] 
+					  [complementImplicants: PtrImplicantList SYN] 
+					  [commandAttributes: PtrCommandAttributesList SYN] 
+				   	  [switchType: PtrType INH]
+					  [switchValue: PtrMP_INT INH]
+					  [maxRange: SignedBits INH]
+					  [implicantMask: PtrMP_INT SYN]
+					  [foundTrueGuard: bool SYN] .
+	ForCaseGuard	= [iterator: PtrInstance SYN] /* Local attr */
+					  [countValue: PtrMP_INT SYN] /* Local attr */
+					  [lastErrorCount: int SYN] /* Local attr */
+					  [implicants: PtrImplicantList SYN] /* Local attr */
+					  [errorContextString: Ptrchar SYN] /* Local attrs */
+					  [valueStringPtr: Ptrchar SYN] /* Local attrs */ .
+	Idents			= [idents: PtrIdentList SYN] .
+	FormalPorts		= [portsType: ProcedureArgsType INH] 
+					  [inConditionalPorts : bool INH]
+				 	  [ports: PtrInstanceList SYN] 
+					  [portCount: unsigned SYN]
+				 	  [extraPortInstances: PtrInstanceList SYN]
+					  [hasParameters: bool SYN] .
+	PortGuards		= [portsType: ProcedureArgsType INH] 
+					  [ports: PtrInstanceList SYN] 
+					  [portCount: unsigned SYN]
+				 	  [extraPortInstances: PtrInstanceList SYN]
+					  [hasParameters: bool SYN] .
+	DeclGuards		= [foundTrueGuard: bool SYN] .
+	ProcedureDecl	= [procedure: PtrProcedure SYN] .
+	SharedDecl		= [procedure: PtrProcedure SYN] .
+	FunctionDecl	= [function: PtrProcedure SYN] .
+	BuiltinFunctionDecl = [function: PtrProcedure SYN] .
+	ChannelGuards	= [guardAttributes: PtrExprAttributesList SYN] 
+				      [commandAttributes: PtrCommandAttributesList SYN] .
+	PartDecl		= [procedure: PtrProcedure SYN] .
+	Parameters		= [paramNo: unsigned THREAD]
+					  [parameters: PtrComponentParameterList INH]
+					  [component: PtrComponent INH] . 
+	BreezeParameters = [parameters: PtrComponentParameterList SYN] .
+	Comps			= [channels: PtrWireArray INH]
+					  [channelCount: unsigned INH]
+					  [components: PtrComponentList THREAD] .
+	ProcedureParams = [actualPorts: PtrExprAttributesList SYN]
+					  [formalParams: tTree INH]
+					  [formalPorts: PtrInstanceList INH]
+					  [constantParams: PtrInstanceList INH]
+					  [typeParams: PtrTypeList INH]
+					  [idents: PtrIdentList INH]
+					  [procedure: PtrProcedure THREAD]
+					  [procedureTree: tTree INH]
+					  [noPorts: bool INH] /* true if we are only applying parameters not ports (ie. aliases) */
+					  [parameterContext: PtrContext INH] . /* context for resolving parameters */
+	FunctionParams  = [actualPorts: PtrExprAttributesList SYN]
+					  [formalParams: tTree INH]
+					  [formalPorts: PtrInstanceList INH]
+					  [constantParams: PtrInstanceList INH]
+					  [typeParams: PtrTypeList INH]
+					  [params: PtrComponentParameterList INH]
+					  [idents: PtrIdentList INH]
+					  [function: PtrProcedure THREAD]
+					  [functionTree: tTree INH]
+					  [parameterContext: PtrContext INH] . /* context for resolving parameters */
+	ExprProcParam	= [typeIfTypeName: PtrType SYN] . /* if this is not an expression but a type name */
+	ExprFuncParam	= [typeIfTypeName: PtrType SYN] . /* " " */
+
+RULE
+
+/* Program : top level context manipulation */
+BalsaProgram = {
+	Decls:skip := false;
+	Decls:scope := TopLevelScope;
+
+	Decls:contextIn := AddContextMarker (PredefinedContext);
+	context := { context = TopLevelContext = Decls:contextOut; };
+} .
+
+/* Decls */
+
+ImportDecl = {
+	next:contextIn := {
+		next:contextIn = contextIn;
+
+		if (! skip)
+		{
+			Ptrchar path = MakePathFromDottedPath (Idents, '.');
+
+			next:contextIn = HandleImport (path, position, contextIn, scope);
+		}	
+	};
+} .
+TypeDecl = {
+	next:contextIn := (skip || AType:type == NoType ? contextIn \: TypeDeclaration (contextIn, ident, scope,
+		/* Need to alias an existing type */
+		(AType->Kind == kExistingType ? AliasType (AType:type, NoIdent) \: AType:type), position));
+	AType:context :- contextIn;
+} .
+ConstantDecl = { 
+	next:contextIn :=
+		(skip ? contextIn \: ConstantDeclaration (contextIn, ident, scope, CoercedExpr:position,
+			(CoercedExpr:attributes).value, (AType->Kind == kNullType ? NULL \: AType:type), position));
+	CoercedExpr:context :- contextIn; AType:context :- contextIn;
+	CoercedExpr:expectedType := (AType->Kind == kNullType ? NoType \: AType:type);
+	CoercedExpr:allowChannels := false;
+} .
+VariableDecl = {
+	next:contextIn := (skip ? contextIn \:
+		VariableDeclaration (contextIn, Idents:idents, scope, AType:type, NULL, position));
+	AType:context :- contextIn;
+} .
+InitVariableDecl = {
+	next:contextIn := {
+		next:contextIn = contextIn;
+
+		LOG_ERROR (InitVarNotSupported, NoIdent, position);
+		skip = true;
+
+		if (! skip)
+		{
+			if (! TypedValueIsDCFreeConstant ((CoercedExpr:attributes).value, position))
+			{ /* Error reported */ }
+			else if (! TypeEquivalence (AType:type, (CoercedExpr:attributes).value.type))
+				LOG_ERROR (TypeIsNotValid, NoIdent, position);
+			else {
+				next:contextIn = VariableDeclaration (contextIn, Idents:idents,
+					scope, AType:type, (CoercedExpr:attributes).value.value.baseValue, position);
+			}
+		}
+	};
+	CoercedExpr:context :- contextIn; AType:context :- contextIn;
+	CoercedExpr:expectedType := (AType->Kind == kNullType ? NoType \: AType:type);
+	CoercedExpr:allowChannels := false;
+} .
+ChannelDecl = {
+	next:contextIn := (skip ? contextIn \:
+		ChannelDeclaration (contextIn, Idents:idents, scope, AType:type, multicast, position));
+	AType:context :- contextIn;
+} .
+ChannelArrayDecl = { 
+	AType:context :- contextIn; 
+	Range:context :- contextIn;
+	Range:expectedType := NoType;
+	Range:isSpan := false; /* array decl not span */
+	next:contextIn := (skip ? contextIn \:
+		ChannelArrayDeclaration (contextIn, Idents:idents, scope, AType:type, Range:range, multicast)); 
+} .
+SyncDecl = {
+	next:contextIn := (skip ? contextIn \:
+		ChannelDeclaration (contextIn, Idents:idents, scope, SyncTypeObj, multicast, position));
+} .
+SyncArrayDecl = { 
+	Range:context :- contextIn;
+	Range:expectedType := NoType;
+	Range:isSpan := false; /* array decl not span */
+	next:contextIn := (skip ? contextIn \:
+		ChannelArrayDeclaration (contextIn, Idents:idents, scope, SyncTypeObj, Range:range, multicast)); 
+} .
+
+ProcedureDecl = { 
+	/* First traverse FormalPorts, Block */
+	Block:context, Block:skip, procedure := { 
+		Block:skip = skip;
+		Block:context = contextIn;
+		procedure = NULL;
+
+		if (!skip)
+		{
+			if (FormalPorts:hasParameters) /* Don't fill in this procedure too much */
+			{
+				Block:skip = true;
+				procedure = ParameterisedProcedureDeclaration (contextIn, ident, yyt, position);		
+			} else {
+				procedure = ProcedureDeclaration (contextIn, ident, false /* Not shared */, FormalPorts:ports,
+					FormalPorts:portCount, FormalPorts:extraPortInstances, &Block:context, position); 
+			}
+			procedure->\scope = scope;
+		}
+	};
+	FormalPorts:context :- contextIn;
+	FormalPorts:portsType := ProcedurePorts; 
+	FormalPorts:inConditionalPorts := false;
+	/* Then fill in Procedure and generate output next context */
+	next:contextIn := {
+		next:contextIn = contextIn;
+		if (!skip)
+		{
+			if (FormalPorts:hasParameters && procedure != NoProcedure)
+			{
+				next:contextIn = NewContext (contextIn->depth, contextIn->types,
+					contextIn->instances, NewProcedureList (procedure, contextIn->procedures));
+				contextIn = next:contextIn; /* frig to allow recursion */
+			} else {
+				next:contextIn = ProcedureDeclarationFillIn (procedure, contextIn,
+				false /* Not shared */, Block:attributes, position);
+			}
+		}
+	};
+} .
+ProcAliasDecl = {
+	ProcedureParams:context :- contextIn;
+	ProcedureParams:parameterContext :- contextIn;
+	ProcedureParams:formalPorts := NULL;
+	ProcedureParams:constantParams := NULL;
+	ProcedureParams:typeParams := NULL;
+	ProcedureParams:noPorts := true; /* No ports should be allowed, only parameters */
+
+	ProcedureParams:procedureTree, ProcedureParams:formalParams,
+	ProcedureParams:procedureIn, ProcedureParams:idents, ProcedureParams:skip := {
+		ProcedureParams:procedureTree = NULL;
+		ProcedureParams:formalParams = NULL;
+		ProcedureParams:idents = NULL;
+		ProcedureParams:procedureIn = (skip ? NoProcedure \: LookupProcedure
+			(contextIn, oldName, false /* not necessarily local */ ));
+		ProcedureParams:skip = skip;
+
+		if (! skip)
+		{
+			if (! ProcedureParams:procedureIn ||
+				ProcedureParams:procedureIn == NoProcedure)
+			{
+				LOG_ERROR (ExpectingAProcedureName, oldName, position);
+				ProcedureParams:skip = true;
+			} else {
+				switch (ProcedureParams:procedureIn->nature)
+				{
+					case UnSharedProcedure\: /* Handle unshared procedure aliases w/o parameters */
+						break;
+					case ParameterisedProcedure\:
+						{
+							tTree tree = ProcedureParams:procedureIn->info.parameterisedProcedure.tree;
+							tTree oldNext = tree->Decl.\next;
+						
+							tree->Decl.\next = mNullDecls (position);
+							ProcedureParams:procedureTree = CopyTree (tree);
+							tree->Decl.\next = oldNext;					
+
+							ProcedureParams:formalParams =
+								ProcedureParams:procedureTree->ProcedureDecl.FormalPorts;
+							ProcedureParams:idents = (ProcedureParams:formalParams->Kind == kParamPort
+								?  ProcedureParams:formalParams->ParamPort.Idents->Idents.idents
+								\: ProcedureParams:formalParams->TypeParamPort.Idents->Idents.idents);
+						}
+						break;
+					default\:
+						LOG_ERROR (ExpectingAProcedureName, ProcedureParams:procedureIn->\ident, position);
+						ProcedureParams:skip = true;
+						break;
+				}
+			}
+		}
+	};
+	next:contextIn := {
+		next:contextIn = contextIn;
+
+		if (! skip && ProcedureParams:procedureOut != NoProcedure)
+		{
+			PtrProcedure realProc = CopyPtrProcedure (ProcedureParams:procedureOut);
+			realProc->\ident = newName;
+			realProc->\scope = scope;
+			next:contextIn = NewContext (contextIn->depth,
+				contextIn->types,
+				contextIn->instances,
+				NewProcedureList (realProc, contextIn->procedures)
+			);
+		}
+	};
+} .
+SharedDecl = { 
+	Block:context, procedure := {
+		Block:context = contextIn;
+		procedure = NULL;
+	
+		if (!skip)
+		{
+			procedure = ProcedureDeclaration (contextIn, ident, true /* Shared */, NULL, 
+				0, NULL, &Block:context, position); 
+			procedure->\scope = scope;
+		}
+	};
+	next:contextIn := (skip ? contextIn \: ProcedureDeclarationFillIn (procedure, contextIn, true /* shared */,
+		Block:attributes, position));
+} .
+FunctionDecl = { 
+	/* Traverse formal ports then the Expr'ession */
+	CoercedExpr:expectedType := (AType->Kind == kNullType ? NoType \: AType:type);
+	CoercedExpr:allowChannels := false;
+	CoercedExpr:context, function := {
+		CoercedExpr:context = contextIn;
+		function = NoProcedure;
+
+		if (!skip)
+		{
+			if (FormalPorts:hasParameters) /* Don't fill in this procedure too much */
+			{
+				LOG_ERROR (FunctionCantHaveParameters, ident, position);
+			} else {
+				function = FunctionDeclaration (contextIn, ident, UnSharedFunction,
+					FormalPorts:ports, FormalPorts:portCount, &CoercedExpr:context, position);
+			}
+			if (function != NoProcedure)
+				function->\scope = scope;
+		}
+	};
+	FormalPorts:context :- contextIn;
+	AType:context :- contextIn;
+	FormalPorts:portsType := FunctionArgs;
+	FormalPorts:inConditionalPorts := false;
+	next:contextIn := (skip ? contextIn \:
+		FunctionDeclarationFillIn (function, contextIn,
+			CoercedExpr:attributes, (AType->Kind == kNullType ? NoType \: AType:type), position));
+} .
+BuiltinFunctionDecl = { 
+	/* Traverse formal ports */
+	function := {
+		PtrContext bodyContext;
+		function = NoProcedure;
+
+		if (!skip)
+		{
+			if (scope == InnerScope)
+				LOG_ERROR (CannotDeclareBuiltinFunctionHere, ident, position);
+			else {
+				if (FormalPorts:hasParameters) /* Don't fill in this procedure too much */
+				{
+					function = ParameterisedFunctionDeclaration (ParameterisedBuiltinFunction,
+						contextIn, ident, yyt, position);		
+				} else {
+					function = FunctionDeclaration (contextIn, ident, BuiltinFunction,
+						FormalPorts:ports, FormalPorts:portCount, &bodyContext, position);
+				}
+				if (function != NoProcedure)
+					function->\scope = scope;
+			}
+		}
+	};
+	FormalPorts:context :- contextIn;
+	AType:context :- contextIn;
+	AType:skip := (skip || FormalPorts:hasParameters);
+	FormalPorts:portsType := FunctionArgs;
+	FormalPorts:inConditionalPorts := false;
+	next:contextIn := {
+		next:contextIn = contextIn;
+		if (!skip)
+		{
+			if (FormalPorts:hasParameters)
+			{
+				next:contextIn = NewContext (contextIn->depth, contextIn->types,
+					contextIn->instances, NewProcedureList (function, contextIn->procedures));
+				contextIn = next:contextIn; /* frig to allow recursion */
+			} else {
+				next:contextIn = BuiltinFunctionDeclarationFillIn (function, contextIn, AType:type, position);
+			}
+		}
+	};
+} .
+
+/* Range */
+Range = { range := NoSpan; } .
+TypeRange = { 
+	range := (skip ? NoSpan \: HandleTypeRange (AType:type, expectedType, position)); 
+} .
+SpecifiedRange = { 
+	Left:allowChannels := false;
+	Right:allowChannels := false;
+	range := {
+		range = NoSpan;
+	
+		if (!skip)
+		{
+			/* 3 cases: true, Left, Right   - eg. 1 .. 5 spanning range
+			    true, Right, Right  - eg. 5      single value (in a span),
+			    false, Right, Right - eg. 5      spanning range 0 .. 4 */
+			range = HandleSpecifiedRange (Left->Kind != kNullExpr || isSpan, 
+				(Left->Kind == kNullExpr ? Right:attributes \: Left:attributes), 
+				Right:attributes, expectedType, (Left->Kind == kNullExpr ? Right:position \: position)); 
+		}
+	};
+	Left:expectedType :- expectedType;
+	Right:expectedType := { 
+		Right:expectedType = NoType;
+
+		if (!skip)
+		{
+			if (Left->Kind == kNullExpr) Right:expectedType = expectedType;
+			else if ((Left:attributes).value.type->nature == EnumerationType)
+			/* Don't support record types, this only makes sense for enum and numeric,
+			   and numeric types expressions don't need the expectedType field */
+				Right:expectedType = (Left:attributes).value.type;
+		}
+	};
+} .
+
+/* AType */ 
+AType = { type := NoType; /* Invalid/unused type */ } .
+NumericType = { 
+	type := (skip ? NoType \: MakeNumericType ((Expr:attributes).value, Expr:position, signedness, position)); 
+	Expr:expectedType := NoType; 
+	Expr:allowChannels := false;
+} .
+ExistingType = { type := (skip ? NoType \:
+	ExistingTypeLookup (context, ident, position));
+} . 
+BuiltinType = { type := (skip ? NoType \: NewBuiltinType ()); } .
+ArrayType = { type := (skip ? NoType \:
+	HandleArrayType (context, AType:type, Range:range, position));
+	Range:isSpan := false; Range:expectedType := NoType;
+} .
+NewType = { type := (AType:type == NoType ? NoType \: CopyAnonType (AType:type)); } .
+RecordType = { type := RecordElems:typeOut;
+	RecordElems:hasOverType := !(AType->Kind == kNullType);
+	RecordElems:typeIn := (skip ? NoType \: NewRecordType (MarkerIdent,
+		(RecordElems:hasOverType ? Abs (CheckAndSizeOfType(AType:type, AType:position)) \: 0), NULL, 0));
+	RecordElems:elementsTail := NULL;
+} .
+EnumType = { type := EnumElems:typeOut;
+	EnumElems:elementValue := NewMP_INT (0); 
+	EnumElems:hasOverType := !(AType->Kind == kNullType);
+	EnumElems:typeIn := (skip ? NoType \: NewEnumerationType (MarkerIdent, 
+		(EnumElems:hasOverType ? CheckAndSizeOfType(AType:type, AType:position) \: 0), NULL));
+	EnumElems:elementsTail := NULL;
+} .
+
+/* EnumElems */
+DefaultValuedEnumElem = { 
+	next:typeIn, next:elementValue, next:elementsTail := {
+		next:typeIn = NoType;
+		if (! skip)
+		{
+			next:typeIn = AddEnumElemToEnumType (typeIn, ident, elementValue, 
+				elementsTail, &(next:elementsTail), NoValue,
+				position, true, hasOverType, &(next:elementValue), position);
+		}
+	};
+} .
+ValuedEnumElem = { 
+	CoercedExpr:expectedType := typeIn; 
+	CoercedExpr:allowChannels := false;
+	next:typeIn, next:elementValue, next:elementsTail := {
+		next:typeIn = NoType;
+		if (! skip)
+		{
+			next:typeIn = AddEnumElemToEnumType (typeIn, ident, elementValue, 
+				elementsTail, &(next:elementsTail), (CoercedExpr:attributes).value, 
+				CoercedExpr:position, false, hasOverType, &(next:elementValue), position);
+		}
+	};
+} .
+/* RecordElems */
+RecordElem = { 
+	next:typeIn, next:elementsTail := {
+		next:typeIn = NoType;
+		if (! skip)
+		{
+			next:typeIn = AddRecordElemToRecordType (typeIn, Idents:idents, AType:type, hasOverType, 
+				elementsTail, &(next:elementsTail), position); 
+		}
+	};
+} .
+
+/* CoercedExpr: Expr with integer promotion for constant expressions */
+CoercedExpr = {
+	Expr:allowChannels := false;
+	attributes := {
+		attributes = Expr:attributes;
+		/* Numeric constant? */
+		if (expectedType && expectedType->nature == NumericType &&
+			attributes.value.type && attributes.value.type->nature == NumericType &&
+			attributes.value.value.baseValue)
+		{
+			if (RangeIsWiderOrEqual (expectedType->size,
+				SmallestRangeToHoldValue (attributes.value.value.baseValue)))
+			{ /* Promote the constant */
+				attributes.value.type = expectedType;
+				if (attributes.activation)
+					attributes.activation->width = Abs (expectedType->size);
+			}
+		}
+	};
+} .
+/* Expr */
+Expr = { /* NullExpr */ attributes := NoExprAttributes; } .
+LiteralExpr = {
+	attributes := (skip ? NoExprAttributes \: HandleLiteralExpr (literal, expectedType, position));
+} .
+IdentExpr = {
+	attributes := (skip ? NoExprAttributes \: HandleIdentExpr (context, ident, expectedType,
+		allowChannels, position));
+} .
+StringExpr = { 
+	attributes := (skip ? NoExprAttributes \: HandleStringExpr (string, position));
+} .
+ImplicantExpr = {
+	attributes := (skip ? NoExprAttributes \: HandleImplicantExpr (implicant, expectedType, position));
+} .
+DontCareExpr = {
+	attributes := (skip ? NoExprAttributes \: HandleDontCareExpr (expectedType, position));
+} .
+AggregateConsExpr = {  
+	ExprLists:expectConstants := false; /* Can construct from non-const expressions */
+	ExprLists:expectedType, ExprLists:elements, actualType := { 
+		ExprLists:expectedType = NoType;
+		ExprLists:elements = NULL;
+		actualType = NoType;
+	
+		if (!skip)
+		{
+			ExprLists:elements = GetAggregateConsExprElements (context, ident, expectedType, &actualType, position); 
+			/* ExprLists:expectedType, iff NULL then use the elements list, else use this type for all elems. */
+			ExprLists:expectedType = (actualType->nature == RecordType ? NULL \:
+				(actualType->nature == ArrayType ? actualType->info.array.baseType \: NULL));
+		}
+	};
+	attributes := {
+		attributes = NoExprAttributes;
+		
+		if (! skip)
+		{
+			attributes = HandleAggregateConsExpr (actualType, 
+				ident != NoIdent /* don't check cardinality if no type was named */,
+				false /* cons */, ExprLists:attributes, position); 
+		}
+	};
+} . 
+NamedEnumElemExpr = {
+	attributes := (skip ? NoExprAttributes \: HandleNamedEnumElemExpr (context, typeName, elemName, position));
+} .
+RecordElemExtractExpr = {
+	Expr:expectedType := NoType; /* The record name doesn't have the same type as the element,
+		expectedType should apply to the final expr; that is the element */
+	attributes := (skip ? NoExprAttributes \:
+		HandleRecordElemExtractExpr (context, ident, Expr:attributes, position)); } .
+ArrayExtractExpr = { 
+	/* Extract the subscript type if we have a bona fide array LHS */
+	Array:allowChannels := true;
+	Array:expectedType := NoType; 
+	Subscript:expectedType := 
+		(skip ? NoType \:
+		((Array:attributes).value.type->nature == ArrayType ?
+			(Array:attributes).value.type->info.array.range.boundingType \:
+		((Array:attributes).value.type->nature == ArrayedType ?
+			(Array:attributes).value.type->info.arrayed.range.boundingType \: NoType)));
+	attributes := (skip ? NoExprAttributes \:
+		HandleArrayExtractExpr (context, Array:attributes, Subscript:attributes, position)); 
+} .
+ArraySliceExpr = { 
+	Range:isSpan := true; /* Not relevant as this can't be a single value */
+	Range:expectedType := (skip ? NoType \: ((Expr:attributes).value.type->nature == ArrayType ?
+		(Expr:attributes).value.type->info.array.range.boundingType \: NoType));
+	attributes := (skip ? NoExprAttributes \:
+		HandleArraySliceExpr (context, Expr:attributes, Range:range, false /* return type
+		will be an array even for single element spans */, position)); 
+} .
+ArrayAppendExpr := {
+	Left:expectedType :- expectedType; /* Left the same as whole array */
+	Right:expectedType := Left:attributes.value.type;
+
+	attributes := {
+		attributes = NoExprAttributes;
+
+		if (!skip)
+		{
+			if (Left:attributes.value.type->nature != ArrayType)
+				LOG_ERROR (ExpectingAnArrayOnAppendLHS, NoIdent, position);
+			else if (Right:attributes.value.type->nature != ArrayType)
+				LOG_ERROR (ExpectingAnArrayOnAppendRHS, NoIdent, position);
+			else if (!TypeEquivalence (Left:attributes.value.type->info.array.baseType,
+				Right:attributes.value.type->info.array.baseType))
+				LOG_ERROR (ArrayAppendExprsMustHaveSameBaseType, NoIdent, position);
+			else if (Left:attributes.value.type != NoType && Right:attributes.value.type != NoType)
+			{
+				attributes = HandleAggregateConsExpr (Left:attributes.value.type, false
+					/* don't check cardinality */, true, /* append */
+					NewExprAttributesList (Left:attributes, NewExprAttributesList (Right:attributes, NULL)),
+					position); 
+			}
+		}
+	};
+} .
+AsExpr = {
+	Expr:expectedType := NoType;
+	attributes := (skip ? NoExprAttributes \: HandleAsExpr (AType:type, Expr:attributes, position));
+} .
+BitArrayCastExpr = {
+	attributes := (skip ? NoExprAttributes \: HandleBitArrayCastExpr (Expr:attributes, position));
+} .
+UnaryExpr = {
+	Expr:expectedType := NoType;
+	attributes := (skip ? NoExprAttributes \: HandleUnaryExpr (context, operation, Expr:attributes, position));
+} .
+BinaryExpr = {
+	Left:expectedType := NoType; 
+	Right:expectedType := { /* handle conveying type expectation for non numerics */
+		if ((Left:attributes).value.type->nature == EnumerationType ||
+			(Left:attributes).value.type->nature == RecordType)
+			Right:expectedType = (Left:attributes).value.type;
+		else	Right:expectedType = NoType;
+	};
+	attributes := (skip ? NoExprAttributes \:
+		HandleBinaryExpr (context, operation, Left:attributes, Right:attributes, position)); 
+} .
+LetExpr = {
+	ValDecls:contextIn := AddContextMarker(context);
+	Expr:context := ValDecls:contextOut;
+
+	attributes := {
+		attributes = Expr:attributes;
+		
+		if (!skip)
+		{
+			attributes.accesses = ResolveLocalInstanceAccesses (ValDecls:contextOut, 
+				&attributes.wires, &attributes.components, attributes.accesses, NULL, position);
+		}
+	};
+} .
+FunctionCallExpr = {
+	FunctionParams:constantParams := NULL;
+	FunctionParams:typeParams := NULL;
+	FunctionParams:params := NULL;
+	FunctionParams:parameterContext :- context;
+
+	FunctionParams:skip, FunctionParams:functionTree,
+	FunctionParams:formalParams, FunctionParams:formalPorts,
+	FunctionParams:functionIn, FunctionParams:idents := {
+		FunctionParams:functionTree = NULL;
+		FunctionParams:formalParams = NULL;
+		FunctionParams:formalPorts = NULL;
+		FunctionParams:idents = NULL;
+		FunctionParams:functionIn = (skip ? NoProcedure \: LookupProcedure
+			(context, ident, false /* not necessarily local */ ));
+		FunctionParams:skip = skip;
+
+		if (!skip)
+		{
+			if (! FunctionParams:functionIn ||
+				FunctionParams:functionIn == NoProcedure)
+			{
+				LOG_ERROR (ExpectingAFunctionName, ident, position);
+				FunctionParams:skip = true;
+			} else {
+				switch (FunctionParams:functionIn->nature)
+				{
+					case SharedFunction\:
+					case UnSharedFunction\:
+					case BuiltinFunction\:
+						FunctionParams:formalPorts = FunctionParams:functionIn->ports;
+						break;
+					case ParameterisedBuiltinFunction\:
+						{
+							tTree tree = FunctionParams:functionIn->info.parameterisedFunction.tree;
+							tTree oldNext = tree->Decl.next;
+							
+							tree->Decl.next = mNullDecls (position);
+							FunctionParams:functionTree = CopyTree (tree);
+							tree->Decl.next = oldNext;					
+
+							FunctionParams:formalParams =
+								FunctionParams:functionTree->BuiltinFunctionDecl.FormalPorts;
+							FunctionParams:idents = (FunctionParams:formalParams->Kind == kParamPort
+								?  FunctionParams:formalParams->ParamPort.Idents->Idents.idents
+								\: FunctionParams:formalParams->TypeParamPort.Idents->Idents.idents);
+						}
+						break;
+					default\:
+						LOG_ERROR (ExpectingAFunctionName, ident, position);
+						break;
+				}
+			}
+		}
+	};
+	attributes := {
+		attributes = NoExprAttributes;
+
+		if (! skip && FunctionParams:functionOut != NoProcedure)
+			attributes = HandleFunctionCallExpr (FunctionParams:actualPorts, FunctionParams:functionOut, position); 
+	};
+} .
+SizeofExpr = {
+	attributes := {{
+		PtrType type = LookupType (context, ident, false /* not just local */);
+
+		attributes = (type == NoType ? NoExprAttributes
+			\: HandleLiteralExpr (NewMP_INT (Abs (type->size)), expectedType, position));
+	}};
+} .
+PrimedExpr = {
+	/* Expression which can be retrofitted with an ExprAttributes from a similar context */
+	attributes :- results; 
+} .
+
+/* Command */
+Command = { /* Dummy */ attributes := NoCommandAttributes; } . 
+
+ContinueCommand = { attributes := HandleContinueCommand (position); } .
+HaltCommand = { attributes := HandleHaltCommand (position); } .
+SequentialCommand = {
+	attributes := (skip ? NoCommandAttributes \:
+		HandleSequentialCommand (Left:attributes, Right:attributes, position));
+} . 
+ParallelCommand = {
+	attributes := (skip ? NoCommandAttributes \:
+		HandleParallelCommand (Left:attributes, Right:attributes, isPermissive, position));
+} . 
+BlockCommand = { Block:context := AddContextMarker (context); attributes :- Block:attributes; } . 
+LoopCommand = {
+	attributes := (skip ? NoCommandAttributes \: HandleLoopCommand (Command:attributes, position));
+} . 
+SyncCommand = {
+	Lvalue:expectedBaseType := NoType; /* don't imply a base type */
+	Lvalue:expectingChannel := true; Lvalue:expectingEither := false;
+	Lvalue:isInput := true; Lvalue:isPassive := false; Lvalue:lockPassiveChannels := false;
+	attributes := (skip ? NoCommandAttributes \:
+		HandleSyncCommand (context, Lvalue:attributes, Lvalue:instance, position));
+} .
+WhileGuardsCommand = { 
+	attributes := (skip ? NoCommandAttributes \:
+		HandleWhileCommand (WhileGuardsLoop, context, Guards:commandAttributes, Guards:exprAttributes,
+			NoCommandAttributes, NoCommandAttributes, position)); 
+} . 
+CommandWhileExprCommand = { 
+	Expr:allowChannels := false;
+	Expr:expectedType := BitTypeObj;
+	attributes := (skip ? NoCommandAttributes \:
+		HandleWhileCommand (CommandWhileExprLoop, context, NULL, NewExprAttributesList (Expr:attributes, NULL),
+			Command:attributes, NoCommandAttributes, position));
+} . 
+CommandWhileGuardsCommand = { 
+	attributes := (skip ? NoCommandAttributes \:
+		HandleWhileCommand (CommandWhileGuardsLoop, context, Guards:commandAttributes, Guards:exprAttributes,
+			Command:attributes, NoCommandAttributes, position));
+} . 
+CommandWhileGuardsAlsoCommand = { 
+	attributes := (skip ? NoCommandAttributes \:
+		HandleWhileCommand (CommandWhileGuardsAlsoLoop, context, Guards:commandAttributes, Guards:exprAttributes,
+			FirstCommand:attributes, AlsoCommand:attributes, position));
+} . 
+WhileGuardsAlsoCommand = { 
+	attributes := (skip ? NoCommandAttributes \:
+		HandleWhileCommand (WhileGuardsAlsoLoop, context, Guards:commandAttributes, Guards:exprAttributes,
+			Command:attributes, NoCommandAttributes, position));
+} . 
+IfCommand = { 
+	attributes := (skip ? NoCommandAttributes \:
+		HandleIfCommand (false, context, Guards:commandAttributes, Guards:exprAttributes,
+			NoCommandAttributes, position)); 
+} . 
+IfElseCommand = { 
+	attributes := (skip ? NoCommandAttributes \:
+		HandleIfCommand (! Command:skip, context, Guards:commandAttributes, Guards:exprAttributes,
+			Command:attributes, position)); 
+	Command:skip := {
+		Command:skip = skip;
+
+		if (! skip)
+		{
+			if (Guards:exprAttributes && DetermineGuardNature (CAR (Guards:exprAttributes),
+				false, false /* may be non-const */, position) == TrueGuardNature)
+				Command:skip = true;
+		}
+	};
+} . 
+
+ForCommand = {
+	Range:isSpan := true; /* Span, ie. for || a in 8 then  will execute the body once for a = 8 */
+	Range:expectedType := NoType;
+	/* NB. A range must span at least one value, the boundingType will not be NoType if range is successful */ 
+	attributes := { 
+		attributes = Command:attributes;
+
+		if (!skip && iterator)
+		{ /* Only obey body iff iterator was declared */
+			PtrMP_INT i = iterator->info.constant.value.baseValue; /* Use i as an alias */
+			PtrMP_INT originalIteratorValue = CopyMP_INT (i);
+
+			if (lastErrorCount != ErrorCount)
+				LOG_ERROR (GivingUpOnFor, NoIdent, position);
+
+			PopErrorContext (); /* Pop the first value's error context */
+			mpz_add_ui (i, i, 1); /* lowerBound already done */
+			for (; mpz_cmp (i, (Range:range).upperBound) <= 0 && lastErrorCount == ErrorCount; mpz_add_ui (i, i, 1))
+			{
+				lastErrorCount = ErrorCount;
+				/* Constant contains i, automagically updated */
+				*valueStringPtr = '\0';
+				MakeTypedValueString (valueStringPtr, NewTypedValue (
+					i, (Range:range).boundingType));
+				PushErrorContext (errorContextString, position);
+				yyVisit1 /* Command */ (yyt->\ForCommand.\Command);
+				PopErrorContext ();
+				if (isParallel)
+				{
+					attributes = HandleParallelCommand (attributes, Command:attributes, isPermissive, position);
+				} else {
+					attributes = HandleSequentialCommand (attributes, Command:attributes, position);
+				}
+
+				if (lastErrorCount != ErrorCount)
+				{
+					LOG_ERROR (GivingUpOnFor, NoIdent, position);
+					break;
+				}
+			}
+			FREE_ARRAY (char, 8192, errorContextString);
+			mpz_set (i, originalIteratorValue);
+			DeleteMP_INT (originalIteratorValue);
+		}
+	}; 
+	Command:context, iterator, errorContextString, valueStringPtr, lastErrorCount := {
+		iterator = NULL;
+		Command:context = AddContextMarker (context);
+		errorContextString = "";
+		valueStringPtr = "";
+		lastErrorCount = ErrorCount;
+
+		if (!skip)
+		{
+			if ((Range:range).boundingType == NoType)
+				LOG_ERROR (InvalidForRange, ident, position);
+			else {
+				iterator = NewConstantInstance (ident, 
+					NewTypedValue (CopyMP_INT ((Range:range).lowerBound), (Range:range).boundingType));
+				errorContextString = NEW_ARRAY (char, 8192);
+				valueStringPtr = errorContextString;
+	
+				sprintf (valueStringPtr, "in `for %s' loop at iteration %s = ", (isParallel ? "||" : ";"),
+					PeekString (ident));
+				valueStringPtr = EndOfString (valueStringPtr);
+				/* NB. don't mod. valueStringPtr from now on */
+				*valueStringPtr = '\0';
+				MakeTypedValueString (valueStringPtr, NewTypedValue (
+					(Range:range).lowerBound, (Range:range).boundingType));
+				PushErrorContext (errorContextString, position);
+				(Command:context)->instances = NewInstanceList (iterator, context->instances);
+			}
+		}
+	};
+} .
+
+/* Basic ops */
+AssignmentCommand = { 
+	Lvalue:expectedBaseType := NoType; /* variable lvalue */
+	CoercedExpr:expectedType := (Lvalue:attributes).value.type;
+	CoercedExpr:allowChannels := false;
+	Lvalue:expectingChannel := false; Lvalue:expectingEither := false;
+	Lvalue:isInput := false; Lvalue:isPassive := false; Lvalue:lockPassiveChannels := false;
+	attributes := (skip ? NoCommandAttributes \:
+		HandleAssignmentCommand (
+		FinaliseLvalue (Lvalue:attributes, Lvalue:instance, Lvalue:partitions,
+		Lvalue:indices, Lvalue:indexWire, Lvalue:access, position), Lvalue:instance,
+		CoercedExpr:attributes, position)
+	);
+} . 
+
+InputCommand = { 
+	LHS:expectedBaseType := NoType; /* don't imply a base type */
+	RHS:expectedBaseType := NoType; /* variable RHS */
+	LHS:expectingChannel := true; LHS:expectingEither := false;
+	RHS:expectingChannel := false; RHS:expectingEither := true;
+	LHS:isInput := true; RHS:isInput := false;
+	LHS:isPassive := false; RHS:isPassive := false;
+	LHS:lockPassiveChannels := false; RHS:lockPassiveChannels := false;
+	attributes := (skip || ! LHS:instance || ! RHS:instance ? NoCommandAttributes \:
+		(RHS:instance->nature == VariableInstance
+		? HandleInputCommand (LHS:attributes, LHS:instance,
+			FinaliseLvalue (RHS:attributes, RHS:instance, RHS:partitions, RHS:indices,
+			RHS:indexWire, RHS:access, position), RHS:instance, position)
+		\: HandleInputToChannelCommand (LHS:attributes, LHS:instance, RHS:attributes, RHS:instance, position)
+		));
+} .
+InputEncloseCommand = { 
+	LvalueLists:allowArrayedChannels := false;
+	LvalueLists:isInput := true; /* Active input guards */
+	LvalueLists:isPassive := false; 
+	LvalueLists:lockPassiveChannels := false; /* Don't lock channels */
+	LvalueLists:elements := NULL; /* Don't expect any particular types */
+	LvalueLists:expectedType := NoType; /* Don't expect a type, don't worry about elements */
+	LvalueLists:isProcedurePorts := false;
+
+	Command:context := (skip ? context \:
+		NewContext (context->depth + 1, context->types, 
+			AppendInstanceLists (MakeReadOnlyVariablesFromInstances (LvalueLists:attributes,
+				LvalueLists:idents, ChannelActiveRead), context->instances), context->procedures));
+
+	attributes := (skip ? NoCommandAttributes \:
+		HandleInputEncloseCommand (FlattenDisjointChannelAccessList (LvalueLists:attributes, position), 
+			Command:attributes, false, position));
+} .
+InputEncloseBangCommand = { 
+	LvalueLists:allowArrayedChannels := false;
+	LvalueLists:isInput := true; /* Active input guards */
+	LvalueLists:isPassive := false; 
+	LvalueLists:lockPassiveChannels := false; /* Don't lock channels */
+	LvalueLists:elements := NULL; /* Don't expect any particular types */
+	LvalueLists:expectedType := NoType; /* Don't expect a type, don't worry about elements */
+	LvalueLists:isProcedurePorts := false;
+
+	Command:context := (skip ? context \:
+		NewContext (context->depth + 1, context->types, 
+			AppendInstanceLists (MakeReadOnlyVariablesFromInstances (LvalueLists:attributes,
+				LvalueLists:idents, ChannelActiveRead), context->instances), context->procedures));
+
+	attributes := (skip ? NoCommandAttributes \:
+		HandleInputEncloseCommand (FlattenDisjointChannelAccessList (LvalueLists:attributes, position), 
+			Command:attributes, ! DontGenerateEagerFVs, position));
+} .
+OutputCommand = { 
+	Lvalue:expectedBaseType := NoType; /* don't imply a base type */
+	Lvalue:expectingChannel := true; Lvalue:expectingEither := false;
+	CoercedExpr:expectedType := (Lvalue:attributes).value.type; 
+	CoercedExpr:allowChannels := false;
+	Lvalue:isInput := false; Lvalue:isPassive := false;
+	Lvalue:lockPassiveChannels := false;
+	attributes := (skip ? NoCommandAttributes \: 
+		HandleOutputCommand (Lvalue:attributes, Lvalue:instance, CoercedExpr:attributes, position)); 
+} .
+
+/* Control flow */
+CaseCommand = {
+	Expr:allowChannels := false;
+	Expr:expectedType := NoType;
+	CaseGuards:switchType := (Expr:attributes).value.type; 
+	CaseGuards:maxRange := (Expr:attributes).value.type->size;
+	/* We have a value if the guard is numeric or enumerated */
+	CaseGuards:switchValue := (Expr:attributes).value.value.baseValue;
+	Command:skip := skip || CaseGuards:foundTrueGuard;
+	attributes := {
+		attributes = NoCommandAttributes;
+
+		if (! skip)
+		{
+			if (CaseGuards:switchValue && ! CaseGuards:foundTrueGuard) /* Do the `else' command */
+			{
+				attributes = ((Command->Kind == kNullCommand)
+					? HandleContinueCommand (position)
+					\: Command:attributes
+				);
+			} else {
+				attributes = HandleCaseCommand (CaseGuards:commandAttributes, CaseGuards:implicantss,
+					CaseGuards:complementImplicants, Expr:attributes,
+					Command->Kind != kNullCommand /* else clause ? */,
+					(Command->Kind == kNullCommand ? NoCommandAttributes \: Command:attributes),
+					position
+				);
+			}
+		}	
+	};
+} .
+
+/* ProcedureParams */
+ProcedureParams = {
+	actualPorts := NULL;
+} .
+NullProcParams = {
+	actualPorts := {
+		actualPorts = NULL;
+
+		if (! skip)
+		{
+			if (formalParams)
+				LOG_ERROR (ParameterListTooShort, NoIdent, position);
+			else if (formalPorts && ! noPorts)
+				LOG_ERROR (ExprListTooShort, NoIdent, position);
+		}	
+	};
+} .
+ExprProcParam = {
+	CoercedExpr:skip := {
+		/* CoercedExpr:skip should be part of the generated list of the next term, KCT bug? */
+	};
+	CoercedExpr:expectedType, CoercedExpr:allowChannels,
+	CoercedExpr:context, typeIfTypeName := {
+		typeIfTypeName = NoType;
+
+		if (Tree_IsType (CoercedExpr, kCoercedExpr))
+		{
+			CoercedExpr:expectedType = NoType;
+			CoercedExpr:allowChannels = false;
+			CoercedExpr:skip = skip; /* Do these here to prevent problems if CoercedExpr
+				is converted to a LinkedChannel */
+			CoercedExpr:context = context;
+		}
+
+		if (! skip)
+		{
+			if (formalParams)
+			{
+				if (Tree_IsType (formalParams, kParamPort))
+				{
+					formalParams->ParamPort.AType->AType.\context = parameterContext;
+					formalParams->ParamPort.AType->AType.\skip = false;
+					VisitTreeNode (formalParams->ParamPort.AType);
+
+					CoercedExpr:expectedType = formalParams->ParamPort.AType->AType.type;
+				}
+
+				if (Tree_IsType (formalParams, kTypeParamPort))
+				{
+					/* Is this a type name instead ? */
+					if (Tree_IsType (CoercedExpr, kCoercedExpr) &&
+						Tree_IsType (CoercedExpr->\CoercedExpr.\Expr, kIdentExpr))
+					{
+						tTree expr = CoercedExpr->\CoercedExpr.\Expr;
+						typeIfTypeName = ExistingTypeLookup (context, expr->IdentExpr.ident, position);
+						
+						if (typeIfTypeName == NoType)
+						{
+							LOG_ERROR (ExpectingATypeParam, NoIdent, position);
+						} else CoercedExpr:skip = true;
+					} else LOG_ERROR (ExpectingATypeParam, NoIdent, position);
+				}
+			} else {
+				if (noPorts)
+					LOG_ERROR (ExprListTooLong, NoIdent, position);
+				else {
+					/* Convert Expr to LinkedChannel, set args */
+					if (! Tree_IsType (CoercedExpr, kLinkedChannel))
+						CoercedExpr = ConvertCoercedExprToLinkedChannel (CoercedExpr,
+							context, formalPorts);
+				}
+			}
+		}
+	};
+
+	next:parameterContext, next:formalParams, next:formalPorts,
+	next:constantParams, next:typeParams, next:idents, next:procedureIn := {
+		next:formalParams = NULL;
+		next:formalPorts = formalPorts;
+		next:constantParams = constantParams;
+		next:typeParams = typeParams;
+		next:idents = idents;
+		next:procedureIn = procedureIn;
+		next:parameterContext = parameterContext;
+
+		if (! skip)
+		{
+			if (formalParams)
+			{
+				tTree remainingPorts = NULL;
+
+				if (typeIfTypeName == NoType) /* this was an expression, not a type */
+				{
+					if (CoercedExpr:expectedType != NoType)
+					{
+						remainingPorts = HandleExprParam (formalParams, &next:parameterContext,
+							&next:idents, &next:constantParams, NULL,
+							CoercedExpr:attributes.value, CoercedExpr:position);
+					}
+				} else {
+					remainingPorts = HandleTypeParam (formalParams, &next:parameterContext,
+						&next:idents, &next:typeParams, NULL, typeIfTypeName,
+						CoercedExpr:position);
+				}
+
+				if (! Tree_IsType (remainingPorts, kParamPort)
+					&& ! Tree_IsType (remainingPorts, kTypeParamPort))
+				{
+					/* Apply parameters */
+					next:procedureIn = SpecifyParameterisedProcedure (context, procedureIn->ident,
+						procedureIn, procedureTree,
+						next:constantParams, next:typeParams, remainingPorts, position);
+
+					next:formalPorts = next:procedureIn->ports;
+					next:formalParams = NULL;
+				} else {
+					next:formalParams = remainingPorts;
+				}
+			} else if (formalPorts)
+				next:formalPorts = CDR (formalPorts);
+			else LOG_ERROR (ExprListTooLong, NoIdent, position);
+		}
+	};
+
+	actualPorts := {
+		actualPorts = next:actualPorts;
+
+		if (! skip && Tree_IsType (CoercedExpr, kLinkedChannel))
+		{
+			/* Expr was actually a LinkedChannel */
+			if (CoercedExpr->LinkedChannel.\attributes)
+				actualPorts = AppendExprAttributesLists (CoercedExpr->LinkedChannel.\attributes, next:actualPorts);
+			else actualPorts = next:actualPorts;
+		}
+	};
+} .
+TypeProcParam = {
+	next:parameterContext, next:formalParams, next:formalPorts,
+	next:constantParams, next:typeParams, next:idents, next:procedureIn := {
+		next:parameterContext = parameterContext;
+		next:formalParams = NULL;
+		next:formalPorts = formalPorts;
+		next:constantParams = constantParams;
+		next:typeParams = typeParams;
+		next:idents = idents;
+		next:procedureIn = procedureIn;
+
+		if (! skip)
+		{
+			if (formalParams)
+			{
+				tTree remainingPorts = HandleTypeParam (formalParams, &next:parameterContext,
+					&next:idents,&next:typeParams, NULL, AType:type,
+					AType:position);
+
+				if (! Tree_IsType (remainingPorts, kParamPort)
+					&& ! Tree_IsType (remainingPorts, kTypeParamPort))
+				{
+					/* Apply parameters */
+					next:procedureIn = SpecifyParameterisedProcedure (context, procedureIn->ident,
+						procedureIn, procedureTree,
+						next:constantParams, next:typeParams, remainingPorts, position);
+
+					next:formalPorts = next:procedureIn->ports;
+					next:formalParams = NULL;
+				} else {
+					next:formalParams = remainingPorts;
+				}
+			} else if (noPorts)
+				LOG_ERROR (ExprListTooLong, NoIdent, position);
+		}
+	};
+
+	actualPorts :- next:actualPorts;
+} .
+VarReadProcParam = {
+	CoercedExpr:allowChannels := false;
+	CoercedExpr:expectedType := {
+		CoercedExpr:expectedType = NoType;
+
+		if (! skip)
+		{
+			if (! procedureIn)
+				LOG_ERROR (BadVarAccessActualParameter, NoIdent, position);
+			else if (formalPorts)
+				CoercedExpr:expectedType = CAR (formalPorts)->type;
+		}
+	};
+
+	next:parameterContext, next:formalParams, next:formalPorts,
+	next:constantParams, next:typeParams, next:idents, next:procedureIn := {
+		next:formalParams = NULL;
+		next:formalPorts = formalPorts;
+		next:constantParams = constantParams;
+		next:typeParams = typeParams;
+		next:idents = idents;
+		next:procedureIn = procedureIn;
+		next:parameterContext = parameterContext;
+
+		if (! skip)
+		{
+			if (formalParams)
+			{
+				/* Skip the parameter, for error reporting purposes */
+				(void) GetNextBalsaParam (&(next:formalParams), NULL, &(next:idents), position);
+				LOG_ERROR (BadVarAccessActualParameter, NoIdent, position);
+			} else if (noPorts)
+				LOG_ERROR (ExprListTooLong, NoIdent, position);
+			else if (formalPorts)
+				next:formalPorts = CDR (formalPorts);
+			else LOG_ERROR (ExprListTooLong, NoIdent, position);
+		}
+	};
+
+	actualPorts := {
+		actualPorts = next:actualPorts;
+
+		if (! skip)
+		{
+			if (! TypeEquivalence (CoercedExpr:attributes.value.type, CAR (formalPorts)->type))
+				LOG_ERROR (TypeIsNotValid, NoIdent, position);
+			else if (CAR (formalPorts)->info.port.sense != ActivePortSense)
+				LOG_ERROR (BadVarAccessActualParameter, NoIdent, position);
+			else actualPorts = NewExprAttributesList (CoercedExpr:attributes, next:actualPorts);
+		}
+	};
+} .
+VarWriteProcParam = {
+	Lvalue:expectedBaseType := NoType; /* variable lvalue */
+	Lvalue:expectingChannel := false; Lvalue:expectingEither := false;
+	Lvalue:isInput := false; Lvalue:isPassive := false; Lvalue:lockPassiveChannels := false;
+
+	next:parameterContext, next:formalParams, next:formalPorts,
+	next:constantParams, next:typeParams, next:idents, next:procedureIn := {
+		next:formalParams = NULL;
+		next:formalPorts = formalPorts;
+		next:constantParams = constantParams;
+		next:typeParams = typeParams;
+		next:idents = idents;
+		next:procedureIn = procedureIn;
+		next:parameterContext = parameterContext;
+
+		if (! skip)
+		{
+			if (formalParams)
+			{
+				/* Skip the parameter, for error reporting purposes */
+				(void) GetNextBalsaParam (&(next:formalParams), NULL, &(next:idents), position);
+				LOG_ERROR (BadVarAccessActualParameter, NoIdent, position);
+			} else if (noPorts)
+				LOG_ERROR (ExprListTooLong, NoIdent, position);
+			else if (formalPorts)
+				next:formalPorts = CDR (formalPorts);
+			else LOG_ERROR (ExprListTooLong, NoIdent, position);
+		}
+	};
+
+	actualPorts := {
+		actualPorts = next:actualPorts;
+
+		if (! skip)
+		{
+			ExprAttributes varAttrs = FinaliseLvalue (Lvalue:attributes, Lvalue:instance, Lvalue:partitions,
+				Lvalue:indices, Lvalue:indexWire, Lvalue:access, position);
+
+			if (! TypeEquivalence (varAttrs.value.type, CAR (formalPorts)->type))
+				LOG_ERROR (TypeIsNotValid, NoIdent, position);
+			else actualPorts = NewExprAttributesList (varAttrs, next:actualPorts);
+		}
+	};
+} .
+BlockProcParam = {
+	Block:context := AddContextMarker (context);
+	next:formalPorts := {
+		next:formalPorts = formalPorts;
+
+		if (! skip)
+		{
+			if (formalParams)
+				LOG_ERROR (ExpectingAParameterNotABlock, NoIdent, Block:position);
+			else if (formalPorts)
+			{
+				PtrInstance port = CAR (formalPorts);
+				if (port->type != SyncTypeObj ||
+					port->info.port.sense == PassivePortSense)
+					LOG_ERROR (BlockExpectsActiveSyncPort, NoIdent, Block:position);
+
+				next:formalPorts = CDR (formalPorts);
+			}	
+		}
+	};
+
+	actualPorts := {
+		actualPorts = next:actualPorts;
+
+		if (! skip && Block:attributes.activation)
+		{
+			ExprAttributes attr;
+
+			attr.components = Block:attributes.components;
+			attr.accesses = Block:attributes.accesses;
+			attr.wires = Block:attributes.wires;
+			attr.activation = Block:attributes.activation;
+			attr.value = NoValue;
+			attr.value.type = SyncTypeObj;
+
+			actualPorts = NewExprAttributesList (attr, next:actualPorts);
+		}
+	};
+} .
+
+/* FunctionParams */
+FunctionParams = {
+	actualPorts := NULL;
+} .
+NullFuncParams = {
+	actualPorts := {
+		actualPorts = NULL;
+
+		if (! skip)
+		{
+			if (formalParams)
+				LOG_ERROR (ParameterListTooShort, NoIdent, position);
+			else if (formalPorts)
+				LOG_ERROR (ExprListTooShort, NoIdent, position);
+		}	
+	};
+} .
+ExprFuncParam = {
+	CoercedExpr:skip := {
+		/* CoercedExpr:skip should be part of the generated list of the next term, KCT bug? */
+	};
+	CoercedExpr:expectedType, CoercedExpr:allowChannels,
+	typeIfTypeName := {
+		typeIfTypeName = NoType;
+		CoercedExpr:expectedType = NoType;
+		CoercedExpr:allowChannels = false;
+		CoercedExpr:skip = skip;
+
+		if (! skip)
+		{
+			if (formalParams)
+			{
+				if (Tree_IsType (formalParams, kParamPort))
+				{
+					formalParams->ParamPort.AType->AType.\context = parameterContext;
+					formalParams->ParamPort.AType->AType.\skip = false;
+					VisitTreeNode (formalParams->ParamPort.AType);
+					CoercedExpr:expectedType = formalParams->ParamPort.AType->AType.type;
+				}
+
+				if (Tree_IsType (formalParams, kTypeParamPort))
+				{
+					/* Is this a type name instead ? */
+					if (Tree_IsType (CoercedExpr->\CoercedExpr.\Expr, kIdentExpr))
+					{
+						tTree expr = CoercedExpr->\CoercedExpr.\Expr;
+						typeIfTypeName = ExistingTypeLookup (context, expr->IdentExpr.ident, position);
+						
+						if (typeIfTypeName == NoType)
+						{
+							LOG_ERROR (ExpectingATypeParam, NoIdent, position);
+						} else CoercedExpr:skip = true;
+					} else LOG_ERROR (ExpectingATypeParam, NoIdent, position);
+				}
+			} else if (formalPorts)
+				CoercedExpr:expectedType = CAR (formalPorts)->type;
+		}
+	};
+
+	next:params := {
+		/* KCT Bug? */
+	};
+	next:parameterContext, next:formalParams, next:formalPorts,
+	next:constantParams, next:typeParams, next:idents := {
+		next:formalParams = NULL;
+		next:formalPorts = formalPorts;
+		next:constantParams = constantParams;
+		next:typeParams = typeParams;
+		next:params = params;
+		next:idents = idents;
+		next:parameterContext = parameterContext;
+
+		if (! skip)
+		{
+			if (formalParams)
+			{
+				tTree remainingPorts = NULL;
+
+				if (typeIfTypeName == NoType) /* this was an expression, not a type */
+				{
+					if (CoercedExpr:expectedType != NoType)
+					{
+						remainingPorts = HandleExprParam (formalParams, &next:parameterContext,
+							&next:idents, &next:constantParams, &next:params,
+							CoercedExpr:attributes.value, CoercedExpr:position);
+					}
+				} else {
+					remainingPorts = HandleTypeParam (formalParams, &next:parameterContext,
+						&next:idents, &next:typeParams, &next:params, typeIfTypeName,
+						CoercedExpr:position);
+				}
+
+				if (! Tree_IsType (remainingPorts, kParamPort)
+					&& ! Tree_IsType (remainingPorts, kTypeParamPort))
+				{
+					/* Apply parameters */
+					if (functionIn->nature == ParameterisedBuiltinFunction)
+					{
+						next:functionIn = SpecifyParameterisedBuiltinFunction (context, functionIn->ident,
+							functionIn, functionTree,
+							next:constantParams, next:typeParams, remainingPorts,
+							next:params, position);
+					} else {
+						LOG_ERROR (OnlyBuiltinFunctionsCanHaveParameters, NoIdent, position);
+					}
+
+					next:formalPorts = next:functionIn->ports;
+					next:formalParams = NULL;
+				} else {
+					next:formalParams = remainingPorts;
+				}
+			} else if (formalPorts)
+			{
+				if (CoercedExpr:expectedType != NoType &&
+					!TypeEquivalence ((CoercedExpr:attributes).value.type, CoercedExpr:expectedType)) 
+					LOG_ERROR (TypeIsNotValid, NoIdent, CoercedExpr:position); /* FIXME, use a better error */ 
+
+				next:formalPorts = CDR (formalPorts);
+			}
+			else LOG_ERROR (ExprListTooLong, NoIdent, position);
+		}
+	};
+
+	actualPorts := {
+		actualPorts = next:actualPorts;
+
+		if (! skip && formalPorts)
+			actualPorts = NewExprAttributesList (CoercedExpr:attributes, next:actualPorts);
+	};
+} .
+TypeFuncParam = {
+	next:parameterContext, next:formalParams, next:formalPorts,
+	next:constantParams, next:typeParams, next:idents := {
+		next:parameterContext = parameterContext;
+		next:formalParams = NULL;
+		next:formalPorts = formalPorts;
+		next:constantParams = constantParams;
+		next:typeParams = typeParams;
+		next:idents = idents;
+
+		if (! skip)
+		{
+			if (formalParams)
+			{
+				tTree remainingPorts = NULL;
+
+				remainingPorts = HandleTypeParam (formalParams, &next:parameterContext,
+					&next:idents, &next:typeParams, &next:params, AType:type,
+					AType:position);
+
+				if (! Tree_IsType (remainingPorts, kParamPort)
+					&& ! Tree_IsType (remainingPorts, kTypeParamPort))
+				{
+					/* Apply parameters */
+					if (functionIn->nature == ParameterisedBuiltinFunction)
+					{
+						next:functionIn = SpecifyParameterisedBuiltinFunction (context, functionIn->ident,
+							functionIn, functionTree,
+							next:constantParams, next:typeParams, remainingPorts,
+							next:params, position);
+					} else {
+						LOG_ERROR (OnlyBuiltinFunctionsCanHaveParameters, NoIdent, position);
+					}
+
+					next:formalPorts = next:functionIn->ports;
+					next:formalParams = NULL;
+				} else {
+					next:formalParams = remainingPorts;
+				}
+			}
+		}
+	};
+
+	actualPorts :- next:actualPorts;
+} .
+
+/* Hierarchy */
+ProcedureCallCommonCommand = { 
+	ProcedureParams:constantParams := NULL;
+	ProcedureParams:typeParams := NULL;
+	ProcedureParams:context :- context;
+	ProcedureParams:parameterContext :- context;
+	ProcedureParams:noPorts := false; /* we're taking parameters and ports */
+
+	ProcedureParams:procedureTree, ProcedureParams:formalParams, ProcedureParams:formalPorts,
+	ProcedureParams:procedureIn, ProcedureParams:idents, ProcedureParams:skip := {
+		ProcedureParams:procedureTree = NULL;
+		ProcedureParams:formalParams = NULL;
+		ProcedureParams:formalPorts = NULL;
+		ProcedureParams:idents = NULL;
+		ProcedureParams:procedureIn = (skip ? NoProcedure \: LookupProcedure
+			(context, ident, false /* not necessarily local */ ));
+		ProcedureParams:skip = skip;
+
+		if (! skip)
+		{
+			if (! ProcedureParams:procedureIn ||
+				ProcedureParams:procedureIn == NoProcedure)
+			{
+				LOG_ERROR (ExpectingAProcedureName, ident, position);
+				ProcedureParams:skip = true;
+			} else {
+				switch (ProcedureParams:procedureIn->nature)
+				{
+					case SharedProcedure\:
+					case UnSharedProcedure\:
+						ProcedureParams:formalPorts = ProcedureParams:procedureIn->ports;
+						break;
+					case ParameterisedProcedure\:
+						{
+							tTree tree = ProcedureParams:procedureIn->info.parameterisedProcedure.tree;
+							tTree oldNext = tree->Decl.next;
+						
+							tree->Decl.next = mNullDecls (position);
+							ProcedureParams:procedureTree = CopyTree (tree);
+							tree->Decl.next = oldNext;					
+
+							ProcedureParams:formalParams =
+								ProcedureParams:procedureTree->ProcedureDecl.FormalPorts;
+							ProcedureParams:idents = (ProcedureParams:formalParams->Kind == kParamPort
+								?  ProcedureParams:formalParams->ParamPort.Idents->Idents.idents
+								\: ProcedureParams:formalParams->TypeParamPort.Idents->Idents.idents);
+						}
+						break;
+					default\:
+						LOG_ERROR (ExpectingAProcedureName, ProcedureParams:procedureIn->\ident, position);
+						ProcedureParams:skip = true;
+						break;
+				}
+			}
+		}
+	};
+	attributes := {
+		attributes = (skip || ProcedureParams:procedureOut == NoProcedure ? NoCommandAttributes \:
+			HandleProcedureCallCommand (ProcedureParams:actualPorts, ProcedureParams:procedureOut, position)); 
+	};
+} .
+
+SelectCommand := {
+	attributes := (skip ? NoCommandAttributes \:
+		HandleSelectAndArbitrateCommands (ChannelGuards:commandAttributes, 
+			ChannelGuards:guardAttributes, false /* select */, position));
+} .
+SelectBangCommand := {
+	attributes := (skip ? NoCommandAttributes \:
+		( DontGenerateEagerFVs ?
+			HandleSelectAndArbitrateCommands (ChannelGuards:commandAttributes, 
+				ChannelGuards:guardAttributes, false /* select */, position) \:
+			HandleSelectBangCommand (ChannelGuards:commandAttributes, 
+				ChannelGuards:guardAttributes, position)));
+} .
+ArbitrateCommand := {
+	attributes := (skip ? NoCommandAttributes \:
+		HandleSelectAndArbitrateCommands (ChannelGuards:commandAttributes, 
+			ChannelGuards:guardAttributes, true /* arbitrate */, position));
+} .
+PrintCommand := {
+	Expr:allowChannels := false;
+	Expr:expectedType := ErrorTypeObj;
+	ExprLists:expectConstants := false; /* Handled in HandlePrintCommand */
+	ExprLists:expectedType := NoType;
+	ExprLists:elements := NULL;
+
+	attributes := {
+		attributes = NoCommandAttributes;
+
+		if (!skip)
+			attributes = HandlePrintCommand (context, Expr:attributes, ExprLists:attributes, false
+				/* can do runtime printing */, position);
+	};
+} .
+SinkCommand := {
+	Expr:allowChannels := false;
+	Expr:expectedType := ErrorTypeObj;
+
+	attributes := {
+		attributes = NoCommandAttributes;
+
+		if (!skip)
+			attributes = HandleSinkCommand (Expr:attributes, position);
+	};
+} .
+
+Block = {
+	Decls:contextIn := context;
+	Decls:scope := InnerScope; /* Must be inside something */
+	Command:context := Decls:contextOut;
+	attributes := {
+		attributes = Command:attributes;
+		
+		if (!skip)
+		{
+			PtrWireList initWires = NULL;
+
+			attributes.accesses = ResolveLocalSharedCallAccesses (Decls:contextOut,
+				&attributes.wires, &attributes.components, attributes.accesses, position);
+			attributes.accesses = ResolveLocalInstanceAccesses (Decls:contextOut, 
+				&attributes.wires, &attributes.components, attributes.accesses, &initWires, position);
+
+			if ((Command:attributes).activation && initWires)
+			{
+				attributes.activation = SequenceBlockInitialisationAndCommand ((Command:attributes).activation,
+				  &attributes.wires, &attributes.components, initWires, position);
+			}
+		}
+	};
+} .
+
+/* Lvalue */ 
+Lvalue = { attributes := NoExprAttributes; instance := NULL; partitions := NULL;
+	indices := NULL; indexWire := NULL; access := NULL; } . /* Dummy */
+IdentLvalue = { 
+	attributes, instance, partitions, indices, indexWire, access := {
+		instance = NULL;
+		partitions = NULL;
+		indices = NULL;
+		indexWire = NULL;
+		access = NULL;
+		attributes = NoExprAttributes;
+
+		if (! skip)
+		{
+			instance = LookupInstance (context, ident, false /* Not just local */);
+
+			if (!instance)
+				LOG_ERROR (UnboundIdentifier, ident, position);
+			else {
+				bool isAVariable = instance->nature == VariableInstance;
+				bool isAChannel = instance->nature == OutputChannelInstance ||
+					instance->nature == InputChannelInstance ||
+					instance->nature == ChannelInstance;
+
+				if (isAVariable && (expectingEither || ! expectingChannel))
+					attributes = HandleIdentLvalue (context, &instance, &partitions, &access, position);
+				else if (isAChannel && (expectingEither || expectingChannel))
+					attributes = HandleIdentChannel (context, &instance, isInput, isPassive, lockPassiveChannels, position);
+				else { /* some error */
+					instance = NULL;
+					if (expectingChannel)
+						LOG_ERROR (ExpectingAChannel, NoIdent, position);
+					else if (! expectingEither)
+						LOG_ERROR (ExpectingAWritableVariable, NoIdent, position);
+					else LOG_ERROR (ExpectingAWritableVariableOrChannel, NoIdent, position);
+				};
+			}
+		}
+	}; 
+} .
+ArrayElemLvalue = { 
+	CoercedExpr:expectedType := 
+		((Lvalue:attributes).value.type->nature == ArrayType 
+			?  (Lvalue:attributes).value.type->info.array.range.boundingType 
+			\: ((Lvalue:attributes).value.type->nature == ArrayedType 
+				? (Lvalue:attributes).value.type->info.arrayed.range.boundingType
+				\: NoType));
+	CoercedExpr:allowChannels := false;
+	access :- Lvalue:access;
+	attributes, instance, partitions, indices, indexWire := {
+		instance = NULL;
+		attributes = (skip || ! Lvalue:instance ? NoExprAttributes \:
+			(Lvalue:instance->nature == VariableInstance
+			?	HandleArrayElemLvalue (context, Lvalue:attributes, Lvalue:instance, Lvalue:partitions,
+					Lvalue:indices, Lvalue:indexWire, CoercedExpr:attributes, &instance, &partitions, &indices,
+					&indexWire, Lvalue:access, position)
+			\:	HandleArrayedElemChannel (context, Lvalue:attributes, Lvalue:instance, CoercedExpr:attributes,
+					&instance, isInput, isPassive, position)
+			));
+	};
+} .
+ArraySliceLvalue = { 
+	Range:isSpan := false; /* 5 .. 5 doesn't mean 0 .. 4 */
+	Range:expectedType := 
+		((Lvalue:attributes).value.type->nature == ArrayType 
+			?  (Lvalue:attributes).value.type->info.array.range.boundingType 
+			\: ((Lvalue:attributes).value.type->nature == ArrayedType 
+				? (Lvalue:attributes).value.type->info.arrayed.range.boundingType
+				\: NoType));
+	access :- Lvalue:access; /* Pretty redundent */
+	attributes, instance, partitions, indices, indexWire := {
+		instance = NULL;
+
+		if (! skip && Lvalue:instance)
+		{
+			if (Lvalue:instance->nature == VariableInstance)
+				LOG_ERROR (CannotSliceVariableLvalue, NoIdent, position);
+			else {
+				attributes = HandleArrayedSliceChannel (context, Lvalue:attributes, Lvalue:instance,
+					Range:range, &instance, isInput, isPassive, position);
+			}
+		}
+	};
+} .
+ArrayAppendLvalue = { 
+	access :- Left:access; /* Pretty redundent */
+	attributes, instance, partitions, indices, indexWire := {
+		instance = NULL;
+
+		if (! skip && Left:instance && Right:instance)
+		{
+			if (Left:instance->nature == VariableInstance ||
+				Right:instance->nature == VariableInstance)
+				LOG_ERROR (CannotAppendVariableLvalues, NoIdent, position);
+			else {
+				attributes = HandleArrayedAppendChannels (context, Left:attributes, Left:instance,
+					Right:attributes, Right:instance,
+					&instance, isInput, isPassive, position);
+			}
+		}
+	};
+} .
+RecordElemLvalue = {
+	indices :- Lvalue:indices;
+	access :- Lvalue:access;
+	indexWire :- Lvalue:indexWire;
+	attributes, instance, partitions := {
+		instance = NULL;
+		partitions = NULL;
+		attributes = NoExprAttributes;
+
+		if (! skip && Lvalue:instance)
+		{
+			if (Lvalue:instance->nature == VariableInstance)
+			{
+				attributes = HandleRecordElemLvalue (Lvalue:attributes,
+					Lvalue:instance, Lvalue:partitions, ident, &instance, &partitions, Lvalue:access, position);
+			} else LOG_ERROR (ExpectingAVariableOnLHS, NoIdent, position);
+		}
+	};
+} .
+ArrayConsLvalue = {
+	attributes, instance, partitions, indices, indexWire := {
+		attributes = NoExprAttributes; /* Fall back */
+		instance = NULL;
+
+		if (!skip)
+		{
+			if (! (expectingEither || expectingChannel))
+				LOG_ERROR (CannotConsVariableLvalues, NoIdent, position);
+			else if (LvalueLists:attributes)
+			{
+				if (LvalueLists:expectedType != NoType)
+				{ /* We have an expected type */
+					attributes = HandleArrayedConsChannels (context, LvalueLists:expectedType,
+						LvalueLists:attributes, &instance, isInput, isPassive, position);
+				}
+			}
+		}
+	};
+	LvalueLists:allowArrayedChannels := false;
+	LvalueLists:isProcedurePorts := true; /* Allow block channels */
+	LvalueLists:elements := NULL;
+	/* Use expectedType if it isn't NULL, else get the next elements element */
+	LvalueLists:expectedType := expectedBaseType;
+} .
+AsLvalue = {
+	indices :- Lvalue:indices;
+	access :- Lvalue:access;
+	indexWire :- Lvalue:indexWire;
+	partitions :- Lvalue:partitions;
+	instance :- Lvalue:instance;
+
+	attributes := {
+		attributes = NoExprAttributes;
+
+		if (!skip)
+		{
+			if (Lvalue:attributes.value.type != NoType && AType:type != NoType)
+			{
+				if (ABS (AType:type->size) != ABS (Lvalue:attributes.value.type->size))
+    				LOG_ERROR (WrongWidthInAsLvalue, NoIdent, position);
+    			else {
+					attributes = Lvalue:attributes;
+					attributes.value.type = AType:type;
+				}
+			}
+		}
+	};
+} .
+BitArrayCastLvalue = {
+	indices :- Lvalue:indices;
+	access :- Lvalue:access;
+	indexWire :- Lvalue:indexWire;
+	partitions :- Lvalue:partitions;
+	instance :- Lvalue:instance;
+
+	attributes := {
+		attributes = NoExprAttributes;
+
+		if (!skip)
+		{
+			if (Lvalue:attributes.value.type != NoType)
+			{
+				Bits typeWidth = Abs (Lvalue:attributes.value.type->size);
+				PtrMP_INT typeWidthMinus1 = NewMP_INT (typeWidth - 1);
+				
+				attributes = Lvalue:attributes;
+				attributes.value.type = NewArrayType (MarkerIdent, BitTypeObj, NewSpan (NewMP_INT (0),
+					typeWidthMinus1, NewNumericType (MarkerIdent, SmallestRangeToHoldValue (typeWidthMinus1))));
+			}
+		}
+	};
+} .
+
+/* FormalPorts */ 
+FormalPorts = { ports := NULL; extraPortInstances := NULL; portCount := 0; hasParameters := false;} .
+FormalPort = { /* moan about parameters which are not at the start of the port list */
+	hasParameters := {
+		if (next:hasParameters) LOG_ERROR (ParametersMustBeAtStartOfPorts, NoIdent, position);
+		hasParameters = false;
+	};
+} .
+ValuePort = { 
+	ports, portCount, extraPortInstances := {
+		portCount = next:portCount;
+		extraPortInstances = next:extraPortInstances; /* shouldn't need this for functions proper,
+			but allows value ports to be discarded when used in error in procedures/parts */ 
+		ports = (skip ? next:ports \: HandleValuePorts (Idents:idents, AType:type, portsType,
+			next:ports, &portCount)); 
+	};
+} .
+ParamPort = {
+	next:skip := true;
+	AType:skip := true;
+	hasParameters := true;
+	ports, portCount, extraPortInstances := {
+		/* Stroke Idents to make it be visited */
+		Idents:idents;
+		ports = next:ports;
+		portCount = next:portCount;
+		extraPortInstances = next:extraPortInstances;
+
+		if (inConditionalPorts)
+			LOG_ERROR (ParametersCantBeConditional, NoIdent, position);
+	};
+} .
+TypeParamPort = {
+	next:skip := true;
+	hasParameters := true;
+	ports, portCount, extraPortInstances := {
+		/* Stroke Idents to make it be visited */
+		Idents:idents;
+		ports = next:ports;
+		portCount = next:portCount;
+		extraPortInstances = next:extraPortInstances;
+
+		if (inConditionalPorts)
+			LOG_ERROR (ParametersCantBeConditional, NoIdent, position);
+	};
+} .
+ChannelPort = { 
+	ports, portCount, extraPortInstances := {
+		portCount = next:portCount;
+		extraPortInstances = next:extraPortInstances; /* extra instances include the elements
+			of arrayed channels */
+		ports = (skip ? next:ports \: HandleChannelPorts (Idents:idents, AType:type, portSense, portsType, 
+			isOutput, false /* Not ranged */, NoSpan, next:ports, &extraPortInstances, &portCount,
+			options, position));
+	};
+} .
+SyncPort = { 
+	ports, portCount, extraPortInstances := {
+		portCount = next:portCount;
+		extraPortInstances = next:extraPortInstances; 
+		ports = (skip ? next:ports \:
+			HandleChannelPorts (Idents:idents, SyncTypeObj, portSense, portsType, false /* sync inputs */,
+			false /* Not ranged */, NoSpan, next:ports, &extraPortInstances, &portCount,
+			options, position)); 
+	};
+} . 
+ChannelPortArray = { 
+	Range:isSpan := false; /* 8 == 0..7 not 8..8 */
+	Range:expectedType := NoType;
+	ports, portCount, extraPortInstances := {
+		extraPortInstances = next:extraPortInstances;
+		portCount = next:portCount;
+		ports = (skip ? next:ports \: HandleChannelPorts (Idents:idents, AType:type, portSense, portsType, 
+			isOutput, true /* ranged */, Range:range, next:ports, &extraPortInstances, &portCount,
+			options, position)); 
+	};
+} . 
+SyncPortArray = { 
+	Range:isSpan := false; 
+	Range:expectedType := NoType;
+	ports, portCount, extraPortInstances := {
+		extraPortInstances = next:extraPortInstances; 
+		portCount = next:portCount;
+		ports = (skip ? next:ports \:
+			HandleChannelPorts (Idents:idents, SyncTypeObj, portSense, portsType, false /* sync inputs */,
+			true /* Ranged */, Range:range, next:ports, &extraPortInstances, &portCount,
+			options, position)); 
+	};
+} . 
+IfPorts = {
+	ports, portCount, extraPortInstances, hasParameters := {
+		portCount = next:portCount;
+		extraPortInstances = next:extraPortInstances; 
+		ports = next:ports;
+		hasParameters = next:hasParameters;
+
+		if (! skip)
+		{
+			if (PortGuards:ports)
+			{
+				portCount = PortGuards:portCount + next:portCount;
+				extraPortInstances = AppendInstanceLists (CopyInstanceList (PortGuards:extraPortInstances),
+					next:extraPortInstances);
+				ports = AppendInstanceLists (CopyInstanceList (PortGuards:ports), next:ports);
+				hasParameters = PortGuards:hasParameters || next:hasParameters;
+			}
+		}
+	};
+} .
+IfElsePorts = {
+/*   REMOVED by LJ... CHECK
+	FormalPorts:skip := (PortGuards:ports ? true \: false);  */
+
+	ports, portCount, extraPortInstances, hasParameters := {
+		portCount = next:portCount;
+		extraPortInstances = next:extraPortInstances; 
+		ports = next:ports;
+		hasParameters = next:hasParameters;
+
+		if (! skip)
+		{
+			if (PortGuards:ports)
+			{
+				portCount = PortGuards:portCount + next:portCount;
+				extraPortInstances = AppendInstanceLists (CopyInstanceList (PortGuards:extraPortInstances),
+					next:extraPortInstances);
+				ports = AppendInstanceLists (CopyInstanceList (PortGuards:ports), next:ports);
+				hasParameters = PortGuards:hasParameters || next:hasParameters;
+			} else {
+			  /* False guard, insert other ports */
+				portCount = FormalPorts:portCount + next:portCount;
+				extraPortInstances = AppendInstanceLists (CopyInstanceList (FormalPorts:extraPortInstances),
+					next:extraPortInstances);
+				ports = AppendInstanceLists (CopyInstanceList (FormalPorts:ports), next:ports);
+				hasParameters = FormalPorts:hasParameters || next:hasParameters;
+			}
+		}
+	};
+} .
+
+/* Guards */
+Guards = { /* NullGuards */
+	commandAttributes := NULL;
+	exprAttributes := NULL;
+} .
+Guard = { 
+	Expr:allowChannels := false;
+	Expr:expectedType := BitTypeObj;
+
+	Command:skip, next:skip := { /* This bit is reusable for all if-type guards */
+		Command:skip = skip;
+		next:skip = skip;
+	
+		if (! skip)
+		{
+			switch (DetermineGuardNature (Expr:attributes, true, false /* can be non-const */,
+				position))
+			{
+				case TrueGuardNature\:
+					next:skip = true;
+					break;
+				case FalseGuardNature\:
+					Command:skip = true;
+					break;
+				case NonConstantGuardNature\:
+					break;
+			}
+		}
+	};
+
+	/* Error messages look better with this ordering */
+	next:commandAttributes AFTER Command:attributes;
+
+	commandAttributes, exprAttributes := {
+		commandAttributes = next:commandAttributes;
+		exprAttributes = next:exprAttributes;
+
+		if (! Command:skip)
+		{
+			commandAttributes = NewCommandAttributesList (Command:attributes, commandAttributes);
+			exprAttributes = NewExprAttributesList (Expr:attributes, exprAttributes);
+		}
+	};
+} .
+
+/* PortGuards */
+PortGuards = {
+	ports := NULL; 
+	extraPortInstances := NULL;
+	portCount := 0;
+	hasParameters := false;
+} .
+PortGuard = {
+	Expr:expectedType := BitTypeObj;
+	Expr:allowChannels := false;
+
+	FormalPorts:inConditionalPorts := true;
+	FormalPorts:skip, next:skip := { /* This bit is reusable for all if-type guards */
+		FormalPorts:skip = skip;
+		next:skip = skip;
+
+		if (! skip)
+		{
+			switch (DetermineGuardNature (Expr:attributes, true, true /* must be const */,
+				position))
+			{
+				case TrueGuardNature\:
+					next:skip = true;
+					break;
+				case FalseGuardNature\:
+					FormalPorts:skip = true;
+					break;
+				case NonConstantGuardNature\:
+					break;
+			}
+		}
+	};
+
+	ports, portCount, extraPortInstances, hasParameters := {
+		ports = next:ports;
+		portCount = next:portCount;
+		extraPortInstances = next:extraPortInstances;
+		hasParameters = next:hasParameters;
+
+		if (portsType == FunctionArgs)
+			LOG_ERROR (FunctionsCantHaveConditionalArguments, NoIdent, position);
+		else if (! FormalPorts:skip)
+		{
+			portCount = FormalPorts:portCount;
+			extraPortInstances = FormalPorts:extraPortInstances;
+			ports = FormalPorts:ports;
+			hasParameters = FormalPorts:hasParameters;
+		}
+	};
+} .
+
+/* DeclGuards */
+DeclGuards = {
+	foundTrueGuard := false;
+} .
+DeclGuard = {
+	Expr:expectedType := BitTypeObj;
+	Expr:allowChannels := false;
+	Expr:context :- contextIn;
+	Decls:contextIn :- contextIn;
+
+	Decls:skip, next:skip := { /* This bit is reusable for all if-type guards */
+		Decls:skip = skip;
+		next:skip = skip;
+
+		if (! skip)
+		{
+			switch (DetermineGuardNature (Expr:attributes, true, true /* must be const */,
+				position))
+			{
+				case TrueGuardNature\:
+					next:skip = true;
+					break;
+				case FalseGuardNature\:
+					Decls:skip = true;
+					break;
+				case NonConstantGuardNature\:
+					break;
+			}
+		}
+	};
+
+	contextOut := {
+		contextOut = next:contextOut;
+		foundTrueGuard = next:foundTrueGuard;
+
+		if (! Decls:skip)
+		{
+			contextOut = Decls:contextOut;
+			foundTrueGuard = true;
+		}
+	};
+} .
+
+/* CaseGuards */
+CaseGuards = { /* NullCaseGuards */
+	commandAttributes := NULL;
+	implicantss := NULL; 
+	foundTrueGuard := false;
+	complementImplicants, implicantMask := {
+		complementImplicants = NULL;
+		implicantMask = NewMP_INT (-1);
+
+		if (! skip)
+		{ /* Start with 'XXXXX...' */
+			implicantMask = MakeMaskForRange (Abs (maxRange), 0);
+			complementImplicants = NewImplicantList (NewImplicant (NewMP_INT (0), implicantMask), NULL );
+		}
+	};
+} .
+CaseMatchGuard = { 
+	/* expectedType == NoType means `open numeric ranges' */
+	CaseMatchs:expectedType := (switchValue && switchType->nature == NumericType ? NoType \: switchType);
+	CaseMatchs:isSpan := true; /* 5 == 5 .. 5 */
+	CaseMatchs:allowOverlappingMatches := true;
+
+	foundTrueGuard, Command:skip := {
+		/* Skip the command if 1: We are skipping this case command 2: we have a switchValue and
+			this implicants list doesn't contain that value */
+		Command:skip = skip;
+		foundTrueGuard = next:foundTrueGuard;
+
+		if (! skip)
+		{
+			if (! CaseMatchs:implicants)
+				Command:skip = true;
+			/* Have a constant switch value */		
+			else if (switchValue)
+			{
+				/* Not this guard? */
+				if (!ValueLiesInImplicantList (CaseMatchs:implicants, switchValue))
+					Command:skip = true;
+				else foundTrueGuard = true;
+			}
+		}
+	};
+	
+	next:maxRange := { /* Make the width wider if necessary */
+		next:maxRange = maxRange;
+
+		if (! skip)
+		{
+			SignedBits impsRange = FindRangeOfImplicants (CaseMatchs:implicants);
+			next:maxRange = WidestRange (impsRange, maxRange);
+		}
+	};
+
+	/* Skip this guard if the command should be skipped */
+	commandAttributes := (Command:skip ? next:commandAttributes \:
+		NewCommandAttributesList (Command:attributes, next:commandAttributes));
+	implicantss, complementImplicants := {
+		implicantss = next:implicantss;
+		complementImplicants = next:complementImplicants;
+
+		if (! skip)
+		{
+			/* Trim implicants by real range */
+			TrimImplicants (CaseMatchs:implicants, implicantMask);
+
+			if (RemoveImplicantsFromImplicants (CaseMatchs:implicants, next:complementImplicants, NULL))
+				LOG_ERROR (CaseGuardsAreNotDisjoint, NoIdent, Command:position);
+
+			complementImplicants = RemoveImplicantsFromImplicants (next:complementImplicants,
+				CaseMatchs:implicants, NULL);
+		}
+
+		if (! Command:skip)
+		{
+			implicantss = NewImplicantListList (CaseMatchs:implicants, next:implicantss);
+		}
+	};
+} .
+ForCaseGuard = { 
+	/* expectedType == NULL means `open numeric ranges' */
+	CaseMatchs:expectedType := (switchValue && switchType->nature == NumericType ? NoType \: switchType);
+	CaseMatchs:isSpan := true; /* 5 == 5 .. 5 */
+	CaseMatchs:allowOverlappingMatches := false; /* Matchs must be disjoint */
+
+	foundTrueGuard, Command:skip := {
+		/* Skip the command if 1: We are skipping this case command 2: we have a switchValue and
+			this implicants list doesn't contain that value */
+		Command:skip = skip;
+		foundTrueGuard = next:foundTrueGuard;
+
+		if (! skip)
+		{
+			if (! CaseMatchs:implicants)
+				Command:skip = true;
+			/* Have a constant switch value */		
+			else if (switchValue)
+			{
+				/* Not this guard? */
+				if (!ValueLiesInImplicantList (CaseMatchs:implicants, switchValue))
+					Command:skip = true;
+				else foundTrueGuard = true;
+			}
+		}
+	};
+	
+	next:maxRange := { /* Make the width wider if necessary */
+		next:maxRange = maxRange;
+
+		if (! skip)
+		{
+			SignedBits impsRange = FindRangeOfImplicants (CaseMatchs:implicants);
+			next:maxRange = WidestRange (impsRange, maxRange);
+		}
+	};
+
+	Command:context, iterator, errorContextString, valueStringPtr,
+	implicants, countValue, lastErrorCount := {
+		iterator = NULL;
+		implicants = CaseMatchs:implicants;
+		countValue = NULL;
+		Command:context = AddContextMarker (context);
+		errorContextString = "";
+		valueStringPtr = "";
+		lastErrorCount = ErrorCount;
+
+		if (! Command:skip)
+		{
+			if (foundTrueGuard)
+			{ /* Only need to run command once with switchValue */
+				iterator = NewConstantInstance (ident, 
+					NewTypedValue (switchValue, switchType));
+			} else {
+				iterator = NewConstantInstance (ident, 
+					NewTypedValue (NextMatchFromImplicantList (&implicants, &countValue), switchType));
+				errorContextString = NEW_ARRAY (char, 8192);
+				valueStringPtr = errorContextString;
+		
+				sprintf (valueStringPtr, "in `case for' loop at iteration %s = ", PeekString (ident));
+				valueStringPtr = EndOfString (valueStringPtr);
+				/* NB. don't mod. valueStringPtr from now on */
+				*valueStringPtr = '\0';
+				MakeTypedValueString (valueStringPtr, NewTypedValue (
+					CAR (CaseMatchs:implicants).baseValue,
+					(switchType->nature == NumericType ? NewNumericType (NoIdent, maxRange)
+						\: switchType)));
+				PushErrorContext (errorContextString, position);
+			}
+			(Command:context)->instances = NewInstanceList (iterator, context->instances);
+		}
+	};
+
+	commandAttributes, implicantss, complementImplicants := {
+		commandAttributes = next:commandAttributes;
+		implicantss = next:implicantss;
+		complementImplicants = next:complementImplicants;
+
+		if (! Command:skip)
+		{
+			if (foundTrueGuard)
+			{ /* Don't iterate just use the one command */
+				commandAttributes = NewCommandAttributesList (Command:attributes, next:commandAttributes);
+			} else {
+				/* Trim implicants by real range */
+				TrimImplicants (CaseMatchs:implicants, implicantMask);
+
+				/* Finished first iteration on Command, now adjust and repeat */
+				if (iterator)
+				{ /* Only obey body iff iterator was declared */
+					PtrMP_INT i = iterator->info.constant.value.baseValue; /* Use i as an alias */
+					PtrMP_INT originalIteratorValue = CopyMP_INT (i);
+					Implicant iImplicant;
+					PtrImplicantList iImplicantList;
+					PopErrorContext (); /* Pop the first value's error context */
+					iImplicant = NewImplicant (i, NewMP_INT (0));
+					iImplicantList = NewImplicantList (iImplicant, NULL);
+
+					if (RemoveImplicantsFromImplicants (iImplicantList, next:complementImplicants, NULL))
+						LOG_ERROR (CaseGuardsAreNotDisjoint, NoIdent, Command:position);
+					else if (lastErrorCount != ErrorCount)
+						LOG_ERROR (GivingUpOnFor, NoIdent, position);
+					else {
+						/* Add to implicantss, pare down complementImplicants and add
+							commandAttributes for first iteration */
+						implicantss = NewImplicantListList (iImplicantList, next:implicantss);
+						complementImplicants = RemoveImplicantFromImplicants (next:complementImplicants,
+							iImplicant, NULL);
+						commandAttributes = NewCommandAttributesList (Command:attributes, next:commandAttributes);
+
+						for (i = NextMatchFromImplicantList (&implicants, &countValue); i;
+							i = NextMatchFromImplicantList (&implicants, &countValue))
+						{
+							lastErrorCount = ErrorCount;
+							/* Update iterator */
+							iterator->info.constant.value.baseValue = i;
+							*valueStringPtr = '\0';
+							MakeTypedValueString (valueStringPtr, NewTypedValue (
+								i, (switchType->nature == NumericType ? NewNumericType (NoIdent, maxRange)
+									\: switchType)));
+							PushErrorContext (errorContextString, position);
+							VisitTreeNode /* Command */ (yyt->\ForCaseGuard.\Command);
+							PopErrorContext ();
+
+							/* Add to lists for this iteration */
+							if (Command:attributes.activation)
+							{
+								iImplicant = NewImplicant (i, NewMP_INT (0));
+								iImplicantList = NewImplicantList (iImplicant, NULL);
+
+								if (RemoveImplicantsFromImplicants (iImplicantList, complementImplicants, NULL))
+								{
+									LOG_ERROR (CaseGuardsAreNotDisjoint, NoIdent, Command:position);
+									break;
+								}
+								implicantss = NewImplicantListList (NewImplicantList (iImplicant, NULL), implicantss);
+								complementImplicants = RemoveImplicantFromImplicants (complementImplicants,
+									iImplicant, NULL);
+								commandAttributes = NewCommandAttributesList (Command:attributes, commandAttributes);
+							} else {
+								DeleteMP_INT (iterator->info.constant.value.baseValue);
+							}
+							if (lastErrorCount != ErrorCount)
+							{
+								LOG_ERROR (GivingUpOnFor, NoIdent, position);
+								break;
+							}
+						}
+					}
+					FREE_ARRAY (char, 8192, errorContextString);
+					iterator->info.constant.value.baseValue = originalIteratorValue;
+				}
+			}
+		}
+	};
+} .
+
+/* ChannelGuards */
+ChannelGuards = { guardAttributes := NULL; commandAttributes := NULL; }.
+ChannelGuard = { 
+	LvalueLists:allowArrayedChannels := false;
+	LvalueLists:isInput := true; /* Passive input guards */
+	LvalueLists:isPassive := true; 
+	LvalueLists:lockPassiveChannels := true; /* Lock channels */
+	LvalueLists:elements := NULL; /* Don't expect any particular types */
+	LvalueLists:expectedType := NoType; /* Don't expect a type, don't worry about elements */
+	LvalueLists:isProcedurePorts := false;
+	guardAttributes := {
+		guardAttributes = (skip ? NULL
+			\: NewExprAttributesList (
+				FlattenDisjointChannelAccessList (LvalueLists:attributes, position), 
+				next:guardAttributes));
+	};
+	Command:context := (skip ? context
+		\: NewContext (context->depth + 1, context->types, 
+			AppendInstanceLists (MakeReadOnlyVariablesFromInstances (LvalueLists:attributes,
+				LvalueLists:idents, ChannelPassiveRead), context->instances), context->procedures));
+	commandAttributes := (skip ? NULL
+		\: NewCommandAttributesList (Command:attributes, next:commandAttributes));
+} .
+
+/* ExprLists -> PtrExprAttributesList : list of expressions */
+ExprLists = { /* NullExprs */ attributes := { 
+	/* expectedType ? use expectedType for all elements : use the elements list */ 
+	/* NB. this use of expectedType is different from usual, ie. NULL is used and the type
+		is checked in the list rather than on return.
+		if expectedType == NoType then no error checking is done and NoType is passed as
+		expectedType to Expr's */
+	if (!expectedType && elements) LOG_ERROR (ExprListTooShort, NoIdent, position); 
+	attributes = NULL; };
+} .
+ExprList = {
+	attributes :=  {
+		attributes = next:attributes; /* Fall back */
+
+		if (!skip)
+		{
+			if (CoercedExpr:expectedType != NoType &&
+				!TypeEquivalence ((CoercedExpr:attributes).value.type, CoercedExpr:expectedType)) 
+				LOG_ERROR (TypeIsNotValid, NoIdent, CoercedExpr:position); /* FIXME, use a better error */ 
+			else if (expectConstants && !(CoercedExpr:attributes).value.value.baseValue
+				&& CoercedExpr->Kind != kStringExpr)
+				LOG_ERROR (ExpressionMustBeConstant, NoIdent, CoercedExpr:position);
+			else attributes = NewExprAttributesList (CoercedExpr:attributes, next:attributes);
+		}
+	};
+	/* Use expectedType if it isn't NULL, else get the next elements element */
+	CoercedExpr:expectedType := (expectedType ? expectedType \: (elements ? CAR(elements)->type \: NoType));
+	CoercedExpr:allowChannels := false;
+	next:elements := {
+		if (skip) next:elements = NULL;
+		else {
+			if (!expectedType) {
+				next:elements = CDR (elements); 
+				if (!elements) LOG_ERROR (ExprListTooLong, NoIdent, position);
+			} 
+			else next:elements = NULL;
+		}
+	}; 
+} .
+
+/* LvalueLists -> PtrExprAttributesList : list of channel accesses, iff expectedType then
+	isInput specifies expected direction */ 
+LvalueLists = { /* NullLvalueLists */
+	attributes := { 
+		/* expectedType ? use expectedType for all elements : use the elements list */ 
+		/* NB. this use of expectedType is different from usual, ie. NULL is used and the type
+			is checked in the list rather than on return */
+		if (!expectedType && elements) LOG_ERROR (ExprListTooShort, NoIdent, position); 
+		attributes = NULL;
+	};
+	idents := NULL;
+} .
+LinkedChannel = {
+	attributes, idents := {
+		attributes = next:attributes; /* Fall back */
+		idents = next:idents;
+
+		if (!skip)
+		{
+			if (isProcedurePorts && ident != NoIdent) /* Can't use alternative names in procedure ports */
+				LOG_ERROR (ChannelRenamingNotAllowedInProcPorts, NoIdent, position);
+			else if (Lvalue:instance && ((Lvalue:instance)->nature == VariableInstance || 
+				(Lvalue:instance)->nature == ConstantInstance))
+				LOG_ERROR (ExpectingAChannel, NoIdent, Lvalue:position);
+			/* Check the type of the lvalue if we have either an expectedType or a list of elements */
+			else if ((elements || (expectedType && expectedType != NoType)) &&
+				!TypeEquivalence ((Lvalue:attributes).value.type,
+				(elements ? CAR (elements)->type \: (expectedType ? expectedType \: NoType))))
+			{
+				LOG_ERROR (TypeIsNotValid, NoIdent, Lvalue:position); /* FIXME, use a better error */ 
+				/* print discrepancy in arrayed elem count if necessary */
+			}
+			else if ((Lvalue:attributes).value.type->nature == ArrayedType && !allowArrayedChannels)
+				LOG_ERROR (NotExpectingAnArrayedChannel, NoIdent, position);
+			else {
+				if ((Lvalue:attributes).value.type->nature == ArrayedType)
+				{
+					if (ident != NoIdent)
+						LOG_ERROR (CannotRenameChannelArray, NoIdent, position);
+					else { /* idents don't need to be set */
+						attributes = AppendExprAttributesLists (MakeAttributesListForChannelInstancesAccesses
+							(Lvalue:attributes.value.type->info.arrayed.arrayedElements,
+							Lvalue:attributes.value.type->info.arrayed.elementCount, Lvalue:isInput,
+							Lvalue:isPassive, Lvalue:lockPassiveChannels, position), next:attributes);
+					}
+				} else {
+					idents = NewIdentList ((ident == NoIdent ?
+						(Lvalue:instance == NULL || Lvalue:instance == NoInstance 
+							? NoIdent \: Lvalue:instance->\ident)
+						\: ident), position, next:idents);
+					attributes = NewExprAttributesList (Lvalue:attributes, next:attributes);
+				}
+			}
+		}
+	};
+	/* Use expectedType if it isn't NULL, else get the next elements element */
+	Lvalue:expectingChannel := true; Lvalue:expectingEither := false;
+	Lvalue:expectedBaseType, Lvalue:isInput, Lvalue:isPassive, next:elements := {
+		Lvalue:isInput = isInput;
+		Lvalue:isPassive = isPassive;
+		next:elements = CDR (elements); 
+		Lvalue:expectedBaseType = (expectedType && expectedType->nature == ArrayedType
+			? expectedType->info.arrayed.baseType \: NoType);
+
+		if (!skip)
+		{
+			if (!expectedType) /* Check elements for list overrun */
+			{
+				if (elements)
+				{
+					ASSERT (CAR (elements));
+					Lvalue:expectedBaseType = (CAR (elements)->type->nature == ArrayedType
+						? CAR (elements)->type->info.arrayed.baseType
+						\: (CAR (elements)->type->nature == ArrayType
+							? CAR (elements)->type->info.array.baseType
+							\: NoType));
+					Lvalue:isInput = CAR (elements)->nature == InputChannelInstance;
+					Lvalue:isPassive = CAR (elements)->info.port.sense == PassivePortSense; 
+				} else
+				{ /* FIXME, error situation, should inhibit lvalue assessment */
+					Lvalue:isPassive = false; Lvalue:isInput = false; next:elements = NULL;
+					LOG_ERROR (ExprListTooLong, NoIdent, position); 
+				}
+			}
+		}
+	};
+} .
+LinkedBlock = {
+	idents := NewIdentList (NoIdent, position, next:idents);
+	Block:context := AddContextMarker (context);
+	attributes := {
+		attributes = next:attributes; /* Fall back */
+
+		if (!skip)
+		{
+			if (! isProcedurePorts) /* Can't used blocks in `select' channel guards */
+				LOG_ERROR (BlockNotSelectable, NoIdent, position);
+			else if (elements && (CAR (elements)->type != SyncTypeObj || 
+				CAR (elements)->info.port.sense == PassivePortSense))
+				LOG_ERROR (BlockExpectsActiveSyncPort, NoIdent, position);
+			else if (Block:attributes.activation)
+			{
+				ExprAttributes attr;
+				attr.components = Block:attributes.components;
+				attr.accesses = Block:attributes.accesses;
+				attr.wires = Block:attributes.wires;
+				attr.activation = Block:attributes.activation;
+				attr.value = NoValue;
+				attr.value.type = SyncTypeObj;
+				attributes = NewExprAttributesList (attr, next:attributes);
+			}
+		}
+	};
+	next:elements := CDR (elements);
+} .
+
+/* CaseMatchs */ 
+CaseMatchs = { /* NullCaseMatchs */ implicants := NULL; } .
+CaseRange = {
+	implicants := {
+		implicants = next:implicants;
+	
+		if (!skip && Range:range.lowerBound)
+		{
+			/* If expectedType == NoType then we are processing an `open' numeric set of matches */
+			if (expectedType == NoType && Range:range.boundingType->nature != NumericType)
+				LOG_ERROR (ExpressionMustBeNumeric, NoIdent, position);
+			else {
+				PtrImplicantList newImps = MakeSpanImplicantList (Range:range);
+				implicants = AppendImplicantLists (newImps, next:implicants);
+
+				if (! allowOverlappingMatches && ! ImplicantsAreDisjoint (implicants))
+				{
+					LOG_ERROR (CaseGuardsAreNotDisjoint, NoIdent, position);
+					implicants = next:implicants;
+				}
+			}
+		}
+	};
+} .
+CaseImplicant = {
+	Expr:allowChannels := false;
+	implicants := {
+		implicants = next:implicants;
+
+		if (! skip)	
+		{
+			if (expectedType != NoType)
+			{
+				if (!TypeEquivalence (expectedType, Expr:attributes.value.type))
+					LOG_ERROR (TypeIsNotValid, NoIdent, position);
+				else implicants = NewImplicantList (Expr:attributes.value.value, next:implicants);
+			} else { /* open numeric guards */
+				if (Expr:attributes.value.type->nature != NumericType)
+					LOG_ERROR (ExpressionMustBeNumeric, NoIdent, position);
+				if (!Expr:attributes.value.value.baseValue)
+					LOG_ERROR (ExpressionMustBeConstant, NoIdent, position);
+				else if (expectedType->size < 0 && Expr:attributes.value.value.dontCares) 
+					LOG_ERROR (ImplicantsOnlyForUNumericCases, NoIdent, position);
+				else implicants = NewImplicantList (Expr:attributes.value.value, next:implicants);
+			}
+
+			if (! allowOverlappingMatches && ! ImplicantsAreDisjoint (implicants))
+			{
+				LOG_ERROR (CaseGuardsAreNotDisjoint, NoIdent, position);
+				implicants = next:implicants;
+			}
+		}
+	};
+} .
+
+/* ValDecls */
+ValDecls = { /* NullValDecls */ } .
+ValDecl = {
+	Expr:allowChannels := false;
+	Expr:expectedType := NoType; Expr:context := contextIn;
+	next:contextIn := (skip ? contextIn \: ValDeclaration (contextIn, ident, Expr:attributes, position));
+} .
+
+/* Idents -> IdentList : create a list of idents from the parse tree node Idents,
+	NB. the list will be in the same order as it appears in the input file */
+Idents = { /* NullIdents */ idents := NULL; } .
+Ident = { idents := NewIdentList (ident, position, next:idents);  } .
+
+/* Parts */
+PartDecl = { 
+	next:contextIn := PartDeclarationFillIn (procedure, contextIn, channels, channelCount,
+		Comps:componentsOut, position); 
+
+	/* Before Comps evaluation */
+	procedure, Comps:skip := {
+		Comps:skip = false;
+
+		procedure = (skip ? NULL \: PartDeclaration (contextIn, ident, FormalPorts:ports,
+			FormalPorts:portCount, FormalPorts:extraPortInstances, attributes, position));
+		if (procedure)
+			procedure->\scope = scope;
+		else {
+			Comps:skip = true;
+		}
+	};
+
+	FormalPorts:context :- contextIn;
+	FormalPorts:portsType := PartPorts;  /* Non Balsa (reqr. passive/active) ports */
+	FormalPorts:inConditionalPorts := false;
+
+	Comps:componentsIn := NULL;
+	Comps:context :- contextIn;
+} .
+
+/* Conditional Decls - If{,Else}Decls */
+IfDecls = {
+	DeclGuards:contextIn :- contextIn;
+	contextOut :- next:contextOut;
+
+	next:contextIn := {
+		next:contextIn = contextIn;
+
+		if (! skip)
+		{
+			if (DeclGuards:foundTrueGuard)
+				next:contextIn = DeclGuards:contextOut;
+		}
+	};
+} .
+IfElseDecls = {
+	DeclGuards:contextIn :- contextIn;
+	Decls:contextIn :- contextIn;
+	contextOut :- next:contextOut;
+	Decls:skip := skip || DeclGuards:foundTrueGuard;
+
+	next:contextIn := {
+		next:contextIn = contextIn;
+
+		if (! skip)
+		{
+			if (DeclGuards:foundTrueGuard)
+			{
+				next:contextIn = DeclGuards:contextOut;
+			} else {
+			  /* False guard, insert other decls */
+				next:contextIn = Decls:contextOut;
+			}
+		}
+	};
+} .
+/* Debugging declaraion printing */
+PrintDecl := {
+	Expr:context :- contextIn;
+	ExprLists:context :- contextIn;
+	Expr:allowChannels := false;
+	Expr:expectedType := ErrorTypeObj;
+	ExprLists:expectConstants := false; /* Handled in HandlePrintCommand */
+	ExprLists:expectedType := NoType;
+	ExprLists:elements := NULL;
+	contextOut :- next:contextOut;
+
+	next:contextIn := {
+		next:contextIn = contextIn;
+
+		if (!skip)
+			HandlePrintCommand (contextIn, Expr:attributes, ExprLists:attributes, true
+				/* can't do runtime printing */, position);
+	};
+} .
+
+/* Parameters */
+NumberParameter = {
+	next:paramNoIn := {
+		next:paramNoIn = paramNoIn + 1;
+		if (! skip) HandleParameter ("i#", paramNoIn, component, (void *) literal, context,
+			parameters, position);
+	};
+} .
+StringParameter = {
+	next:paramNoIn := {
+		next:paramNoIn = paramNoIn + 1;
+		if (! skip) HandleParameter ("BUb$", paramNoIn, component, (void *) ident, context,
+			parameters, position);
+	};
+} .
+TypeParameter = {
+	next:paramNoIn := {
+		next:paramNoIn = paramNoIn + 1;
+		if (! skip) HandleParameter ("t", paramNoIn, component, (void *) AType:type, context,
+			parameters, position);
+	};
+} .
+
+/* BreezeParameters */
+BreezeParameters = { parameters := NULL; } .
+BreezeExprParameter	= {
+	parameters := {
+		parameters = next:parameters;
+
+		if (! skip)
+		{
+			parameters = NewComponentParameterList (NewComponentParameter
+				((AType:type == StringTypeObj ? StringComponentParameter \: NumberComponentParameter),
+				NULL, ident, AType:type), next:parameters);
+		}
+	};
+} .
+BreezeTypeParameter	= {
+	parameters := {
+		parameters = next:parameters;
+
+		if (! skip)
+		{
+			parameters = NewComponentParameterList (NewComponentParameter
+				(TypeComponentParameter, NULL, ident, NoType), next:parameters);
+		}
+	};
+} .
+
+/* Components */
+NormalComp = {
+	Parameters:component := NewComponentFromComponentName (context, ident, internal, position); 
+	Parameters:paramNoIn := 0;
+	Parameters:parameters := NULL;
+
+	next:componentsIn := {
+		Parameters:paramNoOut; /* Force evaluation after Parameters, don't remove */
+		next:componentsIn = (skip ? NULL \: HandleComp (componentsIn, Parameters:component, channelNos,
+			channels, position, options));
+	};
+} .
+
+UndeclaredComp = {
+	FormalPorts:portsType := PartPorts;
+	FormalPorts:inConditionalPorts := false;
+	Parameters:component := {
+		Parameters:component = NewComponent (position, ProcedureComponent);
+		Parameters:component->param.procedure.\ident = ident;
+	};
+	Parameters:paramNoIn := 0;
+	Parameters:parameters := BreezeParameters:parameters;
+
+	next:componentsIn := {
+		Parameters:paramNoOut; /* Force evaluation after Parameters, don't remove */
+		next:componentsIn = (skip ? NULL \: HandleUndeclaredComp (componentsIn, Parameters:component, channelNos,
+			channels, position, componentType, baseComponentName, BreezeParameters:parameters,
+			FormalPorts:ports, options));
+	};
+} .
+
+END Compilation
+

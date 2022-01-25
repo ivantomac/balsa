@@ -1,0 +1,176 @@
+(defines
+	(output-plural (> (param "outputWidth") 1))
+	(input-plural (> (param "inputWidth") 1))
+	(input-width-even (quotient (param "inputWidth") 2))
+	(output-width-even (quotient (param "outputWidth") 2))
+	(input-width-odd (quotient (+ (param "inputWidth") 1) 2))
+	(output-width-odd (quotient (+ (param "outputWidth") 1) 2))
+	(input-odd (= (modulo (param "inputWidth") 2) 1))
+	(output-odd (= (modulo (param "outputWidth") 2) 1))
+	(output-diff 
+		(if input-odd
+			(- (param "outputWidth") (+ (param "inputWidth") 1))
+			(- (param "outputWidth") (param "inputWidth"))
+		)
+	)
+	(output-diff-width-even (quotient output-diff 2))
+	(output-diff-width-odd (quotient (+ output-diff 1) 2))
+	(output-diff-odd (= (modulo output-diff 2) 1))
+	(output-diff-plural (> output-diff 1))
+	(signed (= "true" (param "inputIsSigned")))
+	(less-than (> (param "inputWidth") (param "outputWidth")))
+	(equal-to (= (param "outputWidth") (param "inputWidth")))
+	(sgn-ext 
+		(if input-odd
+			input-width-even
+			(- input-width-even 1)
+		)
+	)
+)
+(nodes
+	("zero" 1 0 1)
+	("one" 1 0 1)
+	("extendreqZ" 1 0 1)
+	("extendreqTh" 1 0 1)
+	
+)
+(gates
+	(connect (req "out") (req "inp"))
+	(cond
+		(less-than
+			(gates
+				(if output-plural
+					(gates
+						(connect (slice 0 output-width-even (ack0 "inp"))
+							(slice 0 output-width-even (ack0 "out")))
+						(connect (slice 0 output-width-even (ack1 "inp"))
+							(slice 0 output-width-even (ack1 "out")))
+						(connect (slice 0 output-width-even (ack2 "inp"))
+							(slice 0 output-width-even (ack2 "out")))
+						(connect (slice 0 output-width-even (ack3 "inp"))
+							(slice 0 output-width-even (ack3 "out")))
+					)
+				)
+				(if output-odd
+					(gates
+						(or (slice output-width-even 1 (ack0 "out"))
+							(slice output-width-even 1 (ack0 "inp"))
+							(slice output-width-even 1 (ack2 "inp"))
+						)
+						(or (slice output-width-even 1 (ack1 "out"))
+							(slice output-width-even 1 (ack1 "inp"))
+							(slice output-width-even 1 (ack3 "inp"))
+						)
+					)
+				)
+			)	
+		)
+		(equal-to
+			(gates
+				(connect (ack0 "inp") (ack0 "out"))
+				(connect (ack1 "inp") (ack1 "out"))
+				(connect (ack2 "inp") (ack2 "out"))
+				(connect (ack3 "inp") (ack3 "out"))
+			)
+		)
+		(else
+			(gates
+				(gnd (node "zero"))
+				(connect (req "out")(node "one"))
+				
+				(if input-plural
+					(gates
+						(connect (slice 0 input-width-even (ack0 "inp"))
+							(slice 0 input-width-even (ack0 "out")))
+						(connect (slice 0 input-width-even (ack1 "inp"))
+							(slice 0 input-width-even (ack1 "out")))
+						(connect (slice 0 input-width-even (ack2 "inp"))
+							(slice 0 input-width-even (ack2 "out")))
+						(connect (slice 0 input-width-even (ack3 "inp"))
+							(slice 0 input-width-even (ack3 "out")))
+					)
+				)
+				(if input-odd ;; Extend upto nearest 1-of-4 boundary
+					(if signed
+						(gates
+							(connect (slice input-width-even 1 (ack0 "inp"))
+								(slice input-width-even 1 (ack0 "out")))
+							(connect (node "zero")
+								(slice input-width-even 1 (ack1 "out")))
+							(connect (node "zero")
+								(slice input-width-even 1 (ack2 "out")))
+							(connect (slice input-width-even 1 (ack1 "inp"))
+								(slice input-width-even 1 (ack3 "out")))		
+						)
+						(gates
+							(connect (slice input-width-even 1 (ack0 "inp"))
+								(slice input-width-even 1 (ack0 "out")))
+							(connect (slice input-width-even 1 (ack1 "inp"))
+								(slice input-width-even 1 (ack1 "out")))
+							(connect (node "zero")
+								(slice input-width-even 1 (ack2 "out")))
+							(connect (node "zero")
+								(slice input-width-even 1 (ack3 "out")))
+						)
+					)
+				)
+				(if (> output-diff 0) ;; If input odd and diff=1 then no output diff
+					(if signed 
+						(gates
+							(or (node "extendreqZ") 
+								(slice sgn-ext 1 (ack0 "out")) ;; Use output as already produced 
+								(slice sgn-ext 1 (ack1 "out"))) ;; even representation
+							(or (node "extendreqTh") 
+								(slice sgn-ext 1 (ack2 "out"))
+								(slice sgn-ext 1 (ack3 "out")))
+							(if output-diff-plural
+								(gates
+									(connect (combine (dup output-diff-width-even (node "extendreqZ"))) ; Sign Extend
+										(slice input-width-odd  output-diff-width-even (ack0 "out")))
+									(connect (combine (dup output-diff-width-even (node "zero"))) ; Unused
+										(slice input-width-odd  output-diff-width-even (ack1 "out")))
+									(connect (combine (dup output-diff-width-even (node "zero"))) ; Unused
+										(slice input-width-odd  output-diff-width-even (ack2 "out")))
+									(connect (combine (dup output-diff-width-even (node "extendreqTh"))) ; Sign Extend
+										(slice input-width-odd  output-diff-width-even (ack3 "out")))
+								)
+							)
+							(if output-odd
+								(gates
+									(connect (node "extendreqZ")	
+										(slice output-width-even  1 (ack0 "out")))
+									(connect (node "extendreqTh")	
+										(slice output-width-even  1 (ack1 "out")))
+								)
+							)
+						)
+						(gates
+							(if output-diff-plural
+								(gates
+									(connect (combine (dup output-diff-width-even (node "one"))) ; Pad with "zero"s
+										(slice input-width-odd  output-diff-width-even (ack0 "out")))
+									(connect (combine (dup output-diff-width-even (node "zero"))) ; Unused
+										(slice input-width-odd  output-diff-width-even (ack1 "out")))
+									(connect (combine (dup output-diff-width-even (node "zero"))) ; Unused
+										(slice input-width-odd  output-diff-width-even (ack2 "out")))
+									(connect (combine (dup output-diff-width-even (node "zero"))) ; Unused
+										(slice input-width-odd  output-diff-width-even (ack3 "out")))
+								)
+							)
+							(if output-odd
+								(gates
+									(connect (node "one")	
+										(slice output-width-even  1 (ack0 "out")))
+									(connect (node "zero")	
+										(slice output-width-even  1 (ack1 "out")))
+								)
+							)
+						)
+					)
+				)
+			)
+		)
+	)
+)
+(connections
+)

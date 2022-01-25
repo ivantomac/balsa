@@ -1,0 +1,102 @@
+
+Rename `install.sh' and `libtool' in bin to balsa-install.sh and balsa-libtool.  Check that libtool
+	will use that name.
+Check all suggested buffer insertions
+
+Packages (`current' branch, or nothing for head)
+	balsa (gtk2)
+	balsa-manual
+	balsa-sim-verilog
+	balsa-tech-amulet (gtk2)
+	balsa-tech-example (gtk2)
+	balsa-tech-minimal
+	balsa-tech-umc130f
+	balsa-tech-xilinx (gtk2)
+	balsa-valid
+	--
+	balsa-style-sync
+	wills-technology-generator as a separate package?
+
+balsa
+	balsa-c
+	breeze-sim
+		breeze-sim-debug
+		breeze-sim-early
+		breeze-sim-fast
+	breeze-sim-ctrl
+	breeze-cost
+	breeze-opt
+	breeze2ps
+
+balsa-c
+	Include cocktail generated source in balsa package to remove cocktail from dependency list
+
+balsa-mgr/balsa-make-makefile/Project files
+	Consolidate
+	Lots of gtk2, code clean up related bugs
+	Adding test fixtures to implementations doesn't work
+		Can't edit top-level procedure name
+		Breeze file name for test must be the same as Verilog file.  Add option to balsa-make-impl-test
+
+breeze-cost
+	Add as a balsa-netlist option or have a breeze-manipulate script to do Breeze level stuff
+
+balsa-netlist
+	Remove lots of options
+	Have things like the buffer insertion done with a set of pluggable netlist-modifying modules
+		(do simulation initialisation with something similar?)
+	(and other backend tools) Deprecate BALSATECH, have -X/--technology command line option
+
+breeze-sim
+	Generate VCD as well as HHH
+
+Balsasim library
+	Audit for component-name-specific stuff
+
+Technologies
+	balsa-tech-amulet
+	balsa-tech-example
+	balsa-tech-minimal
+	balsa-tech-umc130f
+	balsa-tech-xilinx
+
+Components
+	Make it possible to add components more easily: audit explicit component references
+	Think about having (primitive-component instead of $Brz
+	Rationalise with sync == 0 bits
+	Component specifying notation (autogenerate breeze-sim)
+
+Documentation
+	In balsa package (apart from the manual)
+	Balsa grammar
+	Breeze grammar
+	Abs grammar
+	Net grammar
+	HHH grammar
+	balsa-netlist flow description
+
+User types:
+	Manchester developer
+	Manchester user
+	External style/component developer
+	Tech. developer
+	External user
+
+balsa-c/Balsa:
+	halt inside conditional in loop fails to insert loop
+	Add character escapes to Balsa/balsa-c
+	Allow slicing of LHSs
+	Slicing of LHSs causes segfault
+	conditional expressions in Balsa?
+	elseif, andalso and orelse in Balsa?
+
+balsa-mgr:
+	Changing tech style options doesn't work
+	Can't edit balsa-netlist options
+	Single assignment into a variable at startup should be good enough to turn
+		that variable into a constant.  Better range checking (explicit?) on array accesses
+
+Sort out operator applicability, xor/ /= thing
+
+breeze-sim:
+	breeze-sim doesn't recognise implicants in constants

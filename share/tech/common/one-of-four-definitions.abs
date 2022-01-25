@@ -1,0 +1,354 @@
+(define one-of-four-implicant-mapping (lambda (implicant imp-width)
+	(let
+		((width (quotient imp-width 2))
+		(dont-care (cdr implicant))
+		(base-value (car implicant))
+		(pair-xor (lambda (index)
+				(bit-xor 
+						(if (bit-set? index dont-care) 1  0)
+						(if (bit-set? (+ index 1)dont-care) 1  0)
+				)
+		))
+		(string-no
+			(let  
+				((end-val (quotient width 2))
+				(tail-xor (lambda (index total)
+					(if (= index end-val)
+						total
+						(tail-xor
+							(+ index 1)
+							(+ total (pair-xor (* index 2)))
+						)
+					)
+				)))
+				(tail-xor 0 0)
+			)
+		)
+		(val-code (lambda (index)
+			(let
+				((lower-bit (if (bit-set? index base-value) 1 0))
+				(higher-bit (if (bit-set? (+ index 1) base-value) 2 0)))
+				(+ lower-bit higher-bit)
+			)
+		))
+		(ret-leng (* imp-width (expt 2 string-no)))
+		(ret (make-string ret-leng #\-))
+		(string-list
+			(let
+				((odd-list (foldl (lambda (res index)
+						(cons
+							(if (bit-set? (* index 2) dont-care) ;; -0/1 or -- (dont-care 1 - confusing)
+								(if (= (pair-xor (* index 2)) 1)
+									(case (val-code (* index 2))
+										((0 1) (cons 0 1))
+							 			((2 3) (cons 2 3))
+									)
+									'() ;;pass nothing
+								)
+								(if (= (pair-xor (* index 2)) 1) ;; 0/1-(dont-care 2)
+									(case (val-code (* index 2))
+										((0 2) (cons 0 2))
+										((1 3) (cons 1 3))
+									)
+									(val-code (* index 2))
+								)
+							)
+							res
+						)
+					) '() (.. 0 (- (quotient width 2) 1))))
+				)	
+				(reverse! 
+					(if (odd? width)
+						(cons
+							(if (bit-set? (- width 1) base-value)
+								1
+								(if (not (bit-set? (- width 1) dont-care))
+									0 ;; zero value
+									`() ;; dont-care
+								)
+							)
+							odd-list
+						)	
+						odd-list
+					)
+				)
+			)
+		)
+		(print-n-times (lambda (val n offset str-pos)
+			(for-each (lambda (index)
+				(let ((basepos (+ (* index imp-width) offset (* str-pos 4)))
+				)
+					(string-set! ret (+ basepos val) #\1)
+				)
+			) (.. 0 (- n 1)))
+		))
+		(print-string-list
+			(let
+				((leng-list (length string-list))
+				(print-str-list (lambda (st-list descision-no)
+					(let
+						((a (if (not (null? st-list))
+							(if (pair? (car st-list))
+								(for-each (lambda (index)
+										(let ((first-choice (print-n-times  ;; Put in Let block instead of begin
+												(caar st-list)
+												(expt 2 descision-no)
+												(* index (expt 2 descision-no) imp-width 2)
+												(- leng-list (length st-list))
+											))
+											(second-choice (print-n-times
+												(cdr (car st-list))
+												(expt 2 descision-no)
+												(+ (* index (expt 2 descision-no) imp-width 2) (* (expt 2 descision-no) imp-width))
+												(- leng-list (length st-list))
+											))
+										)
+										'()
+									)
+									'()
+								) (.. 0 (- (expt 2 (- string-no descision-no 1))1)))
+								(if (not (null? (car st-list)))
+									(print-n-times (car st-list) (expt 2 string-no) 0 (- leng-list (length st-list)))
+									'()
+								)
+							)
+							'()
+						))
+						)
+						(if (not (null? st-list))
+							(print-str-list (cdr st-list) (- descision-no (if (pair? (car st-list)) 1 0)))
+							'()
+						)
+					)
+				)))
+				(print-str-list string-list (- string-no 1))
+			)
+		)
+	)
+	(foldl (lambda (res index)
+		(let ((offset (* index imp-width)))
+				(cons
+					(substring ret offset (+ imp-width offset))
+					res
+				)
+		)
+		) '() (.. 0 (- (quotient (string-length ret) imp-width) 1)))
+	)
+))
+
+(define one-of-four-connect-read-ports (lambda (width-arg read-port-count-arg spec-string-arg store-node-name read-req-node-name)
+	(let
+		((width (eval width-arg))
+		 (read-port-count (eval read-port-count-arg))
+		 (read-port-specification (parse-case-spec (eval spec-string-arg)))
+		 (spec-length (length read-port-specification))
+		 (plural (> width 1))
+		 (width-even (quotient width 2))
+		 (width-odd (quotient (+ 1 width) 2))
+		 (specified-gates (foldl.. (lambda (gates index specification)
+			(append gates
+				(case (car specification)
+					((value) ;; single index
+						(let
+							((val (cadr specification)))
+							(cond
+								((not val);; full width
+									(append
+										(list
+											'(and (ack0 (bundle "read" ,index)) (node (bundle ,store-node-name 0)) (combine (dup ,width-odd (node (bundle ,read-req-node-name ,index)))))
+											'(and (ack1 (bundle "read" ,index)) (node (bundle ,store-node-name 1)) (combine (dup ,width-odd (node (bundle ,read-req-node-name ,index)))))
+										)
+										(if plural
+											(list 
+												'(and (ack2 (bundle "read" ,index)) (node (bundle ,store-node-name 2)) (combine (dup ,width-even (node (bundle ,read-req-node-name ,index)))))
+												'(and (ack3 (bundle "read" ,index)) (node (bundle ,store-node-name 3)) (combine (dup ,width-even (node (bundle ,read-req-node-name ,index)))))
+											)
+											'()
+										)
+									)
+								)
+								((and odd (= val (- width 1))) ;; value is top odd bit straight dual-rail connection
+									(let
+										((offset (quotient val 2)))
+										(list
+											'(and (ack0 (bundle "read" ,index)) (slice ,offset 1 (node (bundle ,store-node-name 0))) (node (bundle ,read-req-node-name ,index)))
+											'(and (ack1 (bundle "read" ,index)) (slice ,offset 1 (node (bundle ,store-node-name 1))) (node (bundle ,read-req-node-name ,index)))
+										)
+									)
+								)
+								(else ;; extract single bit from 1-of-4 code group
+									(let
+										((offset (quotient val 2))
+										 (node-name (string-append "readPort" (number->string index)))
+										)
+										(append
+											(list
+												'(node-decl ,node-name 1 0 4)
+												'(and (node (bundle ,node-name 0)) (slice ,offset 1 (node (bundle ,store-node-name 0))) (node (bundle ,read-req-node-name ,index)))
+												'(and (node (bundle ,node-name 1)) (slice ,offset 1 (node (bundle ,store-node-name 1))) (node (bundle ,read-req-node-name ,index)))
+												'(and (node (bundle ,node-name 2)) (slice ,offset 1 (node (bundle ,store-node-name 2))) (node (bundle ,read-req-node-name ,index)))
+												'(and (node (bundle ,node-name 3)) (slice ,offset 1 (node (bundle ,store-node-name 3))) (node (bundle ,read-req-node-name ,index)))
+											)
+											(if (odd? val)
+												(list
+													'(or (ack0 (bundle "read" ,index)) (node (bundle ,node-name 0)) (node (bundle ,node-name 1)))
+													'(or (ack1 (bundle "read" ,index)) (node (bundle ,node-name 2)) (node (bundle ,node-name 3)))
+												)
+												(list
+													'(or (ack0 (bundle "read" ,index)) (node (bundle ,node-name 0)) (node (bundle ,node-name 2)))
+													'(or (ack1 (bundle "read" ,index)) (node (bundle ,node-name 1)) (node (bundle ,node-name 3)))
+												)
+											)
+										)
+									)
+								)
+							)
+						)
+					)
+					((range)
+						(let
+							((start (cadr specification))
+							 (end (caddr specification))
+							 (low-index (min start end)) 
+							 (high-index (max start end))
+							 (count (- high-index low-index -1))
+							 (offset (quotient low-index 2))
+							 (port-width-odd (quotient (+ count 1) 2))									 
+							 (port-width-even (quotient count 2))
+							 (port-plural (> count 1))
+							 (top-bit (= high-index (- width 1)))
+							)
+							(if (odd? low-index)
+								(let
+									((read-node-name (string-append "readPort" (number->string index)))
+									 (lower-bits-name (string-append "lowerBits" (number->string index)))
+									 (higher-bits-name (string-append "higherBits" (number->string index)))
+									 (read-node-size (+ port-width-even 1))
+									 (top-bit-dual (and top-bit (odd? width))) ;; top bit is dual-rail
+									)
+									(append
+										(list
+											'(node-decl ,read-node-name ,read-node-size 0 4 ,(list read-node-size read-node-size (if top-bit-dual port-width-even read-node-size) (if top-bit-dual port-width-even read-node-size)))
+											'(node-decl ,lower-bits-name ,port-width-even 0 2)
+											'(node-decl ,higher-bits-name ,port-width-odd 0 2)
+											'(and (node (bundle ,read-node-name 0)) (slice ,offset ,read-node-size (node (bundle ,store-node-name 0))) (combine (dup ,read-node-size (node (bundle ,read-req-node-name ,index)))))
+											'(and (node (bundle ,read-node-name 1)) (slice ,offset ,read-node-size (node (bundle ,store-node-name 1))) (combine (dup ,read-node-size (node (bundle ,read-req-node-name ,index)))))
+										)
+										(if top-bit-dual
+ 											(list
+												'(and (slice ,offset ,port-width-even (node (bundle ,read-node-name 2))) (slice ,offset ,port-width-even (node (bundle ,store-node-name 2))) (combine (dup ,port-width-even (node (bundle ,read-req-node-name ,index)))))
+												'(and (slice ,offset ,port-width-even (node (bundle ,read-node-name 3))) (slice ,offset ,port-width-even (node (bundle ,store-node-name 3))) (combine (dup ,port-width-even (node (bundle ,read-req-node-name ,index)))))
+												'(or (slice 0 ,(- port-width-even 1) (node (bundle ,lower-bits-name 0))) (slice 1 ,(- port-width-even 1) (node (bundle ,read-node-name 0))) (slice 1 ,(- port-width-even 1) (node (bundle ,read-node-name 2))))
+												'(or (slice 0 ,(- port-width-even 1) (node (bundle ,lower-bits-name 1))) (slice 1 ,(- port-width-even 1) (node (bundle ,read-node-name 1))) (slice 1 ,(- port-width-even 1) (node (bundle ,read-node-name 3))))
+												'(connect (slice ,port-width-even 1 (node (bundle ,read-node-name 0))) (slice ,(- port-width-even 1) 1 (node (bundle ,lower-bits-name 0))))
+												'(connect (slice ,port-width-even 1 (node (bundle ,read-node-name 1))) (slice ,(- port-width-even 1) 1 (node (bundle ,lower-bits-name 1))))
+
+											)
+											(append
+													(list
+														'(and (node (bundle ,read-node-name 2)) (slice ,offset ,read-node-size (node (bundle ,store-node-name 2))) (combine (dup ,read-node-size (node (bundle ,read-req-node-name ,index)))))
+														'(and (node (bundle ,read-node-name 3)) (slice ,offset ,read-node-size (node (bundle ,store-node-name 3))) (combine (dup ,read-node-size (node (bundle ,read-req-node-name ,index)))))
+													)
+													(if port-plural
+														(list
+															'(or (slice 0 ,port-width-even (node (bundle ,lower-bits-name 0))) (slice 1 ,port-width-even (node (bundle ,read-node-name 0)))  (slice 1 ,port-width-even (node (bundle ,read-node-name 2))))
+															'(or (slice 0 ,port-width-even (node (bundle ,lower-bits-name 1))) (slice 1 ,port-width-even (node (bundle ,read-node-name 1)))  (slice 1 ,port-width-even (node (bundle ,read-node-name 3))))
+														)
+														'()
+													)
+											)
+										)
+										(list
+											'(or (slice 0 ,port-width-odd (node (bundle ,higher-bits-name 0))) (slice 0 ,port-width-odd (node (bundle ,read-node-name 0)))  (slice 0 ,port-width-odd (node (bundle ,read-node-name 1))))
+											'(or (slice 0 ,port-width-odd (node (bundle ,higher-bits-name 1))) (slice 0 ,port-width-odd (node (bundle ,read-node-name 2)))  (slice 0 ,port-width-odd (node (bundle ,read-node-name 3))))
+										)
+										(if (odd? count) ;; last high bits are connected straight through - confusing lower bits become higer bits in combined groups
+											(append
+												(if port-plural
+													(list
+														'(c-element (slice 0 ,port-width-even (ack0 (bundle "read" ,index))) (slice 0 ,port-width-even (node (bundle ,higher-bits-name 0))) (node (bundle ,lower-bits-name 0)))
+														'(c-element (slice 0 ,port-width-even (ack1 (bundle "read" ,index))) (slice 0 ,port-width-even (node (bundle ,higher-bits-name 1))) (node (bundle ,lower-bits-name 0)))
+														'(c-element (slice 0 ,port-width-even (ack2 (bundle "read" ,index))) (slice 0 ,port-width-even (node (bundle ,higher-bits-name 0))) (node (bundle ,lower-bits-name 1)))
+														'(c-element (slice 0 ,port-width-even (ack3 (bundle "read" ,index))) (slice 0 ,port-width-even (node (bundle ,higher-bits-name 1))) (node (bundle ,lower-bits-name 1)))
+													)
+													'()
+												)
+												(list
+													'(connect (slice ,port-width-even 1 (node (bundle ,higher-bits-name 0))) (slice ,port-width-even 1 (ack0 (bundle "read" ,index))))
+													'(connect (slice ,port-width-even 1 (node (bundle ,higher-bits-name 1))) (slice ,port-width-even 1 (ack1 (bundle "read" ,index))))
+												)
+											)
+											(list
+												'(c-element (ack0 (bundle "read" ,index)) (node (bundle ,higher-bits-name 0)) (node (bundle ,lower-bits-name 0)))
+												'(c-element (ack1 (bundle "read" ,index)) (node (bundle ,higher-bits-name 1)) (node (bundle ,lower-bits-name 0)))
+												'(c-element (ack2 (bundle "read" ,index)) (node (bundle ,higher-bits-name 0)) (node (bundle ,lower-bits-name 1)))
+												'(c-element (ack3 (bundle "read" ,index)) (node (bundle ,higher-bits-name 1)) (node (bundle ,lower-bits-name 1)))
+											)
+										)
+									)
+								)
+								(append
+									(if port-plural
+										(list
+											'(and (slice 0 ,port-width-even (ack0 (bundle "read" ,index))) (slice ,offset ,port-width-even (node (bundle ,store-node-name 0))) (combine (dup ,port-width-even (node (bundle ,read-req-node-name ,index)))))
+											'(and (slice 0 ,port-width-even (ack1 (bundle "read" ,index))) (slice ,offset ,port-width-even (node (bundle ,store-node-name 1))) (combine (dup ,port-width-even (node (bundle ,read-req-node-name ,index)))))
+											'(and (ack2 (bundle "read" ,index)) (slice ,offset ,port-width-even (node (bundle ,store-node-name 2))) (combine (dup ,port-width-even (node (bundle ,read-req-node-name ,index)))))
+											'(and (ack3 (bundle "read" ,index)) (slice ,offset ,port-width-even (node (bundle ,store-node-name 3))) (combine (dup ,port-width-even (node (bundle ,read-req-node-name ,index)))))
+										)
+										'()
+									)
+									(if (odd? count) ;; extract the odd bit from a 1-of-4 code group
+										(if top-bit
+											(list
+												'(and (slice  ,port-width-even 1 (ack0 (bundle "read" ,index))) (slice ,(+ offset port-width-even) 1 (node (bundle ,store-node-name 0))) (node (bundle ,read-req-node-name ,index)))
+												'(and (slice  ,port-width-even 1 (ack1 (bundle "read" ,index))) (slice ,(+ offset port-width-even) 1 (node (bundle ,store-node-name 1))) (node (bundle ,read-req-node-name ,index)))
+											)
+											(let
+												((node-name (string-append "readPort" (number->string index))))
+												(list
+													'(node-decl ,node-name 1 0 4)
+													'(and (node (bundle ,node-name 0)) (slice ,(+ offset port-width-even) 1 (node (bundle ,store-node-name 0))) (node (bundle ,read-req-node-name ,index)))
+													'(and (node (bundle ,node-name 1)) (slice ,(+ offset port-width-even) 1 (node (bundle ,store-node-name 1))) (node (bundle ,read-req-node-name ,index)))
+													'(and (node (bundle ,node-name 2)) (slice ,(+ offset port-width-even) 1 (node (bundle ,store-node-name 2))) (node (bundle ,read-req-node-name ,index)))
+													'(and (node (bundle ,node-name 3)) (slice ,(+ offset port-width-even) 1 (node (bundle ,store-node-name 3))) (node (bundle ,read-req-node-name ,index)))
+													'(or (slice  ,port-width-even 1 (ack0 (bundle "read" ,index))) (node (bundle ,node-name 0)) (node (bundle ,node-name 2)))
+													'(or (slice  ,port-width-even 1 (ack1 (bundle "read" ,index))) (node (bundle ,node-name 1)) (node (bundle ,node-name 3)))
+												)
+											)
+										)
+										'()
+									)
+								)
+							)
+						)
+					)
+					((implicant) ;; just using 1s value 
+						'() ;; not implemented yet
+					)
+				)
+			)
+		) '(gates) 0 (- spec-length 1) read-port-specification)
+	 )
+	 )
+	 (if (< spec-length read-port-count)
+		(foldl.. (lambda (gates index)
+			(append gates 
+				(append
+					(list
+						'(and (ack0 (bundle "read" ,index)) (node (bundle ,store-node-name 0)) (combine (dup ,width-odd (node (bundle ,read-req-node-name ,index)))))
+						'(and (ack1 (bundle "read" ,index)) (node (bundle ,store-node-name 1)) (combine (dup ,width-odd (node (bundle ,read-req-node-name ,index)))))
+					)
+					(if (> width 1)
+						(list 
+							'(and (ack2 (bundle "read" ,index)) (node (bundle ,store-node-name 2)) (combine (dup ,width-even (node (bundle ,read-req-node-name ,index)))))
+							'(and (ack3 (bundle "read" ,index)) (node (bundle ,store-node-name 3)) (combine (dup ,width-even (node (bundle ,read-req-node-name ,index)))))
+						)
+						'()
+					)
+				)
+			)
+		) specified-gates spec-length (- read-port-count 1))
+		specified-gates
+	 )
+	)
+))

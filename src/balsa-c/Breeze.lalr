@@ -1,0 +1,1319 @@
+SCANNER BreezeScan PARSER Breeze
+GLOBAL {
+
+#include "BreezeScan.h"
+#include "Tree.h"
+#include "BreezeScanSource.h"
+#include "arith.h"
+#include "ports.h"
+#include "implicants.h"
+#include "wires.h"
+#include "callcontexts.h"
+#include <string.h>
+
+  tIdent nameIdent;
+
+
+#include "Tree.h"
+
+typedef struct { tTree Tree; } yybreeze_file;
+typedef struct { tTree Tree; } yybreeze_decls;
+typedef struct { tTree Tree; } yybreeze_decl;
+typedef struct { tTree Tree; } yybreeze_type;
+typedef struct { tTree Tree; } yybreeze_record_elems;
+typedef struct { tTree Tree; } yybreeze_enum_elems;
+typedef struct { tTree Tree; } yypart_component;
+typedef struct { tTree Tree; } yybreeze_param_decls;
+typedef struct { tTree Tree; } yybreeze_param_decl;
+typedef struct { tTree Tree; } yycomp_parameter;
+typedef struct { tTree Tree; } yypart_port;
+typedef struct { bool isPull; } yypart_channel_sense;
+typedef struct { PtrintList channelNos; } yychannel_numbers;
+typedef struct { tTree Tree; } yypart_components;
+typedef struct { PtrCallContextList callcontexts; } yypart_optional_callcontexts;
+typedef struct { PtrCallContextList callcontexts; } yypart_callcontexts;
+typedef struct { tTree Tree; } yypart_ports;
+typedef struct { PtrWireList channels; } yypart_channels;
+typedef struct { tTree Tree; } yycomp_parameters;
+typedef struct { tPosition Position; tTree type; PtrLispList list; } yybreeze_options;
+typedef struct { tPosition Position; tTree type; PtrLispList tokens; } yybreeze_option;
+typedef struct { PtrLispList tokens; } yylisp_tokens;
+typedef struct { Lisp token; } yylisp_token;
+typedef struct { tPosition Position; } yyposition;
+typedef struct { tTree Tree; } yydecl;
+typedef struct { bool multicast; } yychannel_options;
+typedef struct { tTree Tree; } yyrange;
+typedef struct { tTree Tree; } yytype;
+typedef struct { tTree Tree; } yyval_decls;
+typedef struct { tTree Tree; } yyval_decls_body;
+typedef struct { tTree Tree; } yyval_decl;
+typedef struct { tTree Tree; } yyexpr;
+typedef struct { PortSense portSense; } yyport_sense;
+typedef struct { bool isOutput; } yyport_direction;
+typedef struct { tTree Tree; } yyport;
+typedef struct { tTree Tree; } yyblock;
+typedef struct { tTree Tree; } yycommand;
+typedef struct { tTree Tree; } yyprocedure_params;
+typedef struct { tTree Tree; } yyprocedure_params_body;
+typedef struct { tTree Tree; } yyprocedure_param;
+typedef struct { tTree Tree; } yyfunction_params;
+typedef struct { tTree Tree; } yyfunction_params_body;
+typedef struct { tTree Tree; } yyfunction_param;
+typedef struct { bool isParallel; bool isPermissive; } yypar_seq;
+typedef struct { tTree Tree; } yyguard;
+typedef struct { tTree Tree; } yyport_guard;
+typedef struct { tTree Tree; } yydecl_guard;
+typedef struct { tTree Tree; } yychannel_guard;
+typedef struct { tTree Tree; } yycase_guard;
+typedef struct { tTree Tree; } yylvalue;
+typedef struct { tTree Tree; } yydecls;
+typedef struct { tTree Tree; } yydecls_body;
+typedef struct { tTree Tree; } yyidents;
+typedef struct { tTree Tree; } yyidents_body;
+typedef struct { tTree Tree; } yyexprs;
+typedef struct { tTree Tree; } yyexprs_body;
+typedef struct { tTree Tree; } yylvalues;
+typedef struct { tTree Tree; } yylvalues_body;
+typedef struct { tTree Tree; } yycase_match_elem;
+typedef struct { tTree Tree; } yycase_matches;
+typedef struct { tTree Tree; } yycase_matches_body;
+typedef struct { tTree Tree; } yyformal_ports;
+typedef struct { tTree Tree; } yyformal_ports_body;
+typedef struct { tTree Tree; } yyguards;
+typedef struct { tTree Tree; } yyguards_body;
+typedef struct { tTree Tree; } yyport_guards;
+typedef struct { tTree Tree; } yyport_guards_body;
+typedef struct { tTree Tree; } yydecl_guards;
+typedef struct { tTree Tree; } yydecl_guards_body;
+typedef struct { tTree Tree; } yycase_guards;
+typedef struct { tTree Tree; } yycase_guards_body;
+typedef struct { tTree Tree; } yychannel_guards;
+typedef struct { tTree Tree; } yychannel_guards_body;
+typedef struct { tTree Tree; } yyrecord_elems;
+typedef struct { tTree Tree; } yyrecord_elems_body;
+typedef struct { tTree Tree; } yyenum_elems;
+typedef struct { tTree Tree; } yyenum_elems_body;
+typedef struct { tTree Tree; } yyenum_elem;
+typedef struct { tTree Tree; } yyrecord_elem;
+typedef struct { tTree Tree; } yyident;
+typedef struct { tTree Tree; } yylinked_expr;
+typedef struct { tTree Tree; } yylinked_lvalue;
+
+typedef union {
+ BreezeScan_tScanAttribute Scan;
+ yybreeze_file breeze_file;
+ yybreeze_decls breeze_decls;
+ yybreeze_decl breeze_decl;
+ yybreeze_type breeze_type;
+ yybreeze_record_elems breeze_record_elems;
+ yybreeze_enum_elems breeze_enum_elems;
+ yypart_component part_component;
+ yybreeze_param_decls breeze_param_decls;
+ yybreeze_param_decl breeze_param_decl;
+ yycomp_parameter comp_parameter;
+ yypart_port part_port;
+ yypart_channel_sense part_channel_sense;
+ yychannel_numbers channel_numbers;
+ yypart_components part_components;
+ yypart_optional_callcontexts part_optional_callcontexts;
+ yypart_callcontexts part_callcontexts;
+ yypart_ports part_ports;
+ yypart_channels part_channels;
+ yycomp_parameters comp_parameters;
+ yybreeze_options breeze_options;
+ yybreeze_option breeze_option;
+ yylisp_tokens lisp_tokens;
+ yylisp_token lisp_token;
+ yyposition position;
+ yydecl decl;
+ yychannel_options channel_options;
+ yyrange range;
+ yytype type;
+ yyval_decls val_decls;
+ yyval_decls_body val_decls_body;
+ yyval_decl val_decl;
+ yyexpr expr;
+ yyport_sense port_sense;
+ yyport_direction port_direction;
+ yyport port;
+ yyblock block;
+ yycommand command;
+ yyprocedure_params procedure_params;
+ yyprocedure_params_body procedure_params_body;
+ yyprocedure_param procedure_param;
+ yyfunction_params function_params;
+ yyfunction_params_body function_params_body;
+ yyfunction_param function_param;
+ yypar_seq par_seq;
+ yyguard guard;
+ yyport_guard port_guard;
+ yydecl_guard decl_guard;
+ yychannel_guard channel_guard;
+ yycase_guard case_guard;
+ yylvalue lvalue;
+ yydecls decls;
+ yydecls_body decls_body;
+ yyidents idents;
+ yyidents_body idents_body;
+ yyexprs exprs;
+ yyexprs_body exprs_body;
+ yylvalues lvalues;
+ yylvalues_body lvalues_body;
+ yycase_match_elem case_match_elem;
+ yycase_matches case_matches;
+ yycase_matches_body case_matches_body;
+ yyformal_ports formal_ports;
+ yyformal_ports_body formal_ports_body;
+ yyguards guards;
+ yyguards_body guards_body;
+ yyport_guards port_guards;
+ yyport_guards_body port_guards_body;
+ yydecl_guards decl_guards;
+ yydecl_guards_body decl_guards_body;
+ yycase_guards case_guards;
+ yycase_guards_body case_guards_body;
+ yychannel_guards channel_guards;
+ yychannel_guards_body channel_guards_body;
+ yyrecord_elems record_elems;
+ yyrecord_elems_body record_elems_body;
+ yyenum_elems enum_elems;
+ yyenum_elems_body enum_elems_body;
+ yyenum_elem enum_elem;
+ yyrecord_elem record_elem;
+ yyident ident;
+ yylinked_expr linked_expr;
+ yylinked_lvalue linked_lvalue;
+} tParsAttribute;
+}
+
+EXPORT {
+}
+
+LOCAL {
+}
+
+BEGIN {
+
+	BreezeScan_BeginScanner();
+	nameIdent = MakeIdent1 ("name");
+
+}
+
+CLOSE {
+}
+
+TOKEN
+
+boolean = 1
+breeze_literal = 2
+breeze_keyword = 3
+breeze_ident = 4
+'(' = 5
+'import' = 6
+')' = 7
+'file' = 8
+'constant' = 9
+'named-type' = 10
+'alias-type' = 11
+'numeric-type' = 12
+'array-type' = 13
+'record-type' = 14
+'enumeration-type' = 15
+'builtin-type' = 16
+'implicant' = 17
+'type' = 18
+'balsa' = 19
+'type-decl' = 20
+'at' = 21
+'existing-type' = 22
+'literal-expr' = 23
+'ident-expr' = 24
+'string-expr' = 25
+'dont-care-expr' = 26
+'implicant-expr' = 27
+'named-aggr-cons-expr' = 28
+'exprs' = 29
+'aggr-cons-expr' = 30
+'enum-elem-expr' = 31
+'unary-expr' = 32
+'sizeof-expr' = 33
+'binary-expr' = 34
+'record-elem-extract-expr' = 35
+'array-extract-expr' = 36
+'array-slice-expr' = 37
+'range1' = 38
+'range2' = 39
+'type-range' = 40
+'as-expr' = 41
+'bit-array-cast-expr' = 42
+'let-expr' = 43
+'val-decls' = 44
+'val-decl' = 45
+'function-call-expr' = 46
+'function-params' = 47
+'expr-func-param' = 48
+'type-func-param' = 49
+'array-append-expr' = 50
+'new-type' = 51
+'record-elems' = 52
+'record-elem' = 53
+'idents' = 54
+'bounded-record-type' = 55
+'enum-elems' = 56
+'enum-elem' = 57
+'valued-enum-elem' = 58
+'bounded-enumeration-type' = 59
+'typed-constant-decl' = 60
+'untyped-constant-decl' = 61
+'variable-decl' = 62
+'init-variable-decl' = 63
+'channel-decl' = 64
+'multicast' = 65
+'arrayed-channel-decl' = 66
+'sync-decl' = 67
+'arrayed-sync-decl' = 68
+'procedure-decl' = 69
+'formal-ports' = 70
+'value-port' = 71
+'port' = 72
+'default' = 73
+'active' = 74
+'passive' = 75
+'input' = 76
+'output' = 77
+'arrayed-port' = 78
+'sync-port' = 79
+'arrayed-sync-port' = 80
+'param-port' = 81
+'type-param-port' = 82
+'if-ports' = 83
+'port-guards' = 84
+'port-guard' = 85
+'if-else-ports' = 86
+'block' = 87
+'decls' = 88
+'continue' = 89
+'halt' = 90
+'ident-lvalue' = 91
+'record-elem-lvalue' = 92
+'array-elem-lvalue' = 93
+'array-slice-lvalue' = 94
+'array-append-lvalue' = 95
+'array-cons-lvalue' = 96
+'lvalues' = 97
+'block-lvalue' = 98
+'channel-lvalue' = 99
+'renamed-channel-lvalue' = 100
+'as-lvalue' = 101
+'bit-array-cast-lvalue' = 102
+'input-enclose' = 103
+'input-enclose-bang' = 104
+'sync' = 105
+'assign' = 106
+'block-command' = 107
+'sequential' = 108
+'parallel' = 109
+'permissive-parallel' = 110
+'loop' = 111
+'while-guards' = 112
+'guards' = 113
+'guard' = 114
+'while-guards-also' = 115
+'command-while-expr' = 116
+'command-while-guards' = 117
+'command-while-guards-also' = 118
+'if' = 119
+'if-else' = 120
+'case' = 121
+'case-guards' = 122
+'case-match-guard' = 123
+'case-matches' = 124
+'case-range' = 125
+'case-implicant' = 126
+'for-case-guard' = 127
+'case-else' = 128
+'for' = 129
+'procedure-call' = 130
+'procedure-params' = 131
+'expr-proc-param' = 132
+'type-proc-param' = 133
+'block-proc-param' = 134
+'var-read-proc-param' = 135
+'var-write-proc-param' = 136
+'labelled-command' = 137
+'select' = 138
+'channel-guards' = 139
+'channel-guard' = 140
+'select!' = 141
+'arbitrate' = 142
+'print' = 143
+'sink' = 144
+'procedure-alias-decl' = 145
+'procedure-param-alias-decl' = 146
+'typed-function-decl' = 147
+'untyped-function-decl' = 148
+'builtin-function-decl' = 149
+'shared-decl' = 150
+'if-decls' = 151
+'decl-guards' = 152
+'decl-guard' = 153
+'if-else-decls' = 154
+'print-decl' = 155
+'breeze-part' = 156
+'ports' = 157
+'attributes' = 158
+'channels' = 159
+'push' = 160
+'pull' = 161
+'components' = 162
+'component' = 163
+'undeclared-component' = 164
+'implements' = 165
+'parameters' = 166
+'parameter' = 167
+'type-parameter' = 168
+'call-contexts' = 169
+'call-context' = 170
+
+OPER
+
+
+RULE
+
+breeze_file : breeze_decls {
+		$$.breeze_file.Tree = Breeze_TreeRoot = ReverseTree ($1.breeze_decls.Tree);
+	;
+
+;
+} .
+breeze_decls : { $$.breeze_decls.Tree = mNullDecls (NoPosition);
+ ;
+} .
+breeze_decls : breeze_decls breeze_decl { $2.breeze_decl.Tree->Decl.next = $1.breeze_decls.Tree; $$.breeze_decls.Tree = $2.breeze_decl.Tree; ;
+ ;
+} .
+breeze_decl : '(' 'import' breeze_ident ')' { $$.breeze_decl.Tree = mImportDecl (NoPosition, NoTree,
+	mIdent (NoPosition, mNullIdents (NoPosition), $3.Scan.breeze_ident.ident));
+
+;
+} .
+breeze_decl : '(' 'file' breeze_literal breeze_ident ')' { $$.breeze_decl.Tree = mFileDecl (NoPosition, NoTree,
+	mIdent (NoPosition, mNullIdents (NoPosition), $4.Scan.breeze_ident.ident));
+
+;
+} .
+breeze_decl : '(' 'constant' breeze_ident breeze_literal breeze_type ')' { $$.breeze_decl.Tree = mConstantDecl (NoPosition, NoTree,
+	$3.Scan.breeze_ident.ident, mCoercedExpr (mAsExpr (NoPosition, mLiteralExpr (NoPosition, $4.Scan.breeze_literal.value),
+	$5.breeze_type.Tree)), $5.breeze_type.Tree);
+
+;
+} .
+breeze_decl : '(' 'implicant' breeze_ident breeze_literal breeze_literal breeze_type ')' { $$.breeze_decl.Tree = mConstantDecl (NoPosition, NoTree,
+	$3.Scan.breeze_ident.ident, mCoercedExpr (mAsExpr (NoPosition, mImplicantExpr (NoPosition,
+	NewImplicant ($4.Scan.breeze_literal.value, $5.Scan.breeze_literal.value)), $6.breeze_type.Tree)), $6.breeze_type.Tree);
+
+;
+} .
+breeze_decl : '(' 'type' breeze_ident breeze_type ')' { $$.breeze_decl.Tree = mTypeDecl (NoPosition, NoTree, $3.Scan.breeze_ident.ident, $4.breeze_type.Tree);
+ ;
+} .
+breeze_decl : '(' 'balsa' decl ')' { $$.breeze_decl.Tree  =  $3.decl.Tree;
+ ;
+} .
+breeze_decl : '(' 'breeze-part' breeze_ident '(' 'ports' part_ports ')' '(' 'attributes' breeze_options ')' '(' 'channels' part_channels ')' '(' 'components' part_components ')' part_optional_callcontexts ')' {
+		unsigned channelCount;
+		GList *callcontexts = $20.part_optional_callcontexts.callcontexts;
+		CallContext_MultipleTranslateWires ($14.part_channels.channels, callcontexts);
+		PtrWireArray channels = ConvertWireListToArray ($14.part_channels.channels, &channelCount);
+		$$.breeze_decl.Tree = mPartDecl ($10.breeze_options.Position, NoTree, $3.Scan.breeze_ident.ident,
+			ReverseLispList ($10.breeze_options.list), ReverseTree ($6.part_ports.Tree),
+			channels, channelCount, $18.part_components.Tree, callcontexts);
+	;
+
+;
+} .
+breeze_type : '(' 'named-type' breeze_ident ')' { $$.breeze_type.Tree = mExistingType (NoPosition, $3.Scan.breeze_ident.ident);
+ ;
+} .
+breeze_type : '(' 'alias-type' breeze_ident ')' { $$.breeze_type.Tree = mExistingType (NoPosition, $3.Scan.breeze_ident.ident);
+ ;
+} .
+breeze_type : '(' 'numeric-type' boolean breeze_literal ')' { $$.breeze_type.Tree = mNumericType (NoPosition, $3.Scan.boolean.value,
+	mLiteralExpr (NoPosition, $4.Scan.breeze_literal.value));
+ ;
+} .
+breeze_type : '(' 'array-type' breeze_type breeze_literal breeze_literal ')' {
+		PtrMP_INT upperIndex = CopyMP_INT ($4.Scan.breeze_literal.value);
+		mpz_add (upperIndex, upperIndex, $5.Scan.breeze_literal.value);
+		mpz_sub_ui (upperIndex, upperIndex, 1);
+		$$.breeze_type.Tree = mArrayType (NoPosition, $3.breeze_type.Tree, mSpecifiedRange (NoPosition,
+			mLiteralExpr (NoPosition, $4.Scan.breeze_literal.value),
+			mLiteralExpr (NoPosition, upperIndex)));
+	;
+
+;
+} .
+breeze_type : '(' 'array-type' breeze_type breeze_literal breeze_literal breeze_type ')' {
+		PtrMP_INT upperIndex = CopyMP_INT ($4.Scan.breeze_literal.value);
+		mpz_add (upperIndex, upperIndex, $5.Scan.breeze_literal.value);
+		mpz_sub_ui (upperIndex, upperIndex, 1);
+		$$.breeze_type.Tree = mArrayType (NoPosition, $3.breeze_type.Tree, mSpecifiedRange (NoPosition,
+			mAsExpr (NoPosition, mLiteralExpr (NoPosition, $4.Scan.breeze_literal.value), $6.breeze_type.Tree),
+			mAsExpr (NoPosition, mLiteralExpr (NoPosition, upperIndex), $6.breeze_type.Tree)));
+	;
+
+;
+} .
+breeze_type : '(' 'record-type' breeze_literal breeze_record_elems ')' { $$.breeze_type.Tree = mRecordType (NoPosition, ReverseTree ($4.breeze_record_elems.Tree),
+	mNumericType (NoPosition, false, mLiteralExpr (NoPosition, $3.Scan.breeze_literal.value)));
+ ;
+} .
+breeze_type : '(' 'enumeration-type' boolean breeze_literal breeze_enum_elems ')' { $$.breeze_type.Tree = mEnumType (NoPosition, ReverseTree ($5.breeze_enum_elems.Tree),
+	mNumericType (NoPosition, $3.Scan.boolean.value, mLiteralExpr (NoPosition, $4.Scan.breeze_literal.value)));
+ ;
+} .
+breeze_type : '(' 'builtin-type' ')' { $$.breeze_type.Tree = mBuiltinType (NoPosition);
+ ;
+} .
+breeze_record_elems : { $$.breeze_record_elems.Tree = mNullRecordElems (NoPosition);
+ ;
+} .
+breeze_record_elems : breeze_record_elems '(' breeze_ident breeze_type ')' {
+	$$.breeze_record_elems.Tree = mRecordElem (NoPosition, $1.breeze_record_elems.Tree, mIdent (NoPosition, mNullIdents (NoPosition),
+		$3.Scan.breeze_ident.ident), $4.breeze_type.Tree);
+
+;
+} .
+breeze_enum_elems : { $$.breeze_enum_elems.Tree = mNullEnumElems (NoPosition);
+ ;
+} .
+breeze_enum_elems : breeze_enum_elems '(' breeze_ident breeze_literal ')' { $$.breeze_enum_elems.Tree = mValuedEnumElem (NoPosition, $1.breeze_enum_elems.Tree,
+	$3.Scan.breeze_ident.ident, mCoercedExpr (mLiteralExpr (NoPosition, $4.Scan.breeze_literal.value)));
+
+;
+} .
+part_component : '(' 'component' breeze_ident '(' comp_parameters ')' '(' channel_numbers ')' breeze_options ')' {
+		Ptrconstchar name = PeekString ($3.Scan.breeze_ident.ident);
+
+		$$.part_component.Tree = mNormalComp ($10.breeze_options.Position, NoTree, $3.Scan.breeze_ident.ident, (*name == '$') ,
+			ReverseTree ($5.comp_parameters.Tree), ReverseintList ($8.channel_numbers.channelNos),
+			ReverseLispList ($10.breeze_options.list));
+	;
+
+;
+} .
+part_component : '(' 'undeclared-component' breeze_ident '(' comp_parameters ')' '(' channel_numbers ')' '(' 'implements' breeze_ident breeze_ident ')' '(' 'parameters' breeze_param_decls ')' '(' 'ports' part_ports ')' breeze_options ')' {
+		$$.part_component.Tree = mUndeclaredComp ($23.breeze_options.Position, NoTree, $3.Scan.breeze_ident.ident,
+			ReverseTree ($5.comp_parameters.Tree), ReverseintList ($8.channel_numbers.channelNos),
+			$12.Scan.breeze_ident.ident, $13.Scan.breeze_ident.ident,
+			ReverseTree ($17.breeze_param_decls.Tree),
+			ReverseTree ($21.part_ports.Tree),
+			ReverseLispList ($23.breeze_options.list)
+		);
+	;
+
+;
+} .
+breeze_param_decls : { $$.breeze_param_decls.Tree = mNullBreezeParameters (NoPosition);
+ ;
+} .
+breeze_param_decls : breeze_param_decls breeze_param_decl { $2.breeze_param_decl.Tree->BreezeParameter.next = $1.breeze_param_decls.Tree;
+	$$.breeze_param_decls.Tree = $2.breeze_param_decl.Tree; ;
+ ;
+} .
+breeze_param_decl : '(' 'parameter' breeze_ident breeze_type ')' { $$.breeze_param_decl.Tree = mBreezeExprParameter (NoPosition, NoTree, $3.Scan.breeze_ident.ident, $4.breeze_type.Tree);
+ ;
+} .
+breeze_param_decl : '(' 'type-parameter' breeze_ident ')' { $$.breeze_param_decl.Tree = mBreezeTypeParameter (NoPosition, NoTree, $3.Scan.breeze_ident.ident);
+ ;
+} .
+comp_parameter : breeze_literal { $$.comp_parameter.Tree = mNumberParameter ($1.Scan.Position, NoTree, $1.Scan.breeze_literal.value);
+ ;
+} .
+comp_parameter : breeze_ident { $$.comp_parameter.Tree = mStringParameter ($1.Scan.Position, NoTree, $1.Scan.breeze_ident.ident);
+ ;
+} .
+comp_parameter : breeze_type { $$.comp_parameter.Tree = mTypeParameter ($1.breeze_type.Tree->AType.position, NoTree, $1.breeze_type.Tree);
+ ;
+} .
+part_port : '(' 'sync-port' breeze_ident port_sense breeze_options ')' { $$.part_port.Tree = mSyncPort ($5.breeze_options.Position, NoTree, mIdent (NoPosition, mNullIdents (NoPosition),
+	$3.Scan.breeze_ident.ident), $4.port_sense.portSense, ReverseLispList ($5.breeze_options.list));
+ ;
+} .
+part_port : '(' 'port' breeze_ident port_sense port_direction breeze_type breeze_options ')' { $$.part_port.Tree = mChannelPort ($7.breeze_options.Position, NoTree, mIdent (NoPosition, mNullIdents (NoPosition),
+	$3.Scan.breeze_ident.ident), $6.breeze_type.Tree, $4.port_sense.portSense, $5.port_direction.isOutput,
+	ReverseLispList ($7.breeze_options.list));
+ ;
+} .
+part_port : '(' 'arrayed-port' breeze_ident port_sense port_direction breeze_type breeze_literal breeze_literal breeze_type breeze_options ')' {
+		PtrMP_INT upperIndex = CopyMP_INT ($7.Scan.breeze_literal.value);
+		mpz_add (upperIndex, upperIndex, $8.Scan.breeze_literal.value);
+		mpz_sub_ui (upperIndex, upperIndex, 1);
+
+		$$.part_port.Tree = mChannelPortArray ($10.breeze_options.Position, NoTree, mIdent (NoPosition, mNullIdents (NoPosition), $3.Scan.breeze_ident.ident),
+			$6.breeze_type.Tree, $4.port_sense.portSense, $5.port_direction.isOutput,
+			mSpecifiedRange (NoPosition,
+				mAsExpr (NoPosition, mLiteralExpr (NoPosition, $7.Scan.breeze_literal.value), $9.breeze_type.Tree),
+				mAsExpr (NoPosition, mLiteralExpr (NoPosition, upperIndex), $9.breeze_type.Tree)),
+			ReverseLispList ($10.breeze_options.list));
+	;
+
+;
+} .
+part_port : '(' 'arrayed-sync-port' breeze_ident port_sense breeze_literal breeze_literal breeze_type breeze_options ')' {
+		PtrMP_INT upperIndex = CopyMP_INT ($5.Scan.breeze_literal.value);
+		mpz_add (upperIndex, upperIndex, $6.Scan.breeze_literal.value);
+		mpz_sub_ui (upperIndex, upperIndex, 1);
+
+		$$.part_port.Tree = mSyncPortArray ($8.breeze_options.Position, NoTree, mIdent (NoPosition, mNullIdents (NoPosition), $3.Scan.breeze_ident.ident),
+			$4.port_sense.portSense,
+			mSpecifiedRange (NoPosition,
+				mAsExpr (NoPosition, mLiteralExpr (NoPosition, $5.Scan.breeze_literal.value), $7.breeze_type.Tree),
+				mAsExpr (NoPosition, mLiteralExpr (NoPosition, upperIndex), $7.breeze_type.Tree)),
+			ReverseLispList ($8.breeze_options.list));
+	;
+
+;
+} .
+part_channel_sense : 'push' { $$.part_channel_sense.isPull = false;
+ ;
+} .
+part_channel_sense : 'pull' { $$.part_channel_sense.isPull = true;
+ ;
+} .
+channel_numbers : { $$.channel_numbers.channelNos = NULL;
+ ;
+} .
+channel_numbers : channel_numbers breeze_literal { $$.channel_numbers.channelNos = NewintList (mpz_get_ui ($2.Scan.breeze_literal.value), $2.Scan.Position, $1.channel_numbers.channelNos);
+ ;
+} .
+channel_numbers : channel_numbers '(' channel_numbers ')' { $$.channel_numbers.channelNos = AppendintLists ($3.channel_numbers.channelNos, $1.channel_numbers.channelNos);
+ ;
+} .
+part_components : { $$.part_components.Tree = mNullComps (NoPosition);
+ ;
+} .
+part_components : part_components part_component { $2.part_component.Tree->Comp.next = $1.part_components.Tree; $$.part_components.Tree = $2.part_component.Tree; ;
+ ;
+} .
+part_optional_callcontexts : { $$.part_optional_callcontexts.callcontexts = NULL;
+ ;
+} .
+part_optional_callcontexts : '(' 'call-contexts' part_callcontexts ')' { $$.part_optional_callcontexts.callcontexts  =  $3.part_callcontexts.callcontexts;
+ ;
+} .
+part_callcontexts : { $$.part_callcontexts.callcontexts = NULL;
+ ;
+} .
+part_callcontexts : part_callcontexts '(' 'call-context' breeze_literal breeze_ident position position breeze_literal lisp_tokens ')' {
+		    PtrCallContext callcontext = CallContext_Add ($5.Scan.breeze_ident.ident, $6.position.Position, $7.position.Position, NULL);
+		    callcontext->data = (PtrCallContext) mpz_get_ui ($4.Scan.breeze_literal.value);
+		    $$.part_callcontexts.callcontexts = g_list_prepend ($1.part_callcontexts.callcontexts, callcontext);
+	;
+
+;
+} .
+part_ports : part_port { $1.part_port.Tree->FormalPort.next = mNullFormalPorts (NoPosition); $$.part_ports.Tree = $1.part_port.Tree; ;
+ ;
+} .
+part_ports : part_ports part_port { $2.part_port.Tree->FormalPort.next = $1.part_ports.Tree; $$.part_ports.Tree = $2.part_port.Tree; ;
+ ;
+} .
+part_channels : { $$.part_channels.channels = NULL;
+ ;
+} .
+part_channels : part_channels '(' part_channel_sense breeze_literal breeze_options ')' {
+		Lisp nameNode;
+		PtrWire wire = NewWire (0 , mpz_get_ui ($4.Scan.breeze_literal.value),
+			NoType, 
+			0, $3.part_channel_sense.isPull, $5.breeze_options.Position);
+		wire->type.tree = $5.breeze_options.type;
+
+		wire->options = ReverseLispList ($5.breeze_options.list);
+		if (RemoveHeadedLispListElement (&wire->options, nameIdent, &nameNode))
+			wire->ident = CAR (CDR (nameNode.value.sublist)).value.string;
+		$$.part_channels.channels = NewWireList (wire, $1.part_channels.channels);
+	;
+
+;
+} .
+part_channels : part_channels '(' 'sync' breeze_options ')' {
+		Lisp nameNode;
+		PtrWire wire = NewSyncWire (0 , $4.breeze_options.Position);
+		wire->type.tree = NoTree;
+
+		wire->options = ReverseLispList ($4.breeze_options.list);
+		if (RemoveHeadedLispListElement (&wire->options, nameIdent, &nameNode))
+			wire->ident = CAR (CDR (nameNode.value.sublist)).value.string;
+		$$.part_channels.channels = NewWireList (wire, $1.part_channels.channels);
+	;
+
+;
+} .
+comp_parameters : { $$.comp_parameters.Tree = mNullParameters (NoPosition);
+ ;
+} .
+comp_parameters : comp_parameters comp_parameter { $2.comp_parameter.Tree->Parameter.next = $1.comp_parameters.Tree; $$.comp_parameters.Tree = $2.comp_parameter.Tree; ;
+ ;
+} .
+breeze_options : { $$.breeze_options.Position = NoPosition;
+ $$.breeze_options.type = NULL;
+ $$.breeze_options.list = NULL;
+ ;
+} .
+breeze_options : breeze_options breeze_option {
+	$$.breeze_options.Position = ($2.breeze_option.Position.Line != 0 ? $2.breeze_option.Position : $1.breeze_options.Position);
+
+	$$.breeze_options.list = ($2.breeze_option.tokens
+		? NewLispList (NewLispSublist ($2.breeze_option.tokens), $1.breeze_options.list)
+		: $1.breeze_options.list
+	);
+
+	$$.breeze_options.type = ($2.breeze_option.type == NoTree ? $2.breeze_option.type : $1.breeze_options.type);
+
+;
+} .
+breeze_option : position {
+	$$.breeze_option.Position  =  $1.position.Position;
+
+	$$.breeze_option.type = NoTree;
+
+	$$.breeze_option.tokens = NULL;
+
+;
+} .
+breeze_option : '(' 'type' breeze_type ')' {
+	$$.breeze_option.Position = NoPosition;
+
+	$$.breeze_option.type  =  $3.breeze_type.Tree;
+
+	$$.breeze_option.tokens = NULL;
+
+;
+} .
+breeze_option : '(' breeze_keyword lisp_tokens ')' {
+	$$.breeze_option.Position = NoPosition;
+
+	$$.breeze_option.type = NoTree;
+
+	$$.breeze_option.tokens = NewLispList (NewLispSymbol ($2.Scan.breeze_keyword.keyword), ReverseLispList ($3.lisp_tokens.tokens));
+
+;
+} .
+lisp_tokens : { $$.lisp_tokens.tokens = NULL;
+ ;
+} .
+lisp_tokens : lisp_tokens lisp_token { $$.lisp_tokens.tokens = NewLispList ($2.lisp_token.token, $1.lisp_tokens.tokens);
+ ;
+} .
+lisp_token : breeze_keyword { $$.lisp_token.token = NewLispSymbol ($1.Scan.breeze_keyword.keyword);
+ ;
+} .
+lisp_token : breeze_ident { $$.lisp_token.token = NewLispString ($1.Scan.breeze_ident.ident);
+ ;
+} .
+lisp_token : boolean { $$.lisp_token.token = NewLispBoolean ($1.Scan.boolean.value);
+ ;
+} .
+lisp_token : breeze_literal { $$.lisp_token.token = NewLispNumber ($1.Scan.breeze_literal.value);
+ ;
+} .
+lisp_token : '(' lisp_tokens ')' { $$.lisp_token.token = NewLispSublist (ReverseLispList ($2.lisp_tokens.tokens));
+ ;
+} .
+position : '(' 'at' ')' { $$.position.Position = NoPosition;
+ ;
+} .
+position : '(' 'at' breeze_literal breeze_literal breeze_ident breeze_literal ')' {
+		$$.position.Position.Line = mpz_get_ui ($3.Scan.breeze_literal.value);
+		$$.position.Position.Column = mpz_get_ui ($4.Scan.breeze_literal.value);
+		$$.position.Position.File = NewIdentList ($5.Scan.breeze_ident.ident, NoPosition, NULL);
+		$$.position.Position.CallContext = (CallContext *) mpz_get_ui ($6.Scan.breeze_literal.value);
+	;
+
+;
+} .
+position : '(' 'at' breeze_literal breeze_literal ')' {
+		$$.position.Position.Line = mpz_get_ui ($3.Scan.breeze_literal.value);
+		$$.position.Position.Column = mpz_get_ui ($4.Scan.breeze_literal.value);
+		$$.position.Position.File = NULL;
+		$$.position.Position.CallContext = 0;
+	;
+
+;
+} .
+decl : '(' 'type-decl' position breeze_ident type ')' { $$.decl.Tree = mTypeDecl ($3.position.Position, NoTree, $4.Scan.breeze_ident.ident, $5.type.Tree);
+ ;
+} .
+decl : '(' 'typed-constant-decl' position breeze_ident expr type ')' { $$.decl.Tree = mConstantDecl ($3.position.Position, NoTree,
+	$4.Scan.breeze_ident.ident, mCoercedExpr ($5.expr.Tree), $6.type.Tree);
+ ;
+} .
+decl : '(' 'untyped-constant-decl' position breeze_ident expr ')' { $$.decl.Tree = mConstantDecl ($3.position.Position, NoTree,
+	$4.Scan.breeze_ident.ident, mCoercedExpr ($5.expr.Tree), mNullType (NoPosition));
+ ;
+} .
+decl : '(' 'variable-decl' position idents type ')' { $$.decl.Tree = mVariableDecl ($3.position.Position, NoTree,
+	ReverseTree ($4.idents.Tree), $5.type.Tree);
+ ;
+} .
+decl : '(' 'init-variable-decl' position idents expr type ')' { $$.decl.Tree = mInitVariableDecl ($3.position.Position, NoTree,
+	ReverseTree ($4.idents.Tree), mCoercedExpr ($5.expr.Tree), $6.type.Tree);
+ ;
+} .
+decl : '(' 'channel-decl' position idents type channel_options ')' { $$.decl.Tree = mChannelDecl ($3.position.Position, NoTree,
+	ReverseTree ($4.idents.Tree), $5.type.Tree, $6.channel_options.multicast);
+ ;
+} .
+decl : '(' 'arrayed-channel-decl' position idents range type channel_options ')' { $$.decl.Tree = mChannelArrayDecl ($3.position.Position, NoTree,
+	ReverseTree ($4.idents.Tree), $6.type.Tree, $5.range.Tree, $7.channel_options.multicast);
+ ;
+} .
+decl : '(' 'sync-decl' position idents channel_options ')' { $$.decl.Tree = mSyncDecl ($3.position.Position, NoTree, ReverseTree ($4.idents.Tree), $5.channel_options.multicast);
+ ;
+} .
+decl : '(' 'arrayed-sync-decl' position idents range channel_options ')' { $$.decl.Tree = mSyncArrayDecl ($3.position.Position, NoTree, ReverseTree ($4.idents.Tree),
+	$5.range.Tree, $6.channel_options.multicast);
+ ;
+} .
+decl : '(' 'procedure-decl' position breeze_ident formal_ports block ')' { $$.decl.Tree = mProcedureDecl ($3.position.Position, NoTree, $4.Scan.breeze_ident.ident,
+	ReverseTree ($5.formal_ports.Tree), $6.block.Tree);
+ ;
+} .
+decl : '(' 'procedure-alias-decl' position breeze_ident breeze_ident ')' { $$.decl.Tree = mProcAliasDecl ($3.position.Position, NoTree,
+	$4.Scan.breeze_ident.ident, $5.Scan.breeze_ident.ident, mNullProcParams ($3.position.Position));
+ ;
+} .
+decl : '(' 'procedure-param-alias-decl' position breeze_ident breeze_ident procedure_params ')' { $$.decl.Tree = mProcAliasDecl ($3.position.Position, NoTree,
+	$4.Scan.breeze_ident.ident, $5.Scan.breeze_ident.ident, ReverseTree ($6.procedure_params.Tree));
+ ;
+} .
+decl : '(' 'typed-function-decl' position breeze_ident formal_ports expr type ')' { $$.decl.Tree = mFunctionDecl ($3.position.Position, NoTree, $4.Scan.breeze_ident.ident,
+	ReverseTree ($5.formal_ports.Tree), mCoercedExpr ($6.expr.Tree), $7.type.Tree);
+ ;
+} .
+decl : '(' 'untyped-function-decl' position breeze_ident formal_ports expr ')' { $$.decl.Tree = mFunctionDecl ($3.position.Position, NoTree, $4.Scan.breeze_ident.ident,
+	ReverseTree ($5.formal_ports.Tree), mCoercedExpr ($6.expr.Tree), mNullType (NoPosition));
+ ;
+} .
+decl : '(' 'builtin-function-decl' position breeze_ident formal_ports type ')' { $$.decl.Tree = mBuiltinFunctionDecl ($3.position.Position, NoTree, $4.Scan.breeze_ident.ident,
+	ReverseTree ($5.formal_ports.Tree), $6.type.Tree);
+ ;
+} .
+decl : '(' 'shared-decl' position breeze_ident block ')' { $$.decl.Tree = mSharedDecl ($3.position.Position, NoTree, $4.Scan.breeze_ident.ident, $5.block.Tree);
+} .
+decl : '(' 'if-decls' position decl_guards ')' { $$.decl.Tree = mIfDecls ($3.position.Position, NoTree, ReverseTree ($4.decl_guards.Tree));
+ ;
+} .
+decl : '(' 'if-else-decls' position decl_guards decls ')' { $$.decl.Tree = mIfElseDecls ($3.position.Position, NoTree, ReverseTree ($4.decl_guards.Tree), ReverseTree ($5.decls.Tree));
+ ;
+} .
+decl : '(' 'print-decl' position expr exprs ')' { $$.decl.Tree = mPrintDecl ($3.position.Position, NoTree, $4.expr.Tree, ReverseTree ($5.exprs.Tree));
+ ;
+} .
+channel_options : { $$.channel_options.multicast = false;
+ ;
+} .
+channel_options : 'multicast' { $$.channel_options.multicast = true;
+ ;
+} .
+range : '(' 'range1' position expr ')' { $$.range.Tree = mSpecifiedRange ($3.position.Position, mNullExpr ($3.position.Position), $4.expr.Tree);
+ ;
+} .
+range : '(' 'range2' position expr expr ')' { $$.range.Tree = mSpecifiedRange ($3.position.Position, $4.expr.Tree, $5.expr.Tree);
+ ;
+} .
+range : '(' 'type-range' position type ')' { $$.range.Tree = mTypeRange ($3.position.Position, $4.type.Tree);
+ ;
+} .
+type : '(' 'existing-type' position breeze_ident ')' { $$.type.Tree = mExistingType ($4.Scan.Position, $4.Scan.breeze_ident.ident);
+ ;
+} .
+type : '(' 'numeric-type' position boolean expr ')' { $$.type.Tree = mNumericType ($3.position.Position, $4.Scan.boolean.value, $5.expr.Tree);
+ ;
+} .
+type : '(' 'array-type' position range type ')' { $$.type.Tree = mArrayType ($3.position.Position, $5.type.Tree, $4.range.Tree);
+ ;
+} .
+type : '(' 'new-type' position type ')' { $$.type.Tree = mNewType ($3.position.Position, $4.type.Tree);
+ ;
+} .
+type : '(' 'record-type' position record_elems ')' { $$.type.Tree = mRecordType ($3.position.Position, ReverseTree ($4.record_elems.Tree), mNullType ($3.position.Position));
+ ;
+} .
+type : '(' 'bounded-record-type' position record_elems type ')' { $$.type.Tree = mRecordType ($3.position.Position, ReverseTree ($4.record_elems.Tree), $5.type.Tree);
+ ;
+} .
+type : '(' 'enumeration-type' position enum_elems ')' { $$.type.Tree = mEnumType ($3.position.Position, ReverseTree ($4.enum_elems.Tree), mNullType ($3.position.Position));
+ ;
+} .
+type : '(' 'bounded-enumeration-type' position enum_elems type ')' { $$.type.Tree = mEnumType ($3.position.Position, ReverseTree ($4.enum_elems.Tree), $5.type.Tree);
+ ;
+} .
+type : '(' 'builtin-type' position ')' { $$.type.Tree = mBuiltinType ($3.position.Position);
+ ;
+} .
+val_decls : '(' 'val-decls' position val_decls_body ')' { $$.val_decls.Tree  =  $4.val_decls_body.Tree;
+ ;
+} .
+val_decls_body : { $$.val_decls_body.Tree = mNullValDecls (NoPosition);
+ ;
+} .
+val_decls_body : val_decls_body val_decl { $2.val_decl.Tree->ValDecl.next = $1.val_decls_body.Tree; $$.val_decls_body.Tree = $2.val_decl.Tree; ;
+ ;
+} .
+val_decl : '(' 'val-decl' position breeze_ident expr ')' { $$.val_decl.Tree = mValDecl ($3.position.Position, NoTree, $4.Scan.breeze_ident.ident, $5.expr.Tree);
+ ;
+} .
+expr : '(' 'literal-expr' position breeze_literal ')' { $$.expr.Tree = mLiteralExpr ($3.position.Position, $4.Scan.breeze_literal.value);
+ ;
+} .
+expr : '(' 'ident-expr' position breeze_ident ')' { $$.expr.Tree = mIdentExpr ($3.position.Position, $4.Scan.breeze_ident.ident);
+ ;
+} .
+expr : '(' 'string-expr' position breeze_ident ')' { $$.expr.Tree = mStringExpr ($3.position.Position, PeekString ($4.Scan.breeze_ident.ident));
+ ;
+} .
+expr : '(' 'dont-care-expr' position ')' { $$.expr.Tree = mDontCareExpr ($3.position.Position);
+ ;
+} .
+expr : '(' 'implicant-expr' position breeze_literal breeze_literal ')' { $$.expr.Tree = mImplicantExpr ($3.position.Position, NewImplicant ($4.Scan.breeze_literal.value, $5.Scan.breeze_literal.value));
+ ;
+} .
+expr : '(' 'named-aggr-cons-expr' position breeze_ident exprs ')' { $$.expr.Tree = mAggregateConsExpr ($3.position.Position, $4.Scan.breeze_ident.ident, ReverseTree ($5.exprs.Tree));
+ ;
+} .
+expr : '(' 'aggr-cons-expr' position exprs ')' { $$.expr.Tree = mAggregateConsExpr ($3.position.Position, NoIdent, ReverseTree ($4.exprs.Tree));
+ ;
+} .
+expr : '(' 'enum-elem-expr' position breeze_ident breeze_ident ')' { $$.expr.Tree = mNamedEnumElemExpr ($3.position.Position, $4.Scan.breeze_ident.ident, $5.Scan.breeze_ident.ident);
+ ;
+} .
+expr : '(' 'unary-expr' position breeze_ident expr ')' { $$.expr.Tree = mUnaryExpr ($3.position.Position, FindUnaryOperator ($4.Scan.breeze_ident.ident, false),
+	$5.expr.Tree);
+ ;
+} .
+expr : '(' 'sizeof-expr' position breeze_ident ')' { $$.expr.Tree = mSizeofExpr ($3.position.Position, $4.Scan.breeze_ident.ident);
+ ;
+} .
+expr : '(' 'binary-expr' position breeze_ident expr expr ')' { $$.expr.Tree = mBinaryExpr ($3.position.Position, FindBinaryOperator ($4.Scan.breeze_ident.ident, false), $5.expr.Tree, $6.expr.Tree);
+
+;
+} .
+expr : '(' 'record-elem-extract-expr' position expr breeze_ident ')' { $$.expr.Tree = mRecordElemExtractExpr ($3.position.Position, $4.expr.Tree, $5.Scan.breeze_ident.ident);
+ ;
+} .
+expr : '(' 'array-extract-expr' position expr expr ')' { $$.expr.Tree = mArrayExtractExpr ($3.position.Position, $4.expr.Tree, mCoercedExpr($5.expr.Tree));
+ ;
+} .
+expr : '(' 'array-slice-expr' position expr range ')' { $$.expr.Tree = mArraySliceExpr ($3.position.Position, $4.expr.Tree, $5.range.Tree);
+ ;
+} .
+expr : '(' 'as-expr' position expr type ')' { $$.expr.Tree = mAsExpr ($3.position.Position, $4.expr.Tree, $5.type.Tree);
+ ;
+} .
+expr : '(' 'bit-array-cast-expr' position expr ')' { $$.expr.Tree = mBitArrayCastExpr ($3.position.Position, $4.expr.Tree);
+ ;
+} .
+expr : '(' 'let-expr' position val_decls expr ')' { $$.expr.Tree = mLetExpr ($3.position.Position, ReverseTree ($4.val_decls.Tree), $5.expr.Tree);
+ ;
+} .
+expr : '(' 'function-call-expr' position breeze_ident function_params ')' { $$.expr.Tree = mFunctionCallExpr ($3.position.Position, $4.Scan.breeze_ident.ident, ReverseTree ($5.function_params.Tree));
+ ;
+} .
+expr : '(' 'array-append-expr' position expr expr ')' { $$.expr.Tree = mArrayAppendExpr ($3.position.Position, $4.expr.Tree, $5.expr.Tree);
+ ;
+} .
+port_sense : 'default' { $$.port_sense.portSense = DefaultPortSense;
+  ;
+} .
+port_sense : 'active' { $$.port_sense.portSense = ActivePortSense;
+ ;
+} .
+port_sense : 'passive' { $$.port_sense.portSense = PassivePortSense;
+ ;
+} .
+port_direction : 'input' { $$.port_direction.isOutput = false;
+ ;
+} .
+port_direction : 'output' { $$.port_direction.isOutput = true;
+ ;
+} .
+port : '(' 'value-port' position idents type ')' { $$.port.Tree = mValuePort ($3.position.Position, NoTree, ReverseTree ($4.idents.Tree), $5.type.Tree);
+ ;
+} .
+port : '(' 'port' position port_sense port_direction idents type ')' { $$.port.Tree = mChannelPort ($3.position.Position, NoTree, ReverseTree ($6.idents.Tree), $7.type.Tree,
+	$4.port_sense.portSense, $5.port_direction.isOutput, NULL);
+ ;
+} .
+port : '(' 'arrayed-port' position port_sense port_direction idents range type ')' { $$.port.Tree = mChannelPortArray ($3.position.Position, NoTree, ReverseTree ($6.idents.Tree), $8.type.Tree,
+	$4.port_sense.portSense, $5.port_direction.isOutput, $7.range.Tree, NULL);
+ ;
+} .
+port : '(' 'sync-port' position port_sense idents ')' { $$.port.Tree = mSyncPort ($3.position.Position, NoTree, ReverseTree ($5.idents.Tree), $4.port_sense.portSense,
+	NULL);
+ ;
+} .
+port : '(' 'arrayed-sync-port' position port_sense idents range ')' { $$.port.Tree = mSyncPortArray ($3.position.Position, NoTree, ReverseTree ($5.idents.Tree),
+	$4.port_sense.portSense, $6.range.Tree, NULL);
+ ;
+} .
+port : '(' 'param-port' position idents type ')' { $$.port.Tree = mParamPort ($3.position.Position, NoTree, ReverseTree ($4.idents.Tree), $5.type.Tree);
+ ;
+} .
+port : '(' 'type-param-port' position idents ')' { $$.port.Tree = mTypeParamPort ($3.position.Position, NoTree, ReverseTree ($4.idents.Tree));
+ ;
+} .
+port : '(' 'if-ports' position port_guards ')' { $$.port.Tree = mIfPorts ($3.position.Position, NoTree, ReverseTree ($4.port_guards.Tree));
+ ;
+} .
+port : '(' 'if-else-ports' position port_guards formal_ports ')' { $$.port.Tree = mIfElsePorts ($3.position.Position, NoTree, ReverseTree ($4.port_guards.Tree),
+	ReverseTree ($5.formal_ports.Tree));
+ ;
+} .
+block : '(' 'block' position decls command ')' { $$.block.Tree = mBlock ($3.position.Position, ReverseTree ($4.decls.Tree), $5.command.Tree);
+ ;
+} .
+command : '(' 'continue' position ')' { $$.command.Tree = mContinueCommand ($3.position.Position);
+ ;
+} .
+command : '(' 'halt' position ')' { $$.command.Tree = mHaltCommand ($3.position.Position);
+ ;
+} .
+command : '(' 'input' position lvalue lvalue ')' { $$.command.Tree = mInputCommand ($3.position.Position, $4.lvalue.Tree, $5.lvalue.Tree);
+ ;
+} .
+command : '(' 'input-enclose' position lvalues command ')' { $$.command.Tree = mInputEncloseCommand ($3.position.Position, $4.lvalues.Tree, $5.command.Tree);
+ ;
+} .
+command : '(' 'input-enclose-bang' position lvalues command ')' { $$.command.Tree = mInputEncloseBangCommand ($3.position.Position, $4.lvalues.Tree, $5.command.Tree);
+ ;
+} .
+command : '(' 'output' position lvalue expr ')' { $$.command.Tree = mOutputCommand ($3.position.Position, $4.lvalue.Tree, mCoercedExpr ($5.expr.Tree));
+ ;
+} .
+command : '(' 'sync' position lvalue ')' { $$.command.Tree = mSyncCommand ($3.position.Position, $4.lvalue.Tree);
+ ;
+} .
+command : '(' 'assign' position lvalue expr ')' { $$.command.Tree = mAssignmentCommand ($3.position.Position, $4.lvalue.Tree, mCoercedExpr ($5.expr.Tree));
+ ;
+} .
+command : '(' 'block-command' position block ')' { $$.command.Tree = mBlockCommand ($3.position.Position, $4.block.Tree);
+ ;
+} .
+command : '(' 'sequential' position command command ')' { $$.command.Tree = mSequentialCommand ($3.position.Position, $4.command.Tree, $5.command.Tree);
+ ;
+} .
+command : '(' 'parallel' position command command ')' { $$.command.Tree = mParallelCommand ($3.position.Position, false, $4.command.Tree, $5.command.Tree);
+ ;
+} .
+command : '(' 'permissive-parallel' position command command ')' { $$.command.Tree = mParallelCommand ($3.position.Position, true, $4.command.Tree, $5.command.Tree);
+ ;
+} .
+command : '(' 'loop' position command ')' { $$.command.Tree = mLoopCommand ($3.position.Position, $4.command.Tree);
+ ;
+} .
+command : '(' 'while-guards' position guards ')' { $$.command.Tree = mWhileGuardsCommand ($3.position.Position, ReverseTree ($4.guards.Tree));
+ ;
+} .
+command : '(' 'while-guards-also' position guards command ')' { $$.command.Tree = mWhileGuardsAlsoCommand ($3.position.Position, ReverseTree ($4.guards.Tree), $5.command.Tree);
+ ;
+} .
+command : '(' 'command-while-expr' position command expr ')' { $$.command.Tree = mCommandWhileExprCommand ($3.position.Position, $4.command.Tree, $5.expr.Tree);
+ ;
+} .
+command : '(' 'command-while-guards' position command guards ')' { $$.command.Tree = mCommandWhileGuardsCommand ($3.position.Position, $4.command.Tree, ReverseTree ($5.guards.Tree));
+ ;
+} .
+command : '(' 'command-while-guards-also' position command guards command ')' { $$.command.Tree = mCommandWhileGuardsAlsoCommand ($3.position.Position, $4.command.Tree, ReverseTree ($5.guards.Tree),
+	$6.command.Tree);
+ ;
+} .
+command : '(' 'if' position guards ')' { $$.command.Tree = mIfCommand ($3.position.Position, ReverseTree ($4.guards.Tree));
+ ;
+} .
+command : '(' 'if-else' position guards command ')' { $$.command.Tree = mIfElseCommand ($3.position.Position, ReverseTree ($4.guards.Tree), $5.command.Tree);
+ ;
+} .
+command : '(' 'case' position expr case_guards ')' { $$.command.Tree = mCaseCommand ($3.position.Position, $4.expr.Tree,
+	ReverseTree ($5.case_guards.Tree), mNullCommand ($3.position.Position));
+ ;
+} .
+command : '(' 'case-else' position expr case_guards command ')' { $$.command.Tree = mCaseCommand ($3.position.Position, $4.expr.Tree, ReverseTree ($5.case_guards.Tree), $6.command.Tree);
+ ;
+} .
+command : '(' 'for' position par_seq breeze_ident range command ')' { $$.command.Tree = mForCommand ($3.position.Position, $4.par_seq.isParallel, $4.par_seq.isPermissive, $5.Scan.breeze_ident.ident,
+	$6.range.Tree, $7.command.Tree);
+ ;
+} .
+command : '(' 'procedure-call' position breeze_ident procedure_params ')' { $$.command.Tree = mProcedureCallCommonCommand ($3.position.Position, $4.Scan.breeze_ident.ident, ReverseTree ($5.procedure_params.Tree));
+ ;
+} .
+command : '(' 'labelled-command' position breeze_ident command ')' { $$.command.Tree  =  $5.command.Tree;
+ ;
+} .
+command : '(' 'select' position channel_guards ')' { $$.command.Tree = mSelectCommand ($3.position.Position, $4.channel_guards.Tree);
+ ;
+} .
+command : '(' 'select!' position channel_guards ')' { $$.command.Tree = mSelectBangCommand ($3.position.Position, $4.channel_guards.Tree);
+ ;
+} .
+command : '(' 'arbitrate' position channel_guards ')' { $$.command.Tree = mArbitrateCommand ($3.position.Position, $4.channel_guards.Tree);
+ ;
+} .
+command : '(' 'print' position expr exprs ')' { $$.command.Tree = mPrintCommand ($3.position.Position, $4.expr.Tree, ReverseTree ($5.exprs.Tree));
+ ;
+} .
+command : '(' 'sink' position expr ')' { $$.command.Tree = mSinkCommand ($3.position.Position, $4.expr.Tree);
+ ;
+} .
+procedure_params : '(' 'procedure-params' position procedure_params_body ')' { $$.procedure_params.Tree  =  $4.procedure_params_body.Tree;
+ ;
+} .
+procedure_params_body : { $$.procedure_params_body.Tree = mNullProcParams (NoPosition);
+ ;
+} .
+procedure_params_body : procedure_params_body procedure_param { $2.procedure_param.Tree->ProcParam.next = $1.procedure_params_body.Tree;
+	$$.procedure_params_body.Tree = $2.procedure_param.Tree; ;
+ ;
+} .
+procedure_param : '(' 'expr-proc-param' position expr ')' { $$.procedure_param.Tree = mExprProcParam ($3.position.Position, NoTree, mCoercedExpr ($4.expr.Tree));
+ ;
+} .
+procedure_param : '(' 'type-proc-param' position type ')' { $$.procedure_param.Tree = mTypeProcParam ($3.position.Position, NoTree, $4.type.Tree);
+ ;
+} .
+procedure_param : '(' 'block-proc-param' position block ')' { $$.procedure_param.Tree = mBlockProcParam ($3.position.Position, NoTree, $4.block.Tree);
+ ;
+} .
+procedure_param : '(' 'var-read-proc-param' position expr ')' { $$.procedure_param.Tree = mVarReadProcParam ($3.position.Position, NoTree, mCoercedExpr ($4.expr.Tree));
+ ;
+} .
+procedure_param : '(' 'var-write-proc-param' position lvalue ')' { $$.procedure_param.Tree = mVarWriteProcParam ($3.position.Position, NoTree, $4.lvalue.Tree);
+ ;
+} .
+function_params : '(' 'function-params' position function_params_body ')' { $$.function_params.Tree  =  $4.function_params_body.Tree;
+ ;
+} .
+function_params_body : { $$.function_params_body.Tree = mNullFuncParams (NoPosition);
+ ;
+} .
+function_params_body : function_params_body function_param { $2.function_param.Tree->FuncParam.next = $1.function_params_body.Tree;
+	$$.function_params_body.Tree = $2.function_param.Tree; ;
+ ;
+} .
+function_param : '(' 'expr-func-param' position expr ')' { $$.function_param.Tree = mExprFuncParam ($3.position.Position, NoTree, mCoercedExpr ($4.expr.Tree));
+ ;
+} .
+function_param : '(' 'type-func-param' position type ')' { $$.function_param.Tree = mTypeFuncParam ($3.position.Position, NoTree, $4.type.Tree);
+ ;
+} .
+par_seq : 'sequential' { $$.par_seq.isParallel = false;
+ $$.par_seq.isPermissive = false;
+ ;
+} .
+par_seq : 'parallel' { $$.par_seq.isParallel = true;
+ $$.par_seq.isPermissive = false;
+ ;
+} .
+par_seq : 'permissive-parallel' { $$.par_seq.isParallel = true;
+ $$.par_seq.isPermissive = true;
+ ;
+} .
+guard : '(' 'guard' position expr command ')' { $$.guard.Tree = mGuard ($3.position.Position, NoTree, $4.expr.Tree, $5.command.Tree);
+ ;
+} .
+port_guard : '(' 'port-guard' position expr formal_ports ')' { $$.port_guard.Tree = mPortGuard ($3.position.Position, NoTree, $4.expr.Tree, ReverseTree ($5.formal_ports.Tree));
+ ;
+} .
+decl_guard : '(' 'decl-guard' position expr decls ')' { $$.decl_guard.Tree = mDeclGuard ($3.position.Position, NoTree, $4.expr.Tree, ReverseTree ($5.decls.Tree));
+ ;
+} .
+channel_guard : '(' 'channel-guard' position lvalues command ')' { $$.channel_guard.Tree = mChannelGuard ($3.position.Position, NoTree, ReverseTree ($4.lvalues.Tree), $5.command.Tree);
+ ;
+} .
+case_guard : '(' 'case-match-guard' position case_matches command ')' { $$.case_guard.Tree = mCaseMatchGuard ($3.position.Position, NoTree, $4.case_matches.Tree, $5.command.Tree);
+ ;
+} .
+case_guard : '(' 'for-case-guard' position breeze_ident case_matches command ')' { $$.case_guard.Tree = mForCaseGuard ($3.position.Position, NoTree, $4.Scan.breeze_ident.ident, $5.case_matches.Tree, $6.command.Tree);
+ ;
+} .
+lvalue : '(' 'ident-lvalue' position breeze_ident ')' { $$.lvalue.Tree = mIdentLvalue ($3.position.Position, $4.Scan.breeze_ident.ident);
+ ;
+} .
+lvalue : '(' 'record-elem-lvalue' position lvalue breeze_ident ')' { $$.lvalue.Tree = mRecordElemLvalue ($3.position.Position, $4.lvalue.Tree, $5.Scan.breeze_ident.ident);
+ ;
+} .
+lvalue : '(' 'array-elem-lvalue' position lvalue expr ')' { $$.lvalue.Tree = mArrayElemLvalue ($3.position.Position, $4.lvalue.Tree, mCoercedExpr ($5.expr.Tree));
+ ;
+} .
+lvalue : '(' 'array-slice-lvalue' position lvalue range ')' { $$.lvalue.Tree = mArraySliceLvalue ($3.position.Position, $4.lvalue.Tree, $5.range.Tree);
+ ;
+} .
+lvalue : '(' 'array-append-lvalue' position lvalue lvalue ')' { $$.lvalue.Tree = mArrayAppendLvalue ($3.position.Position, $4.lvalue.Tree, $5.lvalue.Tree);
+ ;
+} .
+lvalue : '(' 'array-cons-lvalue' position lvalues ')' { $$.lvalue.Tree = mArrayConsLvalue ($3.position.Position, ReverseTree ($4.lvalues.Tree));
+ ;
+} .
+lvalue : '(' 'as-lvalue' position lvalue type ')' { $$.lvalue.Tree = mAsLvalue ($3.position.Position, $4.lvalue.Tree, $5.type.Tree);
+ ;
+} .
+lvalue : '(' 'bit-array-cast-lvalue' position lvalue ')' { $$.lvalue.Tree = mBitArrayCastLvalue ($3.position.Position, $4.lvalue.Tree);
+ ;
+} .
+decls : '(' 'decls' position decls_body ')' { $$.decls.Tree  =  $4.decls_body.Tree;
+ ;
+} .
+decls_body : { $$.decls_body.Tree = mNullDecls (NoPosition);
+ ;
+} .
+decls_body : decls_body decl { $2.decl.Tree->Decl.next = $1.decls_body.Tree; $$.decls_body.Tree = $2.decl.Tree; ;
+ ;
+} .
+idents : '(' 'idents' position idents_body ')' { $$.idents.Tree  =  $4.idents_body.Tree;
+ ;
+} .
+idents_body : ident { $1.ident.Tree->Ident.next = mNullIdents (NoPosition); $$.idents_body.Tree = $1.ident.Tree;;
+} .
+idents_body : idents_body ident { $2.ident.Tree->Ident.next = $1.idents_body.Tree; $$.idents_body.Tree = $2.ident.Tree; ;
+ ;
+} .
+exprs : '(' 'exprs' position exprs_body ')' { $$.exprs.Tree  =  $4.exprs_body.Tree;
+ ;
+} .
+exprs_body : { $$.exprs_body.Tree = mNullExprLists (NoPosition);
+ ;
+} .
+exprs_body : exprs_body linked_expr { $2.linked_expr.Tree->ExprList.next = $1.exprs_body.Tree; $$.exprs_body.Tree = $2.linked_expr.Tree; ;
+ ;
+} .
+lvalues : '(' 'lvalues' position lvalues_body ')' { $$.lvalues.Tree  =  $4.lvalues_body.Tree;
+ ;
+} .
+lvalues_body : linked_lvalue { $1.linked_lvalue.Tree->LvalueList.next =
+	mNullLvalueLists (NoPosition); $$.lvalues_body.Tree = $1.linked_lvalue.Tree; ;
+ ;
+} .
+lvalues_body : lvalues_body linked_lvalue { $2.linked_lvalue.Tree->LvalueList.next = $1.lvalues_body.Tree;
+	$$.lvalues_body.Tree = $2.linked_lvalue.Tree; ;
+ ;
+} .
+case_match_elem : '(' 'case-range' position range ')' { $$.case_match_elem.Tree = mCaseRange ($3.position.Position, NoTree, $4.range.Tree);
+ ;
+} .
+case_match_elem : '(' 'case-implicant' position expr ')' { $$.case_match_elem.Tree = mCaseImplicant ($3.position.Position, NoTree, $4.expr.Tree) ;
+ ;
+} .
+case_matches : '(' 'case-matches' position case_matches_body ')' { $$.case_matches.Tree  =  $4.case_matches_body.Tree;
+ ;
+} .
+case_matches_body : case_match_elem { $1.case_match_elem.Tree->CaseMatch.next =
+	mNullCaseMatchs (NoPosition); $$.case_matches_body.Tree = $1.case_match_elem.Tree; ;
+ ;
+} .
+case_matches_body : case_matches_body case_match_elem { $2.case_match_elem.Tree->CaseRange.next = $1.case_matches_body.Tree;
+	$$.case_matches_body.Tree = $2.case_match_elem.Tree; ;
+ ;
+} .
+formal_ports : '(' 'formal-ports' position formal_ports_body ')' { $$.formal_ports.Tree  =  $4.formal_ports_body.Tree;
+ ;
+} .
+formal_ports_body : { $$.formal_ports_body.Tree = mNullFormalPorts (NoPosition);
+ ;
+} .
+formal_ports_body : formal_ports_body port { $2.port.Tree->FormalPort.next = $1.formal_ports_body.Tree; $$.formal_ports_body.Tree = $2.port.Tree; ;
+ ;
+} .
+guards : '(' 'guards' position guards_body ')' { $$.guards.Tree  =  $4.guards_body.Tree;
+ ;
+} .
+guards_body : guard { $1.guard.Tree->Guard.next = mNullGuards (NoPosition); $$.guards_body.Tree = $1.guard.Tree; ;
+ ;
+} .
+guards_body : guards_body guard { $2.guard.Tree->Guard.next = $1.guards_body.Tree; $$.guards_body.Tree = $2.guard.Tree; ;
+ ;
+} .
+port_guards : '(' 'port-guards' position port_guards_body ')' { $$.port_guards.Tree  =  $4.port_guards_body.Tree;
+ ;
+} .
+port_guards_body : port_guard { $1.port_guard.Tree->PortGuard.next = mNullPortGuards (NoPosition); $$.port_guards_body.Tree = $1.port_guard.Tree; ;
+ ;
+} .
+port_guards_body : port_guards_body port_guard { $2.port_guard.Tree->PortGuard.next = $1.port_guards_body.Tree; $$.port_guards_body.Tree = $2.port_guard.Tree; ;
+ ;
+} .
+decl_guards : '(' 'decl-guards' position decl_guards_body ')' { $$.decl_guards.Tree  =  $4.decl_guards_body.Tree;
+ ;
+} .
+decl_guards_body : decl_guard { $1.decl_guard.Tree->DeclGuard.next = mNullDeclGuards (NoPosition); $$.decl_guards_body.Tree = $1.decl_guard.Tree; ;
+ ;
+} .
+decl_guards_body : decl_guards_body decl_guard { $2.decl_guard.Tree->DeclGuard.next = $1.decl_guards_body.Tree; $$.decl_guards_body.Tree = $2.decl_guard.Tree; ;
+ ;
+} .
+case_guards : '(' 'case-guards' position case_guards_body ')' { $$.case_guards.Tree  =  $4.case_guards_body.Tree;
+ ;
+} .
+case_guards_body : case_guard { $1.case_guard.Tree->CaseGuard.next = mNullCaseGuards (NoPosition); $$.case_guards_body.Tree = $1.case_guard.Tree; ;
+ ;
+} .
+case_guards_body : case_guards_body case_guard { $2.case_guard.Tree->CaseGuard.next = $1.case_guards_body.Tree; $$.case_guards_body.Tree = $2.case_guard.Tree; ;
+ ;
+} .
+channel_guards : '(' 'channel-guards' position channel_guards_body ')' { $$.channel_guards.Tree  =  $4.channel_guards_body.Tree;
+ ;
+} .
+channel_guards_body : channel_guard { $1.channel_guard.Tree->ChannelGuard.next = mNullChannelGuards (NoPosition);
+	$$.channel_guards_body.Tree = $1.channel_guard.Tree; ;
+ ;
+} .
+channel_guards_body : channel_guards_body channel_guard { $2.channel_guard.Tree->ChannelGuard.next = $1.channel_guards_body.Tree;
+	$$.channel_guards_body.Tree = $2.channel_guard.Tree; ;
+ ;
+} .
+record_elems : '(' 'record-elems' position record_elems_body ')' { $$.record_elems.Tree  =  $4.record_elems_body.Tree;
+ ;
+} .
+record_elems_body : record_elem { $1.record_elem.Tree->RecordElem.next = mNullRecordElems (NoPosition);
+	$$.record_elems_body.Tree = $1.record_elem.Tree; ;
+ ;
+} .
+record_elems_body : record_elems_body record_elem { $2.record_elem.Tree->RecordElem.next = $1.record_elems_body.Tree;
+	$$.record_elems_body.Tree = $2.record_elem.Tree; ;
+ ;
+} .
+enum_elems : '(' 'enum-elems' position enum_elems_body ')' { $$.enum_elems.Tree  =  $4.enum_elems_body.Tree;
+ ;
+} .
+enum_elems_body : enum_elem { $1.enum_elem.Tree->EnumElem.next = mNullEnumElems (NoPosition); $$.enum_elems_body.Tree = $1.enum_elem.Tree; ;
+ ;
+} .
+enum_elems_body : enum_elems_body enum_elem { $2.enum_elem.Tree->EnumElem.next = $1.enum_elems_body.Tree; $$.enum_elems_body.Tree = $2.enum_elem.Tree; ;
+ ;
+} .
+enum_elem : '(' 'enum-elem' position breeze_ident ')' { $$.enum_elem.Tree = mDefaultValuedEnumElem ($4.Scan.Position, NoTree, $4.Scan.breeze_ident.ident);
+ ;
+} .
+enum_elem : '(' 'valued-enum-elem' position breeze_ident expr ')' { $$.enum_elem.Tree = mValuedEnumElem ($4.Scan.Position, NoTree, $4.Scan.breeze_ident.ident,
+	mCoercedExpr ($5.expr.Tree));
+ ;
+} .
+record_elem : '(' 'record-elem' position idents type ')' { $$.record_elem.Tree = mRecordElem ($3.position.Position, NoTree, ReverseTree ($4.idents.Tree), $5.type.Tree);
+ ;
+} .
+ident : breeze_ident { $$.ident.Tree = mIdent ($1.Scan.Position, NoTree, $1.Scan.breeze_ident.ident);
+ ;
+} .
+linked_expr : expr { $$.linked_expr.Tree = mExprList (NoPosition, NoTree, mCoercedExpr ($1.expr.Tree));
+ ;
+} .
+linked_lvalue : '(' 'block-lvalue' position block ')' { $$.linked_lvalue.Tree = mLinkedBlock ($3.position.Position, NoTree, $4.block.Tree);
+ ;
+} .
+linked_lvalue : '(' 'channel-lvalue' position lvalue ')' { $$.linked_lvalue.Tree = mLinkedChannel ($3.position.Position, NoTree, NoIdent, $4.lvalue.Tree);
+ ;
+} .
+linked_lvalue : '(' 'renamed-channel-lvalue' position lvalue breeze_ident ')' { $$.linked_lvalue.Tree = mLinkedChannel ($3.position.Position, NoTree, $5.Scan.breeze_ident.ident, $4.lvalue.Tree);
+ ;
+} .

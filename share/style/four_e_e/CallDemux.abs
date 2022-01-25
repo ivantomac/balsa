@@ -1,0 +1,15 @@
+(nodes
+	("inpr" (param "outputCount") 0 1)
+)
+(gates
+	(cell "e-element"
+		(combine (req (each "out")))
+		(combine (ack (each "out")))
+		(node "inpr")
+		(combine (dup (param "outputCount") (ack "inp")))
+	)
+	(or (req "inp") (smash (node "inpr")))
+)
+(connections
+	(connect (data "inp") (data (each "out")))
+)

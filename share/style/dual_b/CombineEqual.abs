@@ -1,0 +1,7 @@
+(nodes
+)
+(gates
+	(connect (req "out") (req (each "inp")))
+	(connect (combine (ack0 (each "inp"))) (ack0 "out"))
+	(connect (combine (ack1 (each "inp"))) (ack1 "out"))
+)

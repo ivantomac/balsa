@@ -1,0 +1,57 @@
+(defines
+	(index-plural (> (param "indexWidth") 1))
+	(out-plural (> (param "width") 1))
+	(width-even (quotient (param "width") 2))
+	(width-odd (quotient (+ (param "width") 1) 2))
+)
+(nodes
+	("elseAck" 1 0 1)
+)
+(gates
+	(if (complete-encoding? (param "specification") (param "indexWidth"))
+		(gates
+			(if index-plural
+				(decode (c-or m-of-n-mapping one-of-four-implicant-mapping)
+					(param "specification") 
+					(param "indexWidth")
+					((ack0 "index") (ack1 "index") (ack2 "index") (ack3 "index"))
+					((req (each "inp")))
+				)
+				(decode (c-or m-of-n-mapping one-of-four-implicant-mapping)
+					(param "specification") 
+					(param "indexWidth")
+					((ack0 "index") (ack1 "index"))
+					((req (each "inp")))
+				)
+			)
+			(or (ack0 "out") (ack0 (each "inp")))
+		)
+		(gates
+			(if index-plural
+				(decode (c-or m-of-n-mapping one-of-four-implicant-mapping)
+					(param "specification") 
+					(param "indexWidth")
+					((ack0 "index") (ack1 "index") (ack2 "index") (ack3 "index"))
+					((combine (req (each "inp")) (node "elseAck")))
+				)
+				(decode (c-or m-of-n-mapping one-of-four-implicant-mapping)
+					(param "specification") 
+					(param "indexWidth")
+					((ack0 "index") (ack1 "index"))
+					((combine (req (each "inp")) (node "elseAck")))
+				)
+			)
+			(or (ack0 "out") (ack0 (each "inp")) (combine (dup width-odd (node "elseAck"))))
+		)
+	)
+	(or (ack1 "out") (ack1 (each "inp")))
+	(if out-plural
+		(gates
+			(or (ack2 "out") (ack2 (each "inp")))
+			(or (ack3 "out") (ack3 (each "inp")))
+		)
+	)
+)
+(connections
+	(connect (req "out") (req "index"))
+)

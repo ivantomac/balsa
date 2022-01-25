@@ -1,0 +1,45 @@
+(defines
+	(NAstyle (style-option "FV" "ovlp"))
+	(plural (> (param "inputWidth") 1)) ;; more than one
+	(width-even (quotient (param "inputWidth") 2))
+	(width-odd (quotient (+ (param "inputWidth") 1) 2))
+	(odd (not (= width-even width-odd)))
+)
+(nodes
+	("partAck" width-odd 0 1)
+	("cd" 1 0 1)
+	("sigAck" 1 0 1)
+)
+(gates
+	(if plural
+		(gates
+			(or (slice 0 width-even (node "partAck"))
+				(slice 0 width-even (ack0 "inp"))
+				(slice 0 width-even (ack1 "inp"))
+				(slice 0 width-even (ack2 "inp"))
+				(slice 0 width-even (ack3 "inp"))
+				
+			)
+			(if odd
+				(or (slice width-even 1 (node "partAck"))
+					(slice width-even 1 (ack0 "inp"))
+					(slice width-even 1 (ack1 "inp"))
+				)
+			)
+		)
+		(or (node "partAck") (ack0 "inp") (ack1 "inp"))
+	)
+	(c-element (node "cd") (smash (node "partAck")))
+	(case NAstyle
+		(("ovlp")
+			(cell "t-element" (req "trigger") (node "sigAck") (req "signal") (ack "signal"))
+		)
+		(else
+			(s-element (req "trigger") (node "sigAck") (req "signal") (ack "signal"))
+		)
+	)
+	(c-element (ack "trigger") (node "sigAck") (node "cd"))
+)
+(connections
+	(connect (req "trigger") (req "inp"))
+)

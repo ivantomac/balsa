@@ -1,0 +1,5955 @@
+;;; `helper-cells.abs'
+;;; Balsa Generic Helper Cells
+;;; Created: Wed Mar 13 17:49:19 GMT 2002
+;;; By: tomsw@amu26 (SunOS)
+;;; With net-net version: 3.2
+
+(cell "inverter"
+	(ports
+		("z" output 1)
+		("a" input 1)
+	)
+	(nodes
+	)
+	(gates
+		(nor (net "z") (net "a") (net "a"))
+	)
+)
+
+(cell "buffer"
+	(ports
+		("z" output 1)
+		("a" input 1)
+	)
+	(nodes
+		("na" 1 0 1)
+	)
+	(gates
+		(inv (node "na") (net "a"))
+		(inv (net "z") (node "na"))
+	)
+)
+
+(cell "and2"
+	(ports
+		("z" output 1)
+		("a" input 1)
+		("b" input 1)
+	)
+	(nodes
+		("na" 1 0 1)
+		("nb" 1 0 1)
+	)
+	(gates
+		(inv (node "na") (net "a"))
+		(inv (node "nb") (net "b"))
+		(nor (net "z") (node "na") (node "nb"))
+	)
+)
+
+(cell "or2"
+	(ports
+		("z" output 1)
+		("a" input 1)
+		("b" input 1)
+	)
+	(nodes
+		("nz" 1 0 1)
+	)
+	(gates
+		(nor (node "nz") (net "a") (net "b"))
+		(inv (net "z") (node "nz"))
+	)
+)
+
+(cell "nand2"
+	(ports
+		("z" output 1)
+		("a" input 1)
+		("b" input 1)
+	)
+	(nodes
+		("na" 1 0 1)
+		("nb" 1 0 1)
+	)
+	(gates
+		(inv (node "na") (net "a"))
+		(inv (node "nb") (net "b"))
+		(or (net "z") (node "na") (node "nb"))
+	)
+)
+
+(cell "xor2"
+	(ports
+		("z" output 1)
+		("a" input 1)
+		("b" input 1)
+	)
+	(nodes
+		("na" 1 0 1)
+		("nb" 1 0 1)
+		("int" 2 0 1)
+	)
+	(gates
+		(inv (node "na") (net "a"))
+		(inv (node "nb") (net "b"))
+		(nor (slice 0 1 (node "int")) (node "na") (node "nb"))
+		(nor (slice 1 1 (node "int")) (net "a") (net "b"))
+		(nor (net "z") (slice 0 1 (node "int")) (slice 1 1 (node "int")))
+	)
+)
+
+(cell "xnor2"
+	(ports
+		("z" output 1)
+		("a" input 1)
+		("b" input 1)
+	)
+	(nodes
+		("na" 1 0 1)
+		("nb" 1 0 1)
+		("int" 2 0 1)
+	)
+	(gates
+		(inv (node "na") (net "a"))
+		(inv (node "nb") (net "b"))
+		(nor (slice 0 1 (node "int")) (net "a") (node "nb"))
+		(nor (slice 1 1 (node "int")) (node "na") (net "b"))
+		(nor (net "z") (slice 0 1 (node "int")) (slice 1 1 (node "int")))
+	)
+)
+
+(cell "latch"
+	(ports
+		("e" input 1)
+		("d" input 1)
+		("q" output 1)
+		
+	)
+	(nodes
+		("nq" 1 0 1)
+		("ne" 1 0 1)
+		("nd" 1 0 1)
+		("int" 2 0 1)
+	)
+	(gates
+		(inv (node "ne") (net "e"))
+		(inv (node "nd") (net "d"))
+		(nor (slice 0 1 (node "int")) (node "ne") (net "d"))
+		(nor (slice 1 1 (node "int")) (node "ne") (node "nd"))
+		(nor (net "q") (slice 0 1 (node "int")) (node "nq"))
+		(nor (node "nq") (net "q") (slice 1 1 (node "int")))
+	)
+	(simulation-initialise
+		((net "q") 0)
+	)
+)
+
+
+(cell "connect"
+	(ports
+		("dst" output 1)
+		("src" input 1)
+	)
+	(nodes
+	)
+	(gates
+		(cell
+			"buf"
+			(net "dst")
+			(net "src")
+		)
+	)
+	(attributes
+		(feedthrough (1 0))
+	)
+)
+
+(cell "builtin-unref"
+	(ports
+		("trigger" input 1)
+		("write" input 64)
+	)
+	(nets
+		("oldWrite" 64 assignable) 
+	)
+	(nodes)
+	(gates
+		(shdl-repeat
+			(wait-until-rising "trigger")
+			(call "BalsaRef" "write")
+			(call "BalsaUnref" "oldWrite")
+			(assign "oldWrite" "write")
+			(wait-until-falling "trigger")
+		)
+		(shdl (assign "oldWrite" 0))
+	)
+)
+
+(cell "suggested-buffer"
+	(ports
+		("dst" output 1)
+		("src" input 1)
+	)
+	(nodes
+	)
+	(gates
+		(cell
+			"buf"
+			(net "dst")
+			(net "src")
+		)
+	)
+)
+
+(cell "and-or21"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+	)
+	(nodes
+		("int" 1 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "int")) (net "i0") (net "i1"))
+		(or (net "q") (slice 0 1 (node "int")) (net "i2"))
+	)
+)
+
+(cell "and-or22"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+		("i3" input 1)
+	)
+	(nodes
+		("int" 2 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "int")) (net "i0") (net "i1"))
+		(and (slice 1 1 (node "int")) (net "i2") (net "i3"))
+		(or (net "q") (slice 0 1 (node "int")) (slice 1 1 (node "int")))
+	)
+)
+
+(cell "and-or-invert22"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+		("i3" input 1)
+	)
+	(nodes
+		("int" 2 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "int")) (net "i0") (net "i1"))
+		(and (slice 1 1 (node "int")) (net "i2") (net "i3"))
+		(nor (net "q") (slice 0 1 (node "int")) (slice 1 1 (node "int")))
+	)
+)
+
+(cell "and-or222"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+		("i3" input 1)
+		("i4" input 1)
+		("i5" input 1)
+	)
+	(nodes
+		("int" 3 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "int")) (net "i0") (net "i1"))
+		(and (slice 1 1 (node "int")) (net "i2") (net "i3"))
+		(and (slice 2 1 (node "int")) (net "i4") (net "i5"))
+		(or (net "q") (slice 0 1 (node "int")) (slice 1 1 (node "int")) (slice 2 1 (node "int")))
+	)
+)
+
+(cell "and-or-invert222"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+		("i3" input 1)
+		("i4" input 1)
+		("i5" input 1)
+	)
+	(nodes
+		("int" 3 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "int")) (net "i0") (net "i1"))
+		(and (slice 1 1 (node "int")) (net "i2") (net "i3"))
+		(and (slice 2 1 (node "int")) (net "i4") (net "i5"))
+		(nor (net "q") (slice 0 1 (node "int")) (slice 1 1 (node "int")) (slice 2 1 (node "int")))
+	)
+)
+
+(cell "mux2"
+	(ports
+		("out" output 1)
+		("in0" input 1)
+		("in1" input 1)
+		("sel" input 1)
+	)
+	(nodes
+		("nsel" 1 0 1)
+	)
+	(gates
+		(inv (node "nsel") (net "sel"))
+		(cell "and-or22"
+			(net "out")
+			(net "in0") (node "nsel")
+			(net "in1") (net "sel")
+		)
+	)
+)
+
+(cell "nmux2"
+	(ports
+		("out" output 1)
+		("in0" input 1)
+		("in1" input 1)
+		("sel" input 1)
+	)
+	(nodes
+		("nsel" 1 0 1)
+	)
+	(gates
+		(inv (node "nsel") (net "sel"))
+		(cell "and-or-invert22"
+			(net "out")
+			(net "in0") (node "nsel")
+			(net "in1") (net "sel")
+		)
+	)
+)
+
+
+(cell "mutex"
+	(ports
+		("inA" input 1)
+		("inB" input 1)
+		("outA" output 1)
+		("outB" output 1)
+	)
+	(nodes
+		("internals" 2 0 1)
+	)
+	(gates
+		(nand (slice 0 1 (node "internals")) (net "inA") (slice 1 1 (node "internals")))
+		(nand (slice 1 1 (node "internals")) (net "inB") (slice 0 1 (node "internals")))
+		(nor (net "outA") (slice 0 1 (node "internals")) (slice 0 1 (node "internals")) (slice 0 1 (node "internals")))
+		(nor (net "outB") (slice 1 1 (node "internals")) (slice 1 1 (node "internals")) (slice 1 1 (node "internals")))
+	)
+)
+
+(cell "set-reset-flip-flop"
+	(ports
+		("s" input 1)
+		("r" input 1)
+		("q" output 1)
+		("nq" output 1)
+	)
+	(nodes
+	)
+	(gates
+		(nor (net "q") (net "nq") (net "r"))
+		(nor (net "nq") (net "q") (net "s"))
+	)
+	(attributes
+		(simulation-initialise
+			((net "q") 0)
+		)
+	)
+)
+
+(cell "single-rail-full-adder"
+	(ports
+		("nStart" input 1)
+		("A" input 1)
+		("B" input 1)
+		("nCVi" input 1)
+		("Ci" input 1)
+		("nCVo" output 1)
+		("Co" output 1)
+		("sum" output 1)
+	)
+	(nodes
+		("start" 1 0 1)
+		("ha" 1 0 1)
+		("cv" 1 0 1)
+	)
+	(gates
+		(inv (slice 0 1 (node "start")) (net "nStart"))
+		(nor (slice 0 1 (node "cv")) (net "nStart") (net "nCVi"))
+		(cell
+			"nmux2"
+			(net "nCVo")
+			(slice 0 1 (node "start"))
+			(slice 0 1 (node "cv"))
+			(slice 0 1 (node "ha"))
+		)
+		(cell
+			"mux2"
+			(net "Co")
+			(net "A")
+			(net "Ci")
+			(slice 0 1 (node "ha"))
+		)
+		(cell
+			"xor2"
+			(slice 0 1 (node "ha"))
+			(net "A")
+			(net "B")
+		)
+		(cell
+			"xor2"
+			(net "sum")
+			(slice 0 1 (node "ha"))
+			(net "Ci")
+		)
+	)
+)
+
+(cell "c-element2"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+	)
+	(nodes
+	)
+	(gates
+		(cell
+			"and-or222"
+			(net "q")
+			(net "i0")
+			(net "i1")
+			(net "i0")
+			(net "q")
+			(net "i1")
+			(net "q")
+		)
+	)
+)
+
+(cell "c-element3"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+	)
+	(nodes
+		("qint" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "qint")) (net "i0") (net "i1"))
+		(c-element (net "q") (net "i2") (slice 0 1 (node "qint")))
+	)
+)
+
+(cell "inverted-c-element"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+	)
+	(nodes
+		("nq" 1 0 1)
+	)
+	(gates
+		(inv (slice 0 1 (node "nq")) (net "q"))
+		(cell
+			"and-or-invert222"
+			(net"q")
+			(net "i0")
+			(net "i1")
+			(net "i0")
+			(slice 0 1 (node "nq"))
+			(net "i1")
+			(slice 0 1 (node "nq"))
+		)
+	)
+)
+
+(cell "inverted-assym-c-element"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+	)
+	(nodes
+		("nq" 1 0 1)
+	)
+	(gates
+		(inv (slice 0 1 (node "nq")) (net "q"))
+		(cell
+			"and-or-invert22"
+			(net "q")
+			(net "i0")
+			(net "i1")
+			(net "i0")
+			(slice 0 1 (node "nq"))
+		)
+	)
+)
+
+(cell "assym-c-element"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+	)
+	(nodes)
+	(gates
+		(cell
+			"and-or22"
+			(net "q")
+			(net "i0")
+			(net "i1")
+			(net "i0")
+			(net "q")
+		)
+	)
+)
+
+(cell "assym-c-element-u0d1"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+	)
+	(nodes
+		("int" 1 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "int")) (net "i1") (net "q"))
+		(or (net "q") (net "i0") (slice 0 1 (node "int")))
+	)
+)
+
+(cell "assym-c-element-rdown"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("initialise" input 1)
+	)
+	(nodes
+		("rq" 1 0 1)
+		("ninit" 1 0 1)
+	)
+	(gates
+		(inv (node "ninit") (net "initialise"))
+		(cell "and-or22"
+			(node "rq")
+			(net "i0")
+			(net "i1")
+			(net "i0")
+			(net "q")
+		)
+		(and (net "q") (node "rq") (node "ninit"))
+	)
+	(attributes
+		(global-ports (net "initialise"))
+	)
+)
+
+(cell "assym-c2-rdown"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("initialise" input 1)
+	)
+	(nodes)
+	(gates
+		(cell
+			 "assym-c-element-rdown"
+			(net "q")
+			(net "i0")
+			(net "i1")
+			(net "initialise")
+		)
+	)
+	(attributes
+		(global-ports (net "initialise"))
+	)
+)
+
+(cell "assym-c-element-inv1"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+	)
+	(nodes
+		("ni1" 1 0 1)
+	)
+	(gates
+		(inv (node "ni1") (net "i1"))
+		(cell
+			"and-or22"
+			(net "q")
+			(net "i0")
+			(node "ni1")
+			(net "i0")
+			(net "q")
+		)
+	)
+)
+
+(cell "c-element2-cu"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("set" input 1)
+	)
+	(nodes
+		("qi" 1 0 1)
+	)
+	(gates
+		(cell
+			"and-or222"
+			(node "qi")
+			(net "i0")
+			(net "i1")
+			(net "i0")
+			(node "qi")
+			(net "i1")
+			(node "qi")
+		)
+		(or (net "q") (node "qi") (net "set"))
+	)
+)
+
+(cell "c-element2-rup"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("initialise" input 1)
+	)
+	(nodes)
+	(gates
+		(cell
+			"c-element2-cu"
+			(net "q")
+			(net "i0")
+			(net "i1")
+			(net "initialise")
+		)
+	)
+	(attributes
+		(global-ports (net "initialise"))
+	)
+)
+
+(cell "c-element2-cd"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("nreset" input 1)
+	)
+	(nodes
+		("qi" 1 0 1)
+	)
+	(gates
+		(cell
+			"and-or222"
+			(node "qi")
+			(net "i0")
+			(net "i1")
+			(net "i0")
+			(node "qi")
+			(net "i1")
+			(node "qi")
+		)
+		(and (net "q") (node "qi") (net "nreset"))
+	)
+)
+
+(cell "c-element2-rdown"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("initialise" input 1)
+	)
+	(nodes
+		("ninit" 1 0 1)
+	)
+	(gates
+		(inv (node "ninit") (net "initialise"))
+		(cell
+			"c-element2-cd"
+			(net "q")
+			(net "i0")
+			(net "i1")
+			(node "ninit")
+		)
+	)
+	(attributes
+		(global-ports (net "initialise"))
+	)
+)
+
+(cell "assym-c-element-inv0"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+	)
+	(nodes
+		("ni0" 1 0 1)
+	)
+	(gates
+		(inv (node "ni0") (net "i0"))
+		(cell
+			"and-or22"
+			(net "q")
+			(node "ni0")
+			(net "i1")
+			(node "ni0")
+			(net "q")
+		)
+	)
+)
+
+(cell "c-element-inv1"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+	)
+	(nodes
+		("ni1" 1 0 1)
+	)
+	(gates
+		(inv (node "ni1") (net "i1"))
+		(cell
+			"and-or222"
+			(net "q")
+			(net "i0")
+			(node "ni1")
+			(net "i0")
+			(net "q")
+		(node "ni1")
+		(net "q")
+		)
+	)
+)
+
+(cell "assym-c-element3-u0d2"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+	)
+	(nodes)
+	(gates
+		(cell
+			"and-or222"
+			(net "q")
+			(net "i0")
+			(net "i1")
+			(net "i1")
+			(net "q")
+		(net "i2")
+		(net "q")
+		)
+	)
+)
+
+
+
+(cell "e-element"
+	(ports
+		("rin" input 1)
+		("ain" output 1)
+		("rout" output 1)
+		("aout" input 1)
+	)
+	(nodes)
+	(gates
+	(and (net "ain") (net "rout") (net "aout"))
+		(cell
+			"assym-c-element-inv1"
+			(net "rout")
+			(net "rin")
+			(net "aout")
+		)
+	)
+)
+
+(cell "e-s-element"
+	(ports
+		("Ar" input 1)
+		("Aa" output 1)
+		("Br" output 1)
+		("Ba" input 1)
+	)
+	(nodes
+		("eoutr" 1 0 1)
+	("nAa" 1 0 1)
+	)
+	(gates
+		(cell
+			"assym-c-element-inv1"
+			(node "eoutr")
+			(net "Ar")
+			(net "Ba")
+		)
+	(inv (node "nAa") (net "Aa"))
+	(and (net "Br") (node "eoutr") (node "nAa"))
+		(cell
+			"assym-c-element"
+			(net "Aa")
+			(node "eoutr")
+			(net "Ba")
+		)		
+	)
+)
+
+(cell "a-c3-element-u12"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+	("i2" input 1)
+	)
+	(nodes
+		("int" 2 0 1)
+	)
+	(gates
+	(and (slice 0 1 (node "int")) (net "i0") (net "i1") (net "i2"))
+	(and (slice 1 1 (node "int")) (net "i0") (net "q"))
+	(or (net "q") (slice 0 1 (node "int")) (slice 1 1 (node "int")))
+	)
+)
+
+(cell "or2-rup"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("initialise" input 1)
+	)
+	(nodes)
+	(gates
+		(or (net "q") (net "i0") (net "initialise"))
+	)
+	(attributes
+		(global-ports (net "initialise"))
+	)
+)
+
+(cell "demux2"
+	(ports
+		("i" input 1)
+		("o0" output 1)
+		("o1" output 1)
+		("s" input 1)
+	)
+	(nodes
+		("ns" 1 0 1)
+	)
+	(gates
+		(inv (slice 0 1 (node "ns")) (net "s"))
+		(and (net "o0") (net "i") (slice 0 1 (node "ns")))
+		(and (net "o1") (net "i") (net "s"))
+	)
+)
+
+(cell "s-element"
+	(ports
+		("Ar" input 1)
+		("Aa" output 1)
+		("Br" output 1)
+		("Ba" input 1)
+	)
+	(nodes
+		("s" 1 0 1)
+	)
+	(gates
+		(and (net "Br") (net "Ar") (slice 0 1 (node "s")))
+		(nor (net "Aa") (net "Ba") (slice 0 1 (node "s")))
+		(cell
+			"inverted-assym-c-element"
+			(slice 0 1 (node "s"))
+			(net "Ar")
+			(net "Ba")
+		)
+	)
+)
+
+(cell "t-element"
+	(ports
+		("Ar" input 1)
+		("Aa" output 1)
+		("Br" output 1)
+		("Ba" input 1)
+	)
+	(nodes
+		("s" 1 0 1)
+	)
+	(gates
+		(and (net "Br") (net "Ar") (slice 0 1 (node "s")))
+		(inv (slice 0 1 (node "s")) (net "Aa"))
+		(cell
+			"assym-c-element-u0d1"
+			(net "Aa")
+			(net "Ba")
+			(net "Ar")
+		)
+	)
+)
+
+(cell "t-element-with-reset"
+	(ports
+		("Ar" input 1)
+		("Aa" output 1)
+		("Br" output 1)
+		("Ba" input 1)
+		("initialise" input 1)
+	)
+	(nodes
+		("s" 1 0 1)
+		("nreset" 1 0 1)
+	)
+	(gates
+		(and (net "Br") (net "Ar") (slice 0 1 (node "s")))
+		(inv (slice 0 1 (node "s")) (net "Aa"))
+		(inv (net "nreset") (net "initialise"))
+		(cell
+			"c-element2-cd"
+			(net "Aa")
+			(net "Ba")
+			(net "Ar")
+			(net "nreset")
+		)
+	)
+	(attributes
+		(global-ports (net "initialise"))
+	)
+)
+
+(cell "inv-with-reset"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("initialise" input 1)
+	)
+	(nodes)
+	(gates
+		(nor (net "q") (net "i0") (net "initialise"))
+	)
+	(attributes
+		(global-ports (net "initialise"))
+	)
+)
+
+(cell "th22"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+	)
+	(nodes
+		("qint" 3 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "qint")) (net "i0") (net "i1"))
+		(and (slice 1 1 (node "qint")) (net "i0") (net "q"))
+		(and (slice 2 1 (node "qint")) (net "i1") (net "q"))
+		(or (net "q") (slice 0 1 (node "qint")) (slice 1 1 (node "qint")) (slice 2 1 (node "qint")))
+	)
+)
+
+(cell "th33"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+	)
+	(nodes
+		("hint" 3 0 1)
+		("qint" 2 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "hint")) (net "i0") (net "q"))
+		(and (slice 1 1 (node "hint")) (net "i1") (net "q"))
+		(and (slice 2 1 (node "hint")) (net "i2") (net "q"))
+		(and (slice 0 1 (node "qint")) (net "i1") (net "i2"))
+		(or (slice 1 1 (node "qint")) (slice 0 1 (node "hint")) (slice 1 1 (node "hint")) (slice 2 1 (node "hint")))
+		(or (net "q") (slice 0 1 (node "qint")) (slice 1 1 (node "qint")))
+	)
+)
+
+(cell "th23"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+	)
+	(nodes
+		("hint" 3 0 1)
+		("sint" 2 0 1)
+		("qint" 2 0 1)
+		("sinti" 1 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "hint")) (net "i0") (net "q"))
+		(and (slice 1 1 (node "hint")) (net "i1") (net "q"))
+		(and (slice 2 1 (node "hint")) (net "i2") (net "q"))
+		(or (slice 0 1 (node "qint")) (slice 0 1 (node "hint")) (slice 1 1 (node "hint")) (slice 2 1 (node "hint")))
+		(or (slice 0 1 (node "sinti")) (net "i1") (net "i2"))
+		(and (slice 0 1 (node "sint")) (net "i1") (net "i2"))
+		(and (slice 1 1 (node "sint")) (net "i0") (slice 0 1 (node "sinti")))
+		(or (slice 1 1 (node "qint")) (slice 0 1 (node "sint")) (slice 1 1 (node "sint")))
+		(or (net "q") (slice 0 1 (node "qint")) (slice 1 1 (node "qint")))
+	)
+)
+
+(cell "th23w2"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+	)
+	(nodes
+		("hint" 2 0 1)
+		("sint" 1 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "hint")) (net "i1") (net "q"))
+		(and (slice 1 1 (node "hint")) (net "i2") (net "q"))
+		(and (slice 0 1 (node "sint")) (net "i1") (net "i2"))
+		(or (net "q") (net "i0") (slice 0 1 (node "hint")) (slice 1 1 (node "hint")) (slice 0 1 (node "sint")))
+	)
+)
+
+(cell "th24"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+		("i3" input 1)
+	)
+	(nodes
+		("hint" 4 0 1)
+		("sint" 6 0 1)
+		("qint" 3 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "hint")) (net "i0") (net "q"))
+		(and (slice 1 1 (node "hint")) (net "i1") (net "q"))
+		(and (slice 2 1 (node "hint")) (net "i2") (net "q"))
+		(and (slice 3 1 (node "hint")) (net "i3") (net "q"))
+		(or (slice 0 1 (node "qint")) (slice 0 1 (node "hint")) (slice 1 1 (node "hint")) (slice 2 1 (node "hint")) (slice 3 1 (node "hint")))
+		(and (slice 0 1 (node "sint")) (net "i0") (net "i1"))
+		(and (slice 1 1 (node "sint")) (net "i0") (net "i2"))
+		(and (slice 2 1 (node "sint")) (net "i0") (net "i3"))
+		(and (slice 3 1 (node "sint")) (net "i1") (net "i2"))
+		(and (slice 4 1 (node "sint")) (net "i1") (net "i3"))
+		(and (slice 5 1 (node "sint")) (net "i2") (net "i3"))
+		(or (slice 1 1 (node "qint")) (slice 0 1 (node "sint")) (slice 1 1 (node "sint")) (slice 2 1 (node "sint")))
+		(or (slice 2 1 (node "qint")) (slice 3 1 (node "sint")) (slice 4 1 (node "sint")) (slice 5 1 (node "sint")))
+		(or (net "q") (slice 0 1 (node "qint")) (slice 1 1 (node "qint")) (slice 2 1 (node "qint")))
+	)
+)
+
+(cell "th24w2"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+		("i3" input 1)
+	)
+	(nodes
+		("hint" 3 0 1)
+		("sint" 3 0 1)
+		("qint" 2 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "hint")) (net "i1") (net "q"))
+		(and (slice 1 1 (node "hint")) (net "i2") (net "q"))
+		(and (slice 2 1 (node "hint")) (net "i3") (net "q"))
+		(or (slice 0 1 (node "qint")) (slice 0 1 (node "hint")) (slice 1 1 (node "hint")) (slice 2 1 (node "hint")))
+		(and (slice 0 1 (node "sint")) (net "i1") (net "i2"))
+		(and (slice 1 1 (node "sint")) (net "i1") (net "i3"))
+		(and (slice 2 1 (node "sint")) (net "i2") (net "i3"))
+		(or (slice 1 1 (node "qint")) (slice 0 1 (node "sint")) (slice 1 1 (node "sint")) (slice 2 1 (node "sint")))
+		(or (net "q") (slice 0 1 (node "qint")) (slice 1 1 (node "qint")) (net "i0"))
+	)
+)
+
+(cell "th24w22"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+		("i3" input 1)
+	)
+	(nodes
+		("hint" 2 0 1)
+		("sint" 1 0 1)
+		("qint" 1 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "hint")) (net "i2") (net "q"))
+		(and (slice 1 1 (node "hint")) (net "i3") (net "q"))
+		(and (slice 0 1 (node "sint")) (net "i2") (net "i3"))
+		(or (slice 0 1 (node "qint")) (slice 0 1 (node "hint")) (slice 1 1 (node "hint")) (slice 0 1 (node "sint")))
+		(or (net "q") (net "i0") (net "i1") (slice 0 1 (node "qint")))
+	)
+)
+
+(cell "th33w2"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+	)
+	(nodes
+		("hint" 3 0 1)
+		("sint" 1 0 1)
+		("qint" 2 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "hint")) (net "i0") (net "q"))
+		(and (slice 1 1 (node "hint")) (net "i1") (net "q"))
+		(and (slice 2 1 (node "hint")) (net "i2") (net "q"))
+		(or (slice 0 1 (node "qint")) (slice 0 1 (node "hint")) (slice 1 1 (node "hint")) (slice 2 1 (node "hint")))
+		(or (slice 0 1 (node "sint")) (net "i1") (net "i2"))
+		(and (slice 1 1 (node "qint")) (net "i0") (slice 0 1 (node "sint")))
+		(or (slice 1 1 (node "qint")) (slice 0 1 (node "sint")) (slice 1 1 (node "sint")) (slice 2 1 (node "sint")))
+		(or (slice 2 1 (node "qint")) (slice 3 1 (node "sint")) (slice 4 1 (node "sint")) (slice 5 1 (node "sint")))
+		(or (net "q") (slice 0 1 (node "qint")) (slice 1 1 (node "qint")))
+	)
+)
+
+(cell "th34"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+		("i3" input 1)
+	)
+	(nodes
+		("hint" 4 0 1)
+		("sint" 2 0 1)
+		("qint" 2 0 1)
+		("sinti" 2 0 1)
+	)
+	(gates
+		(and (slice 0 1 (node "hint")) (net "i0") (net "q"))
+		(and (slice 1 1 (node "hint")) (net "i1") (net "q"))
+		(and (slice 2 1 (node "hint")) (net "i2") (net "q"))
+		(and (slice 3 1 (node "hint")) (net "i3") (net "q"))
+		(or (slice 0 1 (node "qint")) (slice 0 1 (node "hint")) (slice 1 1 (node "hint")) (slice 2 1 (node "hint")) (slice 3 1 (node "hint")))
+		(or (slice 0 1 (node "sinti")) (net "i1") (net "i3"))
+		(and (slice 0 1 (node "sint")) (net "i0") (net "i2") (slice 0 1 (node "sinti")))
+		(or (slice 1 1 (node "sinti")) (net "i0") (net "i2"))
+		(and (slice 1 1 (node "sint")) (net "i1") (net "i3") (slice 1 1 (node "sinti")))
+		(or (slice 1 1 (node "qint")) (slice 0 1 (node "sint")) (slice 1 1 (node "sint")))
+		(or (net "q") (slice 0 1 (node "qint")) (slice 1 1 (node "qint")))
+	)
+)
+
+(cell "th34w2"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+		("i3" input 1)
+	)
+	(nodes
+		("mint" 2 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i1") (net "i2") (net "i3"))
+		(or (slice 1 1 (node "mint")) (net "i1") (net "i2") (net "i3"))
+		(cell
+			"th23w2"
+			(net "q")
+			(slice 0 1 (node "mint"))
+			(slice 1 1 (node "mint"))
+			(net "i0")
+		)
+	)
+)
+
+(cell "th34w22"
+	(ports
+		("q" output 1)
+		("i0" input 1)
+		("i1" input 1)
+		("i2" input 1)
+		("i3" input 1)
+	)
+	(nodes
+		("mint" 1 0 1)
+	)
+	(gates
+		(or (slice 0 1 (node "mint")) (net "i2") (net "i3"))
+		(cell
+			"th23"
+			(net "q")
+			(slice 0 1 (node "mint"))
+			(net "i0")
+			(net "i1")
+		)
+	)
+)
+
+(cell "dual-rail-and2"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+	)
+	(gates
+		(c-element (net "q_1") (net "i0_1") (net "i1_1"))
+		(c-element (node "n2") (net "i0_1") (net "i1_0"))
+		(c-element (node "n1") (net "i0_0") (net "i1_1"))
+		(c-element (node "n0") (net "i0_0") (net "i1_0"))
+		(or (net "q_0") (node "n0") (node "n1") (node "n2"))
+	)
+)
+
+(cell "dual-rail-and2-bal"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+		("n3" 1 0 1)
+	)
+	(gates
+		(c-element (node "n3") (net "i0_1") (net "i1_1"))
+		(or (net "q_1") (net "gnd") (node "n3") (net "gnd"))
+		(c-element (node "n2") (net "i0_1") (net "i1_0"))
+		(c-element (node "n1") (net "i0_0") (net "i1_1"))
+		(c-element (node "n0") (net "i0_0") (net "i1_0"))
+		(or (net "q_0") (node "n0") (node "n1") (node "n2"))
+	)
+)
+
+(cell "dual-rail-and2-ncl"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes)
+	(gates
+				(cell "th34w22" (net "q_0") (net "i0_0") (net "i1_0") (net "i0_1") (net "i1_1"))
+		(c-element (net "q_1") (net "i0_1") (net "i1_1"))
+	 )
+)
+
+(cell "dual-rail-or2"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+	)
+	(gates
+		(c-element (node "n0") (net "i0_0") (net "i1_1"))
+		(c-element (node "n1") (net "i0_1") (net "i1_0"))
+		(c-element (node "n2") (net "i0_1") (net "i1_1"))
+		(or (net "q_1") (node "n0") (node "n1") (node "n2"))
+		(c-element (net "q_0") (net "i0_0") (net "i1_0"))
+	)
+)
+
+(cell "dual-rail-or2-bal"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+		("n3" 1 0 1)
+	)
+	(gates
+		(c-element (node "n0") (net "i0_0") (net "i1_1"))
+		(c-element (node "n1") (net "i0_1") (net "i1_0"))
+		(c-element (node "n2") (net "i0_1") (net "i1_1"))
+		(or (net "q_1") (node "n0") (node "n1") (node "n2"))
+		(c-element (node "n3") (net "i0_0") (net "i1_0"))
+		(or (net "q_0") (net "gnd") (node "n3") (net "gnd"))
+	)
+)
+
+(cell "dual-rail-or2-ncl"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes)
+	(gates
+		(c-element (net "q_0") (net "i0_0") (net "i1_0"))
+				(cell "th34w22" (net "q_1") (net "i0_1") (net "i1_1") (net "i0_0") (net "i1_0"))
+				
+	)
+)
+
+(cell "dual-rail-nor2"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+	)
+	(gates
+		(c-element (node "n0") (net "i0_0") (net "i1_1"))
+		(c-element (node "n1") (net "i0_1") (net "i1_0"))
+		(c-element (node "n2") (net "i0_1") (net "i1_1"))
+		(or (net "q_0") (node "n0") (node "n1") (node "n2"))
+		(c-element (net "q_1") (net "i0_0") (net "i1_0"))
+	)
+)
+
+(cell "dual-rail-nor2-ncl"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes)
+	(gates
+				(cell "th34w22" (net "q_0") (net "i0_1") (net "i1_1") (net "i0_0") (net "i1_0"))
+				(c-element (net "q_1") (net "i0_0") (net "i1_0"))
+	)
+)
+
+(cell "dual-rail-xor2"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+		("n3" 1 0 1)
+	)
+	(gates
+		(c-element (node "n2") (net "i0_1") (net "i1_0"))
+		(c-element (node "n1") (net "i0_0") (net "i1_1"))
+		(or (net "q_1") (node "n1") (node "n2"))
+		(c-element (node "n0") (net "i0_0") (net "i1_0"))
+		(c-element (node "n3") (net "i0_1") (net "i1_1"))
+		(or (net "q_0") (node "n0") (node "n3"))
+	)
+)
+
+(cell "dual-rail-xor2-ncl"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+	)
+	(gates
+		(c-element (node "n0") (net "i0_0") (net "i1_0"))
+		(cell "th23w2" (net "q_0") (node "n0") (net "i0_1") (net "i1_1"))
+		(c-element (node "n1") (net "i0_0") (net "i1_1"))
+		(cell "th23w2" (net "q_1") (node "n1") (net "i0_1") (net "i1_0"))
+	 )
+)
+
+(cell "dual-rail-ao21"
+    (ports
+        ("a0" input 1)
+        ("a1" input 1)
+        ("b0" input 1)
+        ("b1" input 1)
+        ("c0" input 1)
+        ("c1" input 1)
+        ("q0" output 1)
+        ("q1" output 1)
+    )
+    (nodes
+        ("minterm" 8 0 1)
+    )
+    (gates
+        (or (net "q1") (slice 1 1 (node "minterm")) (slice 3 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")) (slice 7 1 (node "minterm")))
+        (or (net "q0") (slice 0 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 4 1 (node "minterm")))
+        (c-element (slice 7 1 (node "minterm")) (net "a1") (net "b1") (net "c1"))
+        (c-element (slice 6 1 (node "minterm")) (net "a1") (net "b1") (net "c0"))
+        (c-element (slice 5 1 (node "minterm")) (net "a1") (net "b0") (net "c1"))
+        (c-element (slice 4 1 (node "minterm")) (net "a1") (net "b0") (net "c0"))
+        (c-element (slice 3 1 (node "minterm")) (net "a0") (net "b1") (net "c1"))
+        (c-element (slice 2 1 (node "minterm")) (net "a0") (net "b1") (net "c0"))
+        (c-element (slice 1 1 (node "minterm")) (net "a0") (net "b0") (net "c1"))
+        (c-element (slice 0 1 (node "minterm")) (net "a0") (net "b0") (net "c0"))
+    )
+)
+
+(cell "dual-rail-ao21-bal"
+    (ports
+        ("a0" input 1)
+        ("a1" input 1)
+        ("b0" input 1)
+        ("b1" input 1)
+        ("c0" input 1)
+        ("c1" input 1)
+        ("q0" output 1)
+        ("q1" output 1)
+    )
+    (nodes
+        ("minterm" 8 0 1)
+    )
+    (gates
+		
+        (or (net "q1") (slice 1 1 (node "minterm")) (slice 3 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")) (slice 7 1 (node "minterm")))
+        (or (net "q0") (net "gnd") (slice 0 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 4 1 (node "minterm")) (net "gnd"))
+        (c-element (slice 7 1 (node "minterm")) (net "a1") (net "b1") (net "c1"))
+        (c-element (slice 6 1 (node "minterm")) (net "a1") (net "b1") (net "c0"))
+        (c-element (slice 5 1 (node "minterm")) (net "a1") (net "b0") (net "c1"))
+        (c-element (slice 4 1 (node "minterm")) (net "a1") (net "b0") (net "c0"))
+        (c-element (slice 3 1 (node "minterm")) (net "a0") (net "b1") (net "c1"))
+        (c-element (slice 2 1 (node "minterm")) (net "a0") (net "b1") (net "c0"))
+        (c-element (slice 1 1 (node "minterm")) (net "a0") (net "b0") (net "c1"))
+        (c-element (slice 0 1 (node "minterm")) (net "a0") (net "b0") (net "c0"))
+    )
+)
+
+(cell "dual-rail-ao21-ncl"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i2_0" input 1)
+		("i2_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+	)
+	(gates
+		(cell
+			"dual-rail-and2-ncl"
+			(net "i0_0")
+			(net "i0_1")
+			(net "i1_0")
+			(net "i1_1")
+			(node "n0")
+			(node "n1")
+		)
+		(cell
+			"dual-rail-or2-ncl"
+			(node "n0")
+			(node "n1")
+			(net "i2_0")
+			(net "i2_1")
+			(net "q_0")
+			(net "q_1")
+		)
+	)
+)
+
+(cell "dual-rail-ineq-comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i2_0" input 1)
+		("i2_1" input 1)
+		("i3_0" input 1)
+		("i3_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q1_0" output 1)
+		("q1_1" output 1)
+	)
+	(nodes
+	)
+	(gates
+		(cell
+			"dual-rail-and2"
+			(net "i1_0")
+			(net "i1_1")
+			(net "i3_0")
+			(net "i3_1")
+			(net "q1_0")
+			(net "q1_1")
+		)
+		(cell
+			"dual-rail-ao21"
+			(net "i2_0")
+			(net "i2_1")
+			(net "i1_0")
+			(net "i1_1")
+			(net "i0_0")
+			(net "i0_1")
+			(net "q0_0")
+			(net "q0_1")
+		)
+	)
+)
+
+(cell "dual-rail-ineq-comp-bal"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i2_0" input 1)
+		("i2_1" input 1)
+		("i3_0" input 1)
+		("i3_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q1_0" output 1)
+		("q1_1" output 1)
+	)
+	(nodes
+	)
+	(gates
+		(cell
+			"dual-rail-and2-bal"
+			(net "i1_0")
+			(net "i1_1")
+			(net "i3_0")
+			(net "i3_1")
+			(net "q1_0")
+			(net "q1_1")
+		)
+		(cell
+			"dual-rail-ao21-bal"
+			(net "i2_0")
+			(net "i2_1")
+			(net "i1_0")
+			(net "i1_1")
+			(net "i0_0")
+			(net "i0_1")
+			(net "q0_0")
+			(net "q0_1")
+		)
+	)
+)
+
+(cell "dual-rail-ineq-comp-ncl"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i2_0" input 1)
+		("i2_1" input 1)
+		("i3_0" input 1)
+		("i3_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q1_0" output 1)
+		("q1_1" output 1)
+	)
+	(nodes
+	)
+	(gates
+		(cell
+			"dual-rail-and2-ncl"
+			(net "i1_0")
+			(net "i1_1")
+			(net "i3_0")
+			(net "i3_1")
+			(net "q1_0")
+			(net "q1_1")
+		)
+		(cell
+			"dual-rail-ao21-ncl"
+			(net "i2_0")
+			(net "i2_1")
+			(net "i1_0")
+			(net "i1_1")
+			(net "i0_0")
+			(net "i0_1")
+			(net "q0_0")
+			(net "q0_1")
+		)
+	)
+)
+
+(cell "dual-rail-mux2"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("s_0" input 1)
+		("s_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+		("n3" 1 0 1)
+	)
+	(gates
+		(c-element (node "n3") (net "s_1") (net "i1_1"))
+		(c-element (node "n1") (net "s_0") (net "i0_1"))
+		(or (net "q_1") (node "n1") (node "n3"))
+		(c-element (node "n2") (net "s_1") (net "i1_0"))
+		(c-element (node "n0") (net "s_0") (net "i0_0"))
+		(or (net "q_0") (node "n0") (node "n2"))
+	)
+)
+
+(cell "dual-rail-mux2-ncl"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("s_0" input 1)
+		("s_1" input 1)
+		("q_0" output 1)
+		("q_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+	)
+	(gates
+				(c-element (node "n0") (net "s_1") (net "i1_0"))
+		(cell "th23w2" (net "q_0") (node "n0") (net "s_0") (net "i0_0"))
+		(c-element (node "n1") (net "s_1") (net "i1_1"))
+		(cell "th23w2" (net "q_1") (node "n1") (net "s_0") (net "i0_1"))
+	)
+)
+
+(cell "dual-rail-half-adder"
+	(ports
+		("a_0" input 1)
+		("a_1" input 1)
+		("b_0" input 1)
+		("b_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+		("n3" 1 0 1)
+	)
+	(gates
+		(c-element (node "n0") (net "a_0") (net "b_0"))
+		(c-element (node "n1") (net "a_0") (net "b_1"))
+		(c-element (node "n2") (net "a_1") (net "b_0"))
+		(c-element (node "n3") (net "a_1") (net "b_1"))
+		(or (net "sum_0") (node "n0") (node "n3"))
+		(or (net "sum_1") (node "n1") (node "n2"))
+		(cell "and-or21" (net "co_0") (net "a_1") (net "b_0") (net "a_0"))
+		(and (net "co_1") (net "a_1") (net "b_1"))
+	)
+)
+
+(cell "dual-rail-half-adder-bal"
+	(ports
+		("a_0" input 1)
+		("a_1" input 1)
+		("b_0" input 1)
+		("b_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+		("n3" 1 0 1)
+	)
+	(gates
+		(c-element (node "n0") (net "a_0") (net "b_0"))
+		(c-element (node "n1") (net "a_0") (net "b_1"))
+		(c-element (node "n2") (net "a_1") (net "b_0"))
+		(c-element (node "n3") (net "a_1") (net "b_1"))
+		(or (net "sum_0") (node "n0") (node "n3"))
+		(or (net "sum_1") (node "n1") (node "n2"))
+		(or (net "co_0") (node "n0") (node "n1") (node "n2"))
+		(or (net "co_1") (net "gnd") (node "n3") (net "gnd"))
+	)
+)
+
+(cell "dual-rail-half-adder-ncl"
+	(ports
+		("a_0" input 1)
+		("a_1" input 1)
+		("b_0" input 1)
+		("b_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+	)
+	(gates
+		(c-element (net "co_1") (net "a_1") (net "b_1"))
+		(cell "th23w2" (net "sum_0") (net "co_1") (net "a_0") (net "b_0"))
+		(c-element (node "n0") (net "a_0") (net "b_1"))
+		(cell "th23w2" (net "sum_1") (node "n0") (net "a_1") (net "b_0"))
+		(cell "th23w2" (net "co_0") (net "sum_1") (net "a_0") (net "b_0"))
+	)
+)
+
+(cell "dual-rail-full-adder"
+	(ports
+		("a0" input 1)
+		("a1" input 1)
+		("b0" input 1)
+		("b1" input 1)
+		("ci0" input 1)
+		("ci1" input 1)
+		("co0" output 1)
+		("co1" output 1)
+		("sum0" output 1)
+		("sum1" output 1)
+	)
+	(nodes
+		("minterm" 8 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "minterm")) (net "a0") (net "b0") (net "ci0"))
+		(c-element (slice 1 1 (node "minterm")) (net "a0") (net "b0") (net "ci1"))
+		(c-element (slice 2 1 (node "minterm")) (net "a0") (net "b1") (net "ci0"))
+		(c-element (slice 3 1 (node "minterm")) (net "a0") (net "b1") (net "ci1"))
+		(c-element (slice 4 1 (node "minterm")) (net "a1") (net "b0") (net "ci0"))
+		(c-element (slice 5 1 (node "minterm")) (net "a1") (net "b0") (net "ci1"))
+		(c-element (slice 6 1 (node "minterm")) (net "a1") (net "b1") (net "ci0"))
+		(c-element (slice 7 1 (node "minterm")) (net "a1") (net "b1") (net "ci1"))
+		(or (net "sum1") (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 4 1 (node "minterm")) (slice 7 1 (node "minterm")))
+		(or (net "sum0") (slice 0 1 (node "minterm")) (slice 3 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")))
+		(cell "and-or222" (net "co1") (net "a1") (net "b1") (net "a1") (net "ci1") (net "b1") (net "ci1"))
+		(cell "and-or222" (net "co0") (net "a0") (net "b0") (net "a0") (net "ci0") (net "b0") (net "ci0"))
+	)
+)
+
+(cell "dual-rail-full-adder-bal"
+	(ports
+		("a0" input 1)
+		("a1" input 1)
+		("b0" input 1)
+		("b1" input 1)
+		("ci0" input 1)
+		("ci1" input 1)
+		("co0" output 1)
+		("co1" output 1)
+		("sum0" output 1)
+		("sum1" output 1)
+	)
+	(nodes
+		("minterm" 8 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "minterm")) (net "a0") (net "b0") (net "ci0"))
+		(c-element (slice 1 1 (node "minterm")) (net "a0") (net "b0") (net "ci1"))
+		(c-element (slice 2 1 (node "minterm")) (net "a0") (net "b1") (net "ci0"))
+		(c-element (slice 3 1 (node "minterm")) (net "a0") (net "b1") (net "ci1"))
+		(c-element (slice 4 1 (node "minterm")) (net "a1") (net "b0") (net "ci0"))
+		(c-element (slice 5 1 (node "minterm")) (net "a1") (net "b0") (net "ci1"))
+		(c-element (slice 6 1 (node "minterm")) (net "a1") (net "b1") (net "ci0"))
+		(c-element (slice 7 1 (node "minterm")) (net "a1") (net "b1") (net "ci1"))
+		(or (net "sum1") (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 4 1 (node "minterm")) (slice 7 1 (node "minterm")))
+		(or (net "sum0") (slice 0 1 (node "minterm")) (slice 3 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")))
+		(or (net "co1") (slice 3 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")) (slice 7 1 (node "minterm")))
+		(or (net "co0") (slice 0 1 (node "minterm")) (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 4 1 (node "minterm")))
+	)
+)
+
+(cell "dual-rail-dims-adder"
+	(ports
+		("a0" input 1)
+		("a1" input 1)
+		("b0" input 1)
+		("b1" input 1)
+		("ci0" input 1)
+		("ci1" input 1)
+		("co0" output 1)
+		("co1" output 1)
+		("sum0" output 1)
+		("sum1" output 1)
+	)
+	(nodes
+		("minterm" 8 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "minterm")) (net "a0") (net "b0") (net "ci0"))
+		(c-element (slice 1 1 (node "minterm")) (net "a0") (net "b0") (net "ci1"))
+		(c-element (slice 2 1 (node "minterm")) (net "a0") (net "b1") (net "ci0"))
+		(c-element (slice 3 1 (node "minterm")) (net "a0") (net "b1") (net "ci1"))
+		(c-element (slice 4 1 (node "minterm")) (net "a1") (net "b0") (net "ci0"))
+		(c-element (slice 5 1 (node "minterm")) (net "a1") (net "b0") (net "ci1"))
+		(c-element (slice 6 1 (node "minterm")) (net "a1") (net "b1") (net "ci0"))
+		(c-element (slice 7 1 (node "minterm")) (net "a1") (net "b1") (net "ci1"))
+		(or (net "sum1") (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 4 1 (node "minterm")) (slice 7 1 (node "minterm")))
+		(or (net "sum0") (slice 0 1 (node "minterm")) (slice 3 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")))
+		(or (net "co1") (slice 3 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")) (slice 7 1 (node "minterm")))
+		(or (net "co0") (slice 0 1 (node "minterm")) (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 4 1 (node "minterm")))
+	)
+)
+
+(cell "dual-rail-ncl-adder"
+	(ports
+		("a0" input 1)
+		("a1" input 1)
+		("b0" input 1)
+		("b1" input 1)
+		("ci0" input 1)
+		("ci1" input 1)
+		("co0" output 1)
+		("co1" output 1)
+		("sum0" output 1)
+		("sum1" output 1)
+	)
+	(nodes)
+	(gates
+		(cell
+			"th23"
+			(net "co0")
+			(net "a0")
+			(net "b0")
+			(net "ci0")
+		)
+		(cell
+			"th23"
+			(net "co1")
+			(net "a1")
+			(net "b1")
+			(net "ci1")
+		)
+		(cell
+			"th34w2"
+			(net "sum0")
+			(net "co1")
+			(net "a0")
+			(net "b0")
+			(net "ci0")
+		)
+		(cell
+			"th34w2"
+			(net "sum1")
+			(net "co0")
+			(net "a1")
+			(net "b1")
+			(net "ci1")
+		)
+	)
+)
+
+(cell "dual-rail-full-adder-primed"
+	(ports
+		("a_0" input 1)
+		("a_1" input 1)
+		("b_0" input 1)
+		("b_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+		("n3" 1 0 1)
+	)
+	(gates
+		(c-element (node "n0") (net "a_0") (net "b_0"))
+		(c-element (node "n1") (net "a_0") (net "b_1"))
+		(c-element (node "n2") (net "a_1") (net "b_0"))
+		(c-element (node "n3") (net "a_1") (net "b_1"))
+		(or (net "sum_1") (node "n0") (node "n3"))
+		(or (net "sum_0") (node "n1") (node "n2"))
+		(cell "and-or21" (net "co_1") (net "a_0") (net "b_1") (net "a_1"))
+		(and (net "co_0") (net "a_0") (net "b_0"))
+	)
+)
+
+(cell "dual-rail-full-adder-primed-bal"
+	(ports
+		("a_0" input 1)
+		("a_1" input 1)
+		("b_0" input 1)
+		("b_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+		("n3" 1 0 1)
+	)
+	(gates
+		(c-element (node "n0") (net "a_0") (net "b_0"))
+		(c-element (node "n1") (net "a_0") (net "b_1"))
+		(c-element (node "n2") (net "a_1") (net "b_0"))
+		(c-element (node "n3") (net "a_1") (net "b_1"))
+		(or (net "sum_1") (node "n0") (node "n3"))
+		(or (net "sum_0") (node "n1") (node "n2"))
+		(or (net "co_1") (node "n1") (node "n2") (node "n3"))
+		(or (net "co_0") (net "gnd") (node "n0") (net "gnd"))
+	)
+)
+
+(cell "dual-rail-full-adder-primed-ncl"
+	(ports
+		("a_0" input 1)
+		("a_1" input 1)
+		("b_0" input 1)
+		("b_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+	)
+	(nodes
+		("n0" 1 0 1)
+		("n1" 1 0 1)
+		("n2" 1 0 1)
+		("n3" 1 0 1)
+	)
+	(gates
+			(c-element (node "n0") (net "a_1") (net "b_0"))
+			(cell "th23w2" (net "sum_0") (node "n0") (net "a_0") (net "b_1"))
+			
+			(c-element (net "co_0") (net "a_0") (net "b_0"))
+			(cell "th23w2" (net "sum_1") (net "co_0") (net "a_1") (net "b_1"))
+			
+			(cell "th23w2" (net "co_1") (net "sum_0") (net "a_0") (net "b_1"))
+	)
+)
+
+(cell "dual-rail-dims-subtracter"
+	(ports
+		("a0" input 1)
+		("a1" input 1)
+		("b0" input 1)
+		("b1" input 1)
+		("ci0" input 1)
+		("ci1" input 1)
+		("co0" output 1)
+		("co1" output 1)
+		("sum0" output 1)
+		("sum1" output 1)
+	)
+	(nodes
+		("minterm" 8 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "minterm")) (net "a0") (net "b0") (net "ci0"))
+		(c-element (slice 1 1 (node "minterm")) (net "a0") (net "b0") (net "ci1"))
+		(c-element (slice 2 1 (node "minterm")) (net "a0") (net "b1") (net "ci0"))
+		(c-element (slice 3 1 (node "minterm")) (net "a0") (net "b1") (net "ci1"))
+		(c-element (slice 4 1 (node "minterm")) (net "a1") (net "b0") (net "ci0"))
+		(c-element (slice 5 1 (node "minterm")) (net "a1") (net "b0") (net "ci1"))
+		(c-element (slice 6 1 (node "minterm")) (net "a1") (net "b1") (net "ci0"))
+		(c-element (slice 7 1 (node "minterm")) (net "a1") (net "b1") (net "ci1"))
+		(or (net "sum0") (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 4 1 (node "minterm")) (slice 7 1 (node "minterm")))
+		(or (net "sum1") (slice 0 1 (node "minterm")) (slice 3 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")))
+		(or (net "co0") (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 3 1 (node "minterm")) (slice 7 1 (node "minterm")))
+		(or (net "co1") (slice 0 1 (node "minterm")) (slice 4 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")))
+	)
+)
+
+(cell "dual-rail-ncl-subtracter"
+	(ports
+		("a0" input 1)
+		("a1" input 1)
+		("b0" input 1)
+		("b1" input 1)
+		("ci0" input 1)
+		("ci1" input 1)
+		("co0" output 1)
+		("co1" output 1)
+		("sum0" output 1)
+		("sum1" output 1)
+	)
+	(nodes
+		("cint" 2 0 1)
+	)
+	(gates
+		(cell
+			"th23"
+			(slice 0 1 (node "cint"))
+			(net "a0")
+			(net "b0")
+			(net "ci0")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "cint"))
+			(net "a1")
+			(net "b1")
+			(net "ci1")
+		)
+		(cell
+			"th34w2"
+			(net "sum0")
+			(slice 1 1 (node "cint"))
+			(net "a0")
+			(net "b0")
+			(net "ci0")
+		)
+		(cell
+			"th34w2"
+			(net "sum1")
+			(slice 0 1 (node "cint"))
+			(net "a1")
+			(net "b1")
+			(net "ci1")
+		)
+		(cell
+			"th23"
+			(net "co0")
+			(slice 1 1 (node "cint"))
+			(net "b0")
+			(slice 0 1 (node "ci0"))
+		)
+		(cell
+			"th23"
+			(net "co1")
+			(slice 0 1 (node "cint"))
+			(net "b1")
+			(slice 0 1 (node "ci1"))
+		)
+	)
+)
+
+(cell "one-of-four-half-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("sopint" 4 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_3") (net "i1_2"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_3") (net "i1_3"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(or (slice 0 1 (node "sopint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(or (slice 1 1 (node "sopint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")))
+		(or (slice 2 1 (node "sopint")) (slice 6 1 (node "mint")) (slice 7 1 (node "mint")))
+		(or (slice 3 1 (node "sopint")) (slice 8 1 (node "mint")) (slice 9 1 (node "mint")) (slice 10 1 (node "mint")))
+		(or (net "sum_0") (slice 0 1 (node "mint")) (slice 0 1 (node "sopint")))
+		(or (net "sum_1") (slice 1 1 (node "sopint")) (slice 2 1 (node "sopint")))
+		(or (net "sum_2") (slice 3 1 (node "sopint")) (slice 11 1 (node "mint")))
+		(or (net "sum_3") (slice 12 1 (node "mint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")) (slice 15 1 (node "mint")))
+		(or (net "co_0") (slice 0 1 (node "mint")) (slice 1 1 (node "sopint")) (slice 3 1 (node "sopint")) (net "sum_3"))
+		(or (net "co_1") (slice 0 1 (node "sopint")) (slice 2 1 (node "sopint")) (slice 11 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-dims-carry-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("mint" 7 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "ci_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "ci_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "ci_0"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "ci_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "ci_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_2") (net "ci_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_3") (net "ci_0"))
+		(c-element (net "co_1") (net "i0_3") (net "ci_1"))
+		(or (net "sum_0") (slice 0 1 (node "mint")) (net "co_1"))
+		(or (net "sum_1") (slice 1 1 (node "mint")) (slice 2 1 (node "mint")))
+		(or (net "sum_2") (slice 3 1 (node "mint")) (slice 4 1 (node "mint")))
+		(or (net "sum_3") (slice 5 1 (node "mint")) (slice 6 1 (node "mint")))
+		(or (net "co_0") (slice 0 1 (node "mint")) (net "sum_1") (net "sum_2") (net "sum_3"))
+	)
+)
+
+(cell "one-of-four-ncl-carry-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("mint" 4 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "ci_0"))
+		(c-element (net "co_1") (net "i0_3") (net "ci_1"))
+		(or (net "sum_0") (slice 0 1 (node "mint")) (net "co_1"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "ci_1"))
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 1 1 (node "mint"))
+			(net "i0_1")
+			(net "ci_0")
+		)
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "ci_1"))
+		(cell
+			"th23w2"
+			(net "sum_2")
+			(slice 2 1 (node "mint"))
+			(net "i0_2")
+			(net "ci_0")
+		)
+		(c-element (slice 3 1 (node "mint")) (net "i0_2") (net "ci_1"))
+		(cell
+			"th23w2"
+			(net "sum_3")
+			(slice 3 1 (node "mint"))
+			(net "i0_3")
+			(net "ci_0")
+		)
+		(or (net "co_0") (slice 0 1 (node "mint")) (net "sum_1") (net "sum_2") (net "sum_3"))
+	)
+)
+
+(cell "oof_dims_ca_se"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+		("s_0" output 1)
+		("s_1" output 1)
+	)
+	(nodes
+		("mint" 7 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "ci_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "ci_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "ci_0"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "ci_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "ci_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_2") (net "ci_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_3") (net "ci_0"))
+		(c-element (net "co_1") (net "i0_3") (net "ci_1"))
+		(or (net "sum_0") (slice 0 1 (node "mint")) (net "co_1"))
+		(or (net "sum_1") (slice 1 1 (node "mint")) (slice 2 1 (node "mint")))
+		(or (net "sum_2") (slice 3 1 (node "mint")) (slice 4 1 (node "mint")))
+		(or (net "sum_3") (slice 5 1 (node "mint")) (slice 6 1 (node "mint")))
+		(or (net "co_0") (slice 0 1 (node "mint")) (net "sum_1") (net "sum_2") (net "sum_3"))
+		(or (net "s_0") (slice 0 1 (node "mint")) (net "sum_1") (slice 3 1 (node "mint")) (net "co_1"))
+		(or (net "s_1") (slice 4 1 (node "mint")) (net "sum_3"))
+	)
+)
+
+(cell "one-of-four-dims-carry-adder-overflow"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+		("s_0" output 1)
+		("s_1" output 1)
+	)
+	(nodes
+		("mint" 7 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "ci_0"))
+		(c-element (net "co_1") (net "i0_3") (net "ci_1"))
+		(or (net "sum_0") (slice 0 1 (node "mint")) (net "co_1"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "ci_1"))
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 1 1 (node "mint"))
+			(net "i0_1")
+			(net "ci_0")
+		)
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "ci_1"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_2") (net "ci_0"))
+		(or (net "sum_2") (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "ci_1"))
+		(cell
+			"th23w2"
+			(net "sum_3")
+			(slice 4 1 (node "mint"))
+			(net "i0_3")
+			(net "ci_0")
+		)
+		(or (net "co_0") (slice 0 1 (node "mint")) (net "sum_1") (net "sum_2") (net "sum_3"))
+		(or (net "s_0") (slice 0 1 (node "mint")) (net "sum_1") (slice 2 1 (node "mint")) (net "co_1"))
+		(or (net "s_1") (slice 3 1 (node "mint")) (net "sum_3"))
+	)
+)
+
+(cell "one-of-four-full-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("halfsum" 4 0 1)
+		("halfcar" 4 0 1)
+	)
+	(gates
+		(cell
+			"one-of-four-half-adder"
+			(net "i0_0")
+			(net "i0_1")
+			(net "i0_2")
+			(net "i0_3")
+			(net "i1_0")
+			(net "i1_1")
+			(net "i1_2")
+			(net "i1_3")
+			(slice 0 1 (node "halfcar"))
+			(slice 1 1 (node "halfcar"))
+			(slice 0 1 (node "halfsum"))
+			(slice 1 1 (node "halfsum"))
+			(slice 2 1 (node "halfsum"))
+			(slice 3 1 (node "halfsum"))
+		)
+		(cell
+			"one-of-four-dims-carry-adder"
+			(slice 0 1 (node "halfsum"))
+			(slice 1 1 (node "halfsum"))
+			(slice 2 1 (node "halfsum"))
+			(slice 3 1 (node "halfsum"))
+			(net "ci_0")
+			(net "ci_1")
+			(slice 2 1 (node "halfcar"))
+			(slice 3 1 (node "halfcar"))
+			(net "sum_0")
+			(net "sum_1")
+			(net "sum_2")
+			(net "sum_3")
+		)
+		(cell
+			"dual-rail-xor2"
+			(slice 0 1 (node "halfcar"))
+			(slice 1 1 (node "halfcar"))
+			(slice 2 1 (node "halfcar"))
+			(slice 3 1 (node "halfcar"))
+			(net "co_0")
+			(net "co_1")
+		)
+	)
+)
+
+(cell "one-of-four-dims-full-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("minterm" 32 0 1)
+		("sumint" 8 0 1)
+		("carrint" 8 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "minterm")) (net "i0_0") (net "i1_0") (net "ci_0"))
+		(c-element (slice 1 1 (node "minterm")) (net "i0_0") (net "i1_0") (net "ci_1"))
+		(c-element (slice 2 1 (node "minterm")) (net "i0_0") (net "i1_1") (net "ci_0"))
+		(c-element (slice 3 1 (node "minterm")) (net "i0_0") (net "i1_1") (net "ci_1"))
+		(c-element (slice 4 1 (node "minterm")) (net "i0_0") (net "i1_2") (net "ci_0"))
+		(c-element (slice 5 1 (node "minterm")) (net "i0_0") (net "i1_2") (net "ci_1"))
+		(c-element (slice 6 1 (node "minterm")) (net "i0_0") (net "i1_3") (net "ci_0"))
+		(c-element (slice 7 1 (node "minterm")) (net "i0_0") (net "i1_3") (net "ci_1"))
+		(c-element (slice 8 1 (node "minterm")) (net "i0_1") (net "i1_0") (net "ci_0"))
+		(c-element (slice 9 1 (node "minterm")) (net "i0_1") (net "i1_0") (net "ci_1"))
+		(c-element (slice 10 1 (node "minterm")) (net "i0_1") (net "i1_1") (net "ci_0"))
+		(c-element (slice 11 1 (node "minterm")) (net "i0_1") (net "i1_1") (net "ci_1"))
+		(c-element (slice 12 1 (node "minterm")) (net "i0_1") (net "i1_2") (net "ci_0"))
+		(c-element (slice 13 1 (node "minterm")) (net "i0_1") (net "i1_2") (net "ci_1"))
+		(c-element (slice 14 1 (node "minterm")) (net "i0_1") (net "i1_3") (net "ci_0"))
+		(c-element (slice 15 1 (node "minterm")) (net "i0_1") (net "i1_3") (net "ci_1"))
+		(c-element (slice 16 1 (node "minterm")) (net "i0_2") (net "i1_0") (net "ci_0"))
+		(c-element (slice 17 1 (node "minterm")) (net "i0_2") (net "i1_0") (net "ci_1"))
+		(c-element (slice 18 1 (node "minterm")) (net "i0_2") (net "i1_1") (net "ci_0"))
+		(c-element (slice 19 1 (node "minterm")) (net "i0_2") (net "i1_1") (net "ci_1"))
+		(c-element (slice 20 1 (node "minterm")) (net "i0_2") (net "i1_2") (net "ci_0"))
+		(c-element (slice 21 1 (node "minterm")) (net "i0_2") (net "i1_2") (net "ci_1"))
+		(c-element (slice 22 1 (node "minterm")) (net "i0_2") (net "i1_3") (net "ci_0"))
+		(c-element (slice 23 1 (node "minterm")) (net "i0_2") (net "i1_3") (net "ci_1"))
+		(c-element (slice 24 1 (node "minterm")) (net "i0_3") (net "i1_0") (net "ci_0"))
+		(c-element (slice 25 1 (node "minterm")) (net "i0_3") (net "i1_0") (net "ci_1"))
+		(c-element (slice 26 1 (node "minterm")) (net "i0_3") (net "i1_1") (net "ci_0"))
+		(c-element (slice 27 1 (node "minterm")) (net "i0_3") (net "i1_1") (net "ci_1"))
+		(c-element (slice 28 1 (node "minterm")) (net "i0_3") (net "i1_2") (net "ci_0"))
+		(c-element (slice 29 1 (node "minterm")) (net "i0_3") (net "i1_2") (net "ci_1"))
+		(c-element (slice 30 1 (node "minterm")) (net "i0_3") (net "i1_3") (net "ci_0"))
+		(c-element (slice 31 1 (node "minterm")) (net "i0_3") (net "i1_3") (net "ci_1"))
+		(or (slice 0 1 (node "sumint")) (slice 0 1 (node "minterm")) (slice 7 1 (node "minterm")) (slice 13 1 (node "minterm")) (slice 14 1 (node "minterm")))
+		(or (slice 1 1 (node "sumint")) (slice 19 1 (node "minterm")) (slice 20 1 (node "minterm")) (slice 25 1 (node "minterm")) (slice 26 1 (node "minterm")))
+		(or (net "sum_0") (slice 0 1 (node "sumint")) (slice 1 1 (node "sumint")))
+		(or (slice 2 1 (node "sumint")) (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 8 1 (node "minterm")) (slice 15 1 (node "minterm")))
+		(or (slice 3 1 (node "sumint")) (slice 21 1 (node "minterm")) (slice 22 1 (node "minterm")) (slice 27 1 (node "minterm")) (slice 28 1 (node "minterm")))
+		(or (net "sum_1") (slice 2 1 (node "sumint")) (slice 3 1 (node "sumint")))
+		(or (slice 4 1 (node "sumint")) (slice 3 1 (node "minterm")) (slice 4 1 (node "minterm")) (slice 9 1 (node "minterm")) (slice 10 1 (node "minterm")))
+		(or (slice 5 1 (node "sumint")) (slice 16 1 (node "minterm")) (slice 23 1 (node "minterm")) (slice 29 1 (node "minterm")) (slice 30 1 (node "minterm")))
+		(or (net "sum_2") (slice 4 1 (node "sumint")) (slice 5 1 (node "sumint")))
+		(or (slice 6 1 (node "sumint")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")) (slice 11 1 (node "minterm")) (slice 12 1 (node "minterm")))
+		(or (slice 7 1 (node "sumint")) (slice 17 1 (node "minterm")) (slice 18 1 (node "minterm")) (slice 24 1 (node "minterm")) (slice 31 1 (node "minterm")))
+		(or (net "sum_3") (slice 6 1 (node "sumint")) (slice 7 1 (node "sumint")))
+		(or (slice 0 1 (node "carrint")) (slice 0 1 (node "minterm")) (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 3 1 (node "minterm")))
+		(or (slice 1 1 (node "carrint")) (slice 4 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")) (slice 8 1 (node "minterm")))
+		(or (slice 2 1 (node "carrint")) (slice 9 1 (node "minterm")) (slice 10 1 (node "minterm")) (slice 11 1 (node "minterm")) (slice 12 1 (node "minterm")))
+		(or (slice 3 1 (node "carrint")) (slice 16 1 (node "minterm")) (slice 17 1 (node "minterm")) (slice 18 1 (node "minterm")) (slice 24 1 (node "minterm")))
+		(or (net "co_0") (slice 0 1 (node "carrint")) (slice 1 1 (node "carrint")) (slice 2 1 (node "carrint")) (slice 3 1 (node "carrint")))
+		(or (slice 4 1 (node "carrint")) (slice 7 1 (node "minterm")) (slice 13 1 (node "minterm")) (slice 14 1 (node "minterm")) (slice 15 1 (node "minterm")))
+		(or (slice 5 1 (node "carrint")) (slice 19 1 (node "minterm")) (slice 20 1 (node "minterm")) (slice 21 1 (node "minterm")) (slice 22 1 (node "minterm")))
+		(or (slice 6 1 (node "carrint")) (slice 23 1 (node "minterm")) (slice 25 1 (node "minterm")) (slice 26 1 (node "minterm")) (slice 27 1 (node "minterm")))
+		(or (slice 7 1 (node "carrint")) (slice 28 1 (node "minterm")) (slice 29 1 (node "minterm")) (slice 30 1 (node "minterm")) (slice 31 1 (node "minterm")))
+		(or (net "co_1") (slice 4 1 (node "carrint")) (slice 5 1 (node "carrint")) (slice 6 1 (node "carrint")) (slice 7 1 (node "carrint")))
+	)
+)
+
+(cell "one-of-four-dims-full-adder-overflow"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+		("s_0" output 1)
+		("s_1" output 1)
+	)
+	(nodes
+		("minterm" 32 0 1)
+		("sumint" 8 0 1)
+		("carrint" 8 0 1)
+		("overint" 8 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "minterm")) (net "i0_0") (net "i1_0") (net "ci_0"))
+		(c-element (slice 1 1 (node "minterm")) (net "i0_0") (net "i1_0") (net "ci_1"))
+		(c-element (slice 2 1 (node "minterm")) (net "i0_0") (net "i1_1") (net "ci_0"))
+		(c-element (slice 3 1 (node "minterm")) (net "i0_0") (net "i1_1") (net "ci_1"))
+		(c-element (slice 4 1 (node "minterm")) (net "i0_0") (net "i1_2") (net "ci_0"))
+		(c-element (slice 5 1 (node "minterm")) (net "i0_0") (net "i1_2") (net "ci_1"))
+		(c-element (slice 6 1 (node "minterm")) (net "i0_0") (net "i1_3") (net "ci_0"))
+		(c-element (slice 7 1 (node "minterm")) (net "i0_0") (net "i1_3") (net "ci_1"))
+		(c-element (slice 8 1 (node "minterm")) (net "i0_1") (net "i1_0") (net "ci_0"))
+		(c-element (slice 9 1 (node "minterm")) (net "i0_1") (net "i1_0") (net "ci_1"))
+		(c-element (slice 10 1 (node "minterm")) (net "i0_1") (net "i1_1") (net "ci_0"))
+		(c-element (slice 11 1 (node "minterm")) (net "i0_1") (net "i1_1") (net "ci_1"))
+		(c-element (slice 12 1 (node "minterm")) (net "i0_1") (net "i1_2") (net "ci_0"))
+		(c-element (slice 13 1 (node "minterm")) (net "i0_1") (net "i1_2") (net "ci_1"))
+		(c-element (slice 14 1 (node "minterm")) (net "i0_1") (net "i1_3") (net "ci_0"))
+		(c-element (slice 15 1 (node "minterm")) (net "i0_1") (net "i1_3") (net "ci_1"))
+		(c-element (slice 16 1 (node "minterm")) (net "i0_2") (net "i1_0") (net "ci_0"))
+		(c-element (slice 17 1 (node "minterm")) (net "i0_2") (net "i1_0") (net "ci_1"))
+		(c-element (slice 18 1 (node "minterm")) (net "i0_2") (net "i1_1") (net "ci_0"))
+		(c-element (slice 19 1 (node "minterm")) (net "i0_2") (net "i1_1") (net "ci_1"))
+		(c-element (slice 20 1 (node "minterm")) (net "i0_2") (net "i1_2") (net "ci_0"))
+		(c-element (slice 21 1 (node "minterm")) (net "i0_2") (net "i1_2") (net "ci_1"))
+		(c-element (slice 22 1 (node "minterm")) (net "i0_2") (net "i1_3") (net "ci_0"))
+		(c-element (slice 23 1 (node "minterm")) (net "i0_2") (net "i1_3") (net "ci_1"))
+		(c-element (slice 24 1 (node "minterm")) (net "i0_3") (net "i1_0") (net "ci_0"))
+		(c-element (slice 25 1 (node "minterm")) (net "i0_3") (net "i1_0") (net "ci_1"))
+		(c-element (slice 26 1 (node "minterm")) (net "i0_3") (net "i1_1") (net "ci_0"))
+		(c-element (slice 27 1 (node "minterm")) (net "i0_3") (net "i1_1") (net "ci_1"))
+		(c-element (slice 28 1 (node "minterm")) (net "i0_3") (net "i1_2") (net "ci_0"))
+		(c-element (slice 29 1 (node "minterm")) (net "i0_3") (net "i1_2") (net "ci_1"))
+		(c-element (slice 30 1 (node "minterm")) (net "i0_3") (net "i1_3") (net "ci_0"))
+		(c-element (slice 31 1 (node "minterm")) (net "i0_3") (net "i1_3") (net "ci_1"))
+		(or (slice 0 1 (node "sumint")) (slice 0 1 (node "minterm")) (slice 7 1 (node "minterm")) (slice 13 1 (node "minterm")) (slice 14 1 (node "minterm")))
+		(or (slice 1 1 (node "sumint")) (slice 19 1 (node "minterm")) (slice 20 1 (node "minterm")) (slice 25 1 (node "minterm")) (slice 26 1 (node "minterm")))
+		(or (net "sum_0") (slice 0 1 (node "sumint")) (slice 1 1 (node "sumint")))
+		(or (slice 2 1 (node "sumint")) (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 8 1 (node "minterm")) (slice 15 1 (node "minterm")))
+		(or (slice 3 1 (node "sumint")) (slice 21 1 (node "minterm")) (slice 22 1 (node "minterm")) (slice 27 1 (node "minterm")) (slice 28 1 (node "minterm")))
+		(or (net "sum_1") (slice 2 1 (node "sumint")) (slice 3 1 (node "sumint")))
+		(or (slice 4 1 (node "sumint")) (slice 3 1 (node "minterm")) (slice 4 1 (node "minterm")) (slice 9 1 (node "minterm")) (slice 10 1 (node "minterm")))
+		(or (slice 5 1 (node "sumint")) (slice 16 1 (node "minterm")) (slice 23 1 (node "minterm")) (slice 29 1 (node "minterm")) (slice 30 1 (node "minterm")))
+		(or (net "sum_2") (slice 4 1 (node "sumint")) (slice 5 1 (node "sumint")))
+		(or (slice 6 1 (node "sumint")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")) (slice 11 1 (node "minterm")) (slice 12 1 (node "minterm")))
+		(or (slice 7 1 (node "sumint")) (slice 17 1 (node "minterm")) (slice 18 1 (node "minterm")) (slice 24 1 (node "minterm")) (slice 31 1 (node "minterm")))
+		(or (net "sum_3") (slice 6 1 (node "sumint")) (slice 7 1 (node "sumint")))
+		(or (slice 0 1 (node "carrint")) (slice 0 1 (node "minterm")) (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 3 1 (node "minterm")))
+		(or (slice 1 1 (node "carrint")) (slice 4 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")) (slice 8 1 (node "minterm")))
+		(or (slice 2 1 (node "carrint")) (slice 9 1 (node "minterm")) (slice 10 1 (node "minterm")) (slice 11 1 (node "minterm")) (slice 12 1 (node "minterm")))
+		(or (slice 3 1 (node "carrint")) (slice 16 1 (node "minterm")) (slice 17 1 (node "minterm")) (slice 18 1 (node "minterm")) (slice 24 1 (node "minterm")))
+		(or (net "co_0") (slice 0 1 (node "carrint")) (slice 1 1 (node "carrint")) (slice 2 1 (node "carrint")) (slice 3 1 (node "carrint")))
+		(or (slice 4 1 (node "carrint")) (slice 7 1 (node "minterm")) (slice 13 1 (node "minterm")) (slice 14 1 (node "minterm")) (slice 15 1 (node "minterm")))
+		(or (slice 5 1 (node "carrint")) (slice 19 1 (node "minterm")) (slice 20 1 (node "minterm")) (slice 21 1 (node "minterm")) (slice 22 1 (node "minterm")))
+		(or (slice 6 1 (node "carrint")) (slice 23 1 (node "minterm")) (slice 25 1 (node "minterm")) (slice 26 1 (node "minterm")) (slice 27 1 (node "minterm")))
+		(or (slice 7 1 (node "carrint")) (slice 28 1 (node "minterm")) (slice 29 1 (node "minterm")) (slice 30 1 (node "minterm")) (slice 31 1 (node "minterm")))
+		(or (net "co_1") (slice 4 1 (node "carrint")) (slice 5 1 (node "carrint")) (slice 6 1 (node "carrint")) (slice 7 1 (node "carrint")))
+		(or (slice 0 1 (node "overint")) (slice 0 1 (node "minterm")) (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 3 1 (node "minterm")))
+		(or (slice 1 1 (node "overint")) (slice 7 1 (node "minterm")) (slice 8 1 (node "minterm")) (slice 9 1 (node "minterm")) (slice 10 1 (node "minterm")))
+		(or (slice 2 1 (node "overint")) (slice 11 1 (node "minterm")) (slice 13 1 (node "minterm")) (slice 14 1 (node "minterm")) (slice 15 1 (node "minterm")))
+		(or (slice 3 1 (node "overint")) (slice 19 1 (node "minterm")) (slice 25 1 (node "minterm")) (slice 26 1 (node "minterm")) (slice 27 1 (node "minterm")))
+		(or (net "s_0") (slice 0 1 (node "overint")) (slice 1 1 (node "overint")) (slice 2 1 (node "overint")) (slice 3 1 (node "overint")))
+		(or (slice 4 1 (node "overint")) (slice 4 1 (node "minterm")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")) (slice 12 1 (node "minterm")))
+		(or (slice 5 1 (node "overint")) (slice 16 1 (node "minterm")) (slice 17 1 (node "minterm")) (slice 18 1 (node "minterm")) (slice 20 1 (node "minterm")))
+		(or (slice 6 1 (node "overint")) (slice 21 1 (node "minterm")) (slice 22 1 (node "minterm")) (slice 23 1 (node "minterm")) (slice 24 1 (node "minterm")))
+		(or (slice 7 1 (node "overint")) (slice 28 1 (node "minterm")) (slice 29 1 (node "minterm")) (slice 30 1 (node "minterm")) (slice 31 1 (node "minterm")))
+		(or (net "s_1") (slice 4 1 (node "overint")) (slice 5 1 (node "overint")) (slice 6 1 (node "overint")) (slice 7 1 (node "overint")))
+	)
+)
+
+(cell "one-of-four-dims-subtracter"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("minterm" 32 0 1)
+		("sumint" 8 0 1)
+		("carrint" 8 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "minterm")) (net "i0_0") (net "i1_0") (net "ci_0"))
+		(c-element (slice 1 1 (node "minterm")) (net "i0_0") (net "i1_0") (net "ci_1"))
+		(c-element (slice 2 1 (node "minterm")) (net "i0_0") (net "i1_1") (net "ci_0"))
+		(c-element (slice 3 1 (node "minterm")) (net "i0_0") (net "i1_1") (net "ci_1"))
+		(c-element (slice 4 1 (node "minterm")) (net "i0_0") (net "i1_2") (net "ci_0"))
+		(c-element (slice 5 1 (node "minterm")) (net "i0_0") (net "i1_2") (net "ci_1"))
+		(c-element (slice 6 1 (node "minterm")) (net "i0_0") (net "i1_3") (net "ci_0"))
+		(c-element (slice 7 1 (node "minterm")) (net "i0_0") (net "i1_3") (net "ci_1"))
+		(c-element (slice 8 1 (node "minterm")) (net "i0_1") (net "i1_0") (net "ci_0"))
+		(c-element (slice 9 1 (node "minterm")) (net "i0_1") (net "i1_0") (net "ci_1"))
+		(c-element (slice 10 1 (node "minterm")) (net "i0_1") (net "i1_1") (net "ci_0"))
+		(c-element (slice 11 1 (node "minterm")) (net "i0_1") (net "i1_1") (net "ci_1"))
+		(c-element (slice 12 1 (node "minterm")) (net "i0_1") (net "i1_2") (net "ci_0"))
+		(c-element (slice 13 1 (node "minterm")) (net "i0_1") (net "i1_2") (net "ci_1"))
+		(c-element (slice 14 1 (node "minterm")) (net "i0_1") (net "i1_3") (net "ci_0"))
+		(c-element (slice 15 1 (node "minterm")) (net "i0_1") (net "i1_3") (net "ci_1"))
+		(c-element (slice 16 1 (node "minterm")) (net "i0_2") (net "i1_0") (net "ci_0"))
+		(c-element (slice 17 1 (node "minterm")) (net "i0_2") (net "i1_0") (net "ci_1"))
+		(c-element (slice 18 1 (node "minterm")) (net "i0_2") (net "i1_1") (net "ci_0"))
+		(c-element (slice 19 1 (node "minterm")) (net "i0_2") (net "i1_1") (net "ci_1"))
+		(c-element (slice 20 1 (node "minterm")) (net "i0_2") (net "i1_2") (net "ci_0"))
+		(c-element (slice 21 1 (node "minterm")) (net "i0_2") (net "i1_2") (net "ci_1"))
+		(c-element (slice 22 1 (node "minterm")) (net "i0_2") (net "i1_3") (net "ci_0"))
+		(c-element (slice 23 1 (node "minterm")) (net "i0_2") (net "i1_3") (net "ci_1"))
+		(c-element (slice 24 1 (node "minterm")) (net "i0_3") (net "i1_0") (net "ci_0"))
+		(c-element (slice 25 1 (node "minterm")) (net "i0_3") (net "i1_0") (net "ci_1"))
+		(c-element (slice 26 1 (node "minterm")) (net "i0_3") (net "i1_1") (net "ci_0"))
+		(c-element (slice 27 1 (node "minterm")) (net "i0_3") (net "i1_1") (net "ci_1"))
+		(c-element (slice 28 1 (node "minterm")) (net "i0_3") (net "i1_2") (net "ci_0"))
+		(c-element (slice 29 1 (node "minterm")) (net "i0_3") (net "i1_2") (net "ci_1"))
+		(c-element (slice 30 1 (node "minterm")) (net "i0_3") (net "i1_3") (net "ci_0"))
+		(c-element (slice 31 1 (node "minterm")) (net "i0_3") (net "i1_3") (net "ci_1"))
+		(or (slice 0 1 (node "sumint")) (slice 0 1 (node "minterm")) (slice 7 1 (node "minterm")) (slice 9 1 (node "minterm")) (slice 10 1 (node "minterm")))
+		(or (slice 1 1 (node "sumint")) (slice 19 1 (node "minterm")) (slice 20 1 (node "minterm")) (slice 29 1 (node "minterm")) (slice 30 1 (node "minterm")))
+		(or (net "sum_0") (slice 0 1 (node "sumint")) (slice 1 1 (node "sumint")))
+		(or (slice 2 1 (node "sumint")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")) (slice 8 1 (node "minterm")) (slice 15 1 (node "minterm")))
+		(or (slice 3 1 (node "sumint")) (slice 17 1 (node "minterm")) (slice 18 1 (node "minterm")) (slice 27 1 (node "minterm")) (slice 28 1 (node "minterm")))
+		(or (net "sum_1") (slice 2 1 (node "sumint")) (slice 3 1 (node "sumint")))
+		(or (slice 4 1 (node "sumint")) (slice 3 1 (node "minterm")) (slice 4 1 (node "minterm")) (slice 13 1 (node "minterm")) (slice 14 1 (node "minterm")))
+		(or (slice 5 1 (node "sumint")) (slice 16 1 (node "minterm")) (slice 23 1 (node "minterm")) (slice 25 1 (node "minterm")) (slice 26 1 (node "minterm")))
+		(or (net "sum_2") (slice 4 1 (node "sumint")) (slice 5 1 (node "sumint")))
+		(or (slice 6 1 (node "sumint")) (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 11 1 (node "minterm")) (slice 12 1 (node "minterm")))
+		(or (slice 7 1 (node "sumint")) (slice 21 1 (node "minterm")) (slice 22 1 (node "minterm")) (slice 24 1 (node "minterm")) (slice 31 1 (node "minterm")))
+		(or (net "sum_3") (slice 6 1 (node "sumint")) (slice 7 1 (node "sumint")))
+		(or (slice 0 1 (node "carrint")) (slice 0 1 (node "minterm")) (slice 8 1 (node "minterm")) (slice 9 1 (node "minterm")) (slice 10 1 (node "minterm")))
+		(or (slice 1 1 (node "carrint")) (slice 16 1 (node "minterm")) (slice 17 1 (node "minterm")) (slice 18 1 (node "minterm")) (slice 19 1 (node "minterm")))
+		(or (slice 2 1 (node "carrint")) (slice 20 1 (node "minterm")) (slice 24 1 (node "minterm")) (slice 25 1 (node "minterm")) (slice 26 1 (node "minterm")))
+		(or (slice 3 1 (node "carrint")) (slice 27 1 (node "minterm")) (slice 28 1 (node "minterm")) (slice 29 1 (node "minterm")) (slice 30 1 (node "minterm")))
+		(or (net "co_0") (slice 0 1 (node "carrint")) (slice 1 1 (node "carrint")) (slice 2 1 (node "carrint")) (slice 3 1 (node "carrint")))
+		(or (slice 4 1 (node "carrint")) (slice 1 1 (node "minterm")) (slice 2 1 (node "minterm")) (slice 3 1 (node "minterm")) (slice 4 1 (node "minterm")))
+		(or (slice 5 1 (node "carrint")) (slice 5 1 (node "minterm")) (slice 6 1 (node "minterm")) (slice 7 1 (node "minterm")) (slice 11 1 (node "minterm")))
+		(or (slice 6 1 (node "carrint")) (slice 12 1 (node "minterm")) (slice 13 1 (node "minterm")) (slice 14 1 (node "minterm")) (slice 15 1 (node "minterm")))
+		(or (slice 7 1 (node "carrint")) (slice 21 1 (node "minterm")) (slice 22 1 (node "minterm")) (slice 23 1 (node "minterm")) (slice 31 1 (node "minterm")))
+		(or (net "co_1") (slice 4 1 (node "carrint")) (slice 5 1 (node "carrint")) (slice 6 1 (node "carrint")) (slice 7 1 (node "carrint")))
+	)
+)
+
+(cell "one-of-four-ncl-full-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("mint" 6 0 1)
+		("assoc" 6 0 1)
+		("eqv" 4 0 1)
+		("fsum" 4 0 1)
+		("fcar" 2 0 1)
+		("sint" 4 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(cell
+			"th23w2"
+			(slice 0 1 (node "assoc"))
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+		(cell
+			"th23w2"
+			(slice 1 1 (node "assoc"))
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+		)
+		(cell
+			"th23w2"
+			(slice 2 1 (node "assoc"))
+			(slice 2 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+		)
+		(cell
+			"th23w2"
+			(slice 3 1 (node "assoc"))
+			(slice 3 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(slice 4 1 (node "assoc"))
+			(slice 4 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(slice 5 1 (node "assoc"))
+			(slice 5 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_2")
+		)
+		(c-element (slice 0 1 (node "eqv")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "eqv")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 2 1 (node "eqv")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 3 1 (node "eqv")) (net "i0_3") (net "i1_3"))
+		(or (slice 0 1 (node "fsum")) (slice 2 1 (node "assoc")) (slice 3 1 (node "assoc")))
+		(or (slice 1 1 (node "fsum")) (slice 0 1 (node "assoc")) (slice 5 1 (node "assoc")))
+		(or (slice 2 1 (node "fsum")) (slice 1 1 (node "assoc")) (slice 1 1 (node "eqv")) (slice 3 1 (node "eqv")))
+		(or (slice 3 1 (node "fsum")) (slice 4 1 (node "assoc")) (slice 0 1 (node "eqv")) (slice 2 1 (node "eqv")))
+		(or (slice 0 1 (node "fcar")) (slice 0 1 (node "assoc")) (slice 1 1 (node "assoc")) (slice 0 1 (node "eqv")) (slice 1 1 (node "eqv")))
+		(or (slice 1 1 (node "fcar")) (slice 4 1 (node "assoc")) (slice 5 1 (node "assoc")) (slice 2 1 (node "eqv")) (slice 3 1 (node "eqv")))
+		(c-element (slice 0 1 (node "sint")) (net "ci_1") (slice 0 1 (node "fsum")))
+		(c-element (slice 1 1 (node "sint")) (net "ci_1") (slice 3 1 (node "fsum")))
+		(c-element (slice 2 1 (node "sint")) (net "ci_1") (slice 1 1 (node "fsum")))
+		(c-element (slice 3 1 (node "sint")) (net "ci_1") (slice 2 1 (node "fsum")))
+		(cell
+			"th23w2"
+			(net "sum_0")
+			(slice 0 1 (node "sint"))
+			(net "ci_0")
+			(slice 3 1 (node "fsum"))
+		)
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 1 1 (node "sint"))
+			(net "ci_0")
+			(slice 1 1 (node "fsum"))
+		)
+		(cell
+			"th23w2"
+			(net "sum_2")
+			(slice 2 1 (node "sint"))
+			(net "ci_0")
+			(slice 2 1 (node "fsum"))
+		)
+		(cell
+			"th23w2"
+			(net "sum_3")
+			(slice 3 1 (node "sint"))
+			(net "ci_0")
+			(slice 0 1 (node "fsum"))
+		)
+		(cell
+			"th34w22"
+			(net "co_0")
+			(slice 0 1 (node "fcar"))
+			(net "ci_0")
+			(slice 0 1 (node "fsum"))
+			(net "ci_1")
+		)
+		(cell
+			"th34w22"
+			(net "co_1")
+			(slice 1 1 (node "fcar"))
+			(net "ci_1")
+			(slice 0 1 (node "fsum"))
+			(net "ci_0")
+		)
+	)
+)
+
+(cell "one-of-four-ncl-full-adder-overflow"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+		("s_0" output 1)
+		("s_1" output 1)
+	)
+	(nodes
+		("mint" 6 0 1)
+		("assoc" 6 0 1)
+		("eqv" 4 0 1)
+		("fsum" 4 0 1)
+		("fcar" 2 0 1)
+		("fext" 2 0 1)
+		("fshar" 1 0 1)
+		("sint" 4 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(cell
+			"th23w2"
+			(slice 0 1 (node "assoc"))
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+		(cell
+			"th23w2"
+			(slice 1 1 (node "assoc"))
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+		)
+		(cell
+			"th23w2"
+			(slice 2 1 (node "assoc"))
+			(slice 2 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+		)
+		(cell
+			"th23w2"
+			(slice 3 1 (node "assoc"))
+			(slice 3 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(slice 4 1 (node "assoc"))
+			(slice 4 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(slice 5 1 (node "assoc"))
+			(slice 5 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_2")
+		)
+		(c-element (slice 0 1 (node "eqv")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "eqv")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 2 1 (node "eqv")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 3 1 (node "eqv")) (net "i0_3") (net "i1_3"))
+		(or (slice 0 1 (node "fsum")) (slice 2 1 (node "assoc")) (slice 3 1 (node "assoc")))
+		(or (slice 1 1 (node "fsum")) (slice 0 1 (node "assoc")) (slice 5 1 (node "assoc")))
+		(or (slice 2 1 (node "fsum")) (slice 1 1 (node "assoc")) (slice 1 1 (node "eqv")) (slice 3 1 (node "eqv")))
+		(or (slice 3 1 (node "fsum")) (slice 4 1 (node "assoc")) (slice 0 1 (node "eqv")) (slice 2 1 (node "eqv")))
+		(or (slice 0 1 (node "fcar")) (slice 0 1 (node "assoc")) (slice 1 1 (node "assoc")) (slice 0 1 (node "eqv")) (slice 1 1 (node "eqv")))
+		(or (slice 1 1 (node "fcar")) (slice 4 1 (node "assoc")) (slice 5 1 (node "assoc")) (slice 2 1 (node "eqv")) (slice 3 1 (node "eqv")))
+		(or (slice 0 1 (node "fext")) (slice 0 1 (node "assoc")) (slice 4 1 (node "assoc")) (slice 0 1 (node "eqv")) (slice 1 1 (node "eqv")))
+		(or (slice 1 1 (node "fext")) (slice 1 1 (node "assoc")) (slice 5 1 (node "assoc")) (slice 2 1 (node "eqv")) (slice 3 1 (node "eqv")))
+		(or (slice 0 1 (node "fshar")) (slice 2 1 (node "assoc")) (slice 3 1 (node "assoc")))
+		(c-element (slice 0 1 (node "sint")) (net "ci_1") (slice 0 1 (node "fsum")))
+		(c-element (slice 1 1 (node "sint")) (net "ci_1") (slice 3 1 (node "fsum")))
+		(c-element (slice 2 1 (node "sint")) (net "ci_1") (slice 1 1 (node "fsum")))
+		(c-element (slice 3 1 (node "sint")) (net "ci_1") (slice 2 1 (node "fsum")))
+		(cell
+			"th23w2"
+			(net "sum_0")
+			(slice 0 1 (node "sint"))
+			(net "ci_0")
+			(slice 3 1 (node "fsum"))
+		)
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 1 1 (node "sint"))
+			(net "ci_0")
+			(slice 1 1 (node "fsum"))
+		)
+		(cell
+			"th23w2"
+			(net "sum_2")
+			(slice 2 1 (node "sint"))
+			(net "ci_0")
+			(slice 2 1 (node "fsum"))
+		)
+		(cell
+			"th23w2"
+			(net "sum_3")
+			(slice 3 1 (node "sint"))
+			(net "ci_0")
+			(slice 0 1 (node "fsum"))
+		)
+		(cell
+			"th34w22"
+			(net "co_0")
+			(slice 0 1 (node "fcar"))
+			(net "ci_0")
+			(slice 0 1 (node "fsum"))
+			(net "ci_1")
+		)
+		(cell
+			"th34w22"
+			(net "co_1")
+			(slice 1 1 (node "fcar"))
+			(net "ci_1")
+			(slice 0 1 (node "fsum"))
+			(net "ci_0")
+		)
+		(cell
+			"th34w22"
+			(net "s_0")
+			(slice 0 1 (node "fext"))
+			(net "ci_1")
+			(net "ci_0")
+			(slice 0 1 (node "fshar"))
+		)
+		(cell
+			"th34w22"
+			(net "s_1")
+			(slice 1 1 (node "fext"))
+			(net "ci_0")
+			(net "ci_1")
+			(slice 0 1 (node "fshar"))
+		)
+	)
+)
+
+(cell "one-of-four-ncl-subtracter"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("fsum" 4 0 1)
+		("fcar" 2 0 1)
+		("cint" 2 0 1)
+		("sint" 4 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_2"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_3"))
+		(or (slice 0 1 (node "fsum")) (slice 0 1 (node "mint")) (slice 5 1 (node "mint")) (slice 10 1 (node "mint")) (slice 15 1 (node "mint")))
+		(or (slice 1 1 (node "fsum")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")) (slice 9 1 (node "mint")) (slice 14 1 (node "mint")))
+		(or (slice 2 1 (node "fsum")) (slice 2 1 (node "mint")) (slice 7 1 (node "mint")) (slice 8 1 (node "mint")) (slice 13 1 (node "mint")))
+		(or (slice 3 1 (node "fsum")) (slice 1 1 (node "mint")) (slice 6 1 (node "mint")) (slice 11 1 (node "mint")) (slice 12 1 (node "mint")))
+		(or (slice 0 1 (node "cint")) (slice 4 1 (node "mint")) (slice 8 1 (node "mint")) (slice 9 1 (node "mint")) (slice 12 1 (node "mint")))
+		(or (slice 1 1 (node "cint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")) (slice 6 1 (node "mint")))
+		(or (slice 0 1 (node "fcar")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")) (slice 0 1 (node "cint")))
+		(or (slice 1 1 (node "fcar")) (slice 7 1 (node "mint")) (slice 11 1 (node "mint")) (slice 1 1 (node "cint")))
+		(c-element (slice 0 1 (node "sint")) (net "ci_1") (slice 1 1 (node "fsum")))
+		(c-element (slice 1 1 (node "sint")) (net "ci_1") (slice 2 1 (node "fsum")))
+		(c-element (slice 2 1 (node "sint")) (net "ci_1") (slice 3 1 (node "fsum")))
+		(c-element (slice 3 1 (node "sint")) (net "ci_1") (slice 0 1 (node "fsum")))
+		(cell
+			"th23w2"
+			(net "sum_0")
+			(slice 0 1 (node "sint"))
+			(net "ci_0")
+			(slice 0 1 (node "fsum"))
+		)
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 1 1 (node "sint"))
+			(net "ci_0")
+			(slice 1 1 (node "fsum"))
+		)
+		(cell
+			"th23w2"
+			(net "sum_2")
+			(slice 2 1 (node "sint"))
+			(net "ci_0")
+			(slice 2 1 (node "fsum"))
+		)
+		(cell
+			"th23w2"
+			(net "sum_3")
+			(slice 3 1 (node "sint"))
+			(net "ci_0")
+			(slice 3 1 (node "fsum"))
+		)
+		(cell
+			"th34w22"
+			(net "co_0")
+			(slice 0 1 (node "fcar"))
+			(net "ci_0")
+			(slice 0 1 (node "fsum"))
+			(net "ci_1")
+		)
+		(cell
+			"th34w22"
+			(net "co_1")
+			(slice 1 1 (node "fcar"))
+			(net "ci_1")
+			(slice 0 1 (node "fsum"))
+			(net "ci_0")
+		)
+	)
+)
+
+(cell "one-of-four-dims-primed-carry-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("mint" 7 0 1)
+	)
+	(gates
+		(c-element (net "co_0") (net "i0_0") (net "ci_0"))
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "ci_1"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "ci_0"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "ci_1"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_2") (net "ci_0"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "ci_1"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_3") (net "ci_0"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_3") (net "ci_1"))
+		(or (net "sum_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")))
+		(or (net "sum_1") (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(or (net "sum_2") (slice 4 1 (node "mint")) (slice 5 1 (node "mint")))
+		(or (net "sum_3") (net "co_0") (slice 6 1 (node "mint")))
+		(or (net "co_1") (net "sum_0") (net "sum_1") (net "sum_2") (slice 6 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-ncl-primed-carry-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("mint" 4 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "ci_1"))
+		(cell
+			"th23w2"
+			(net "sum_0")
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "ci_0")
+		)
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "ci_1"))
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "ci_0")
+		)
+		(c-element (slice 2 1 (node "mint")) (net "i0_2") (net "ci_1"))
+		(cell
+			"th23w2"
+			(net "sum_2")
+			(slice 2 1 (node "mint"))
+			(net "i0_3")
+			(net "ci_0")
+		)
+		(c-element (net "co_0") (net "i0_0") (net "ci_0"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_3") (net "ci_1"))
+		(or (net "sum_3") (net "co_0") (slice 3 1 (node "mint")))
+		(or (net "co_1") (net "sum_0") (net "sum_1") (net "sum_2") (slice 3 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-dims-primed-carry-adder-overflow"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+		("s_0" output 1)
+		("s_1" output 1)
+	)
+	(nodes
+		("mint" 7 0 1)
+	)
+	(gates
+		(c-element (net "co_0") (net "i0_0") (net "ci_0"))
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "ci_1"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "ci_0"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "ci_1"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_2") (net "ci_0"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "ci_1"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_3") (net "ci_0"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_3") (net "ci_1"))
+		(or (net "sum_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")))
+		(or (net "sum_1") (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(or (net "sum_2") (slice 4 1 (node "mint")) (slice 5 1 (node "mint")))
+		(or (net "sum_3") (net "co_0") (slice 6 1 (node "mint")))
+		(or (net "co_1") (net "sum_0") (net "sum_1") (net "sum_2") (slice 6 1 (node "mint")))
+		(or (net "s_0") (net "sum_0") (slice 2 1 (node "mint")))
+		(or (net "s_1") (net "sum_3") (net "sum_2") (slice 3 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-ncl-primed-carry-adder-overflow"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+		("s_0" output 1)
+		("s_1" output 1)
+	)
+	(nodes
+		("mint" 5 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "ci_1"))
+		(cell
+			"th23w2"
+			(net "sum_0")
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "ci_0")
+		)
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "ci_1"))
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "ci_0")
+		)
+		(c-element (slice 2 1 (node "mint")) (net "i0_2") (net "ci_1"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_3") (net "ci_0"))
+		(or (net "sum_2") (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(c-element (net "co_0") (net "i0_0") (net "ci_0"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_3") (net "ci_1"))
+		(or (net "sum_3") (net "co_0") (slice 4 1 (node "mint")))
+		(or (net "co_1") (net "sum_0") (net "sum_1") (net "sum_2") (slice 4 1 (node "mint")))
+		(or (net "s_0") (net "sum_0") (slice 2 1 (node "mint")))
+		(or (net "s_1") (net "sum_3") (net "sum_2") (slice 3 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-dual-rail-dims-carry-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0") (net "ci_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_0") (net "ci_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_1") (net "ci_0"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_1") (net "ci_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0") (net "ci_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_0") (net "ci_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_1") (net "ci_0"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_1") (net "ci_1"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0") (net "ci_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_0") (net "ci_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_1") (net "ci_0"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_1") (net "ci_1"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0") (net "ci_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_0") (net "ci_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_1") (net "ci_0"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_1") (net "ci_1"))
+		(or (net "sum_0") (slice 0 1 (node "mint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")))
+		(or (slice 0 1 (node "sopint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 4 1 (node "mint")))
+		(or (net "sum_1") (slice 11 1 (node "mint")) (slice 15 1 (node "mint")) (slice 0 1 (node "sopint")))
+		(or (net "sum_2") (slice 3 1 (node "mint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 8 1 (node "mint")))
+		(or (net "sum_3") (slice 7 1 (node "mint")) (slice 9 1 (node "mint")) (slice 10 1 (node "mint")) (slice 12 1 (node "mint")))
+		(or (net "co_0") (slice 0 1 (node "mint")) (slice 0 1 (node "sopint")) (net "sum_2") (net "sum_3"))
+		(or (net "co_1") (slice 11 1 (node "mint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")) (slice 15 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-dual-rail-ncl-carry-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("mint" 5 0 1)
+		("sopint" 3 0 1)
+		("sumint" 6 0 1)
+		("carint" 5 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 0 1 (node "sopint"))
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_0")
+		)
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 1 1 (node "sopint"))
+			(slice 1 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 2 1 (node "sopint"))
+			(slice 2 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+		)
+		(c-element (slice 3 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 0 1 (node "sumint")) (slice 0 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_0")
+			(slice 0 1 (node "sumint"))
+			(slice 4 1 (node "mint"))
+			(net "ci_1")
+		)
+		(c-element (slice 1 1 (node "sumint")) (slice 1 1 (node "sopint")) (net "ci_0"))
+		(or (slice 2 1 (node "sumint")) (slice 0 1 (node "sopint")) (slice 3 1 (node "mint")))
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 1 1 (node "sumint"))
+			(slice 2 1 (node "sumint"))
+			(net "ci_1")
+		)
+		(c-element (slice 3 1 (node "sumint")) (slice 2 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_2")
+			(slice 3 1 (node "sumint"))
+			(slice 1 1 (node "sopint"))
+			(net "ci_1")
+		)
+		(c-element (slice 4 1 (node "sumint")) (slice 2 1 (node "sopint")) (net "ci_1"))
+		(or (slice 5 1 (node "sumint")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")))
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 4 1 (node "sumint"))
+			(slice 5 1 (node "sumint"))
+			(net "ci_0")
+		)
+		(c-element (slice 0 1 (node "carint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23"
+			(slice 1 1 (node "carint"))
+			(slice 0 1 (node "carint"))
+			(slice 1 1 (node "sopint"))
+			(net "ci_0")
+		)
+		(cell
+			"th23w2"
+			(slice 2 1 (node "carint"))
+			(slice 1 1 (node "carint"))
+			(slice 0 1 (node "carint"))
+			(net "ci_1")
+		)
+		(or (net "co_0") (slice 2 1 (node "carint")) (net "sum_2") (net "sum_3"))
+		(c-element (slice 3 1 (node "carint")) (slice 0 1 (node "mint")) (net "ci_0"))
+		(or (slice 4 1 (node "carint")) (slice 0 1 (node "mint")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")))
+		(cell
+			"th23w2"
+			(net "co_1")
+			(slice 3 1 (node "carint"))
+			(slice 4 1 (node "carint"))
+			(net "ci_1")
+		)
+	)
+)
+
+(cell "one-of-four-dual-rail-dims-carry-adder-overflow"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+		("s_0" output 1)
+		("s_1" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("sopint" 3 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0") (net "ci_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_0") (net "ci_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_1") (net "ci_0"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_1") (net "ci_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0") (net "ci_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_0") (net "ci_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_1") (net "ci_0"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_1") (net "ci_1"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0") (net "ci_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_0") (net "ci_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_1") (net "ci_0"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_1") (net "ci_1"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0") (net "ci_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_0") (net "ci_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_1") (net "ci_0"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_1") (net "ci_1"))
+		(or (net "sum_0") (slice 0 1 (node "mint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")))
+		(or (slice 0 1 (node "sopint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 4 1 (node "mint")))
+		(or (net "sum_1") (slice 11 1 (node "mint")) (slice 15 1 (node "mint")) (slice 0 1 (node "sopint")))
+		(or (slice 1 1 (node "sopint")) (slice 3 1 (node "mint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")))
+		(or (net "sum_2") (slice 1 1 (node "sopint")) (slice 8 1 (node "mint")))
+		(or (slice 2 1 (node "sopint")) (slice 9 1 (node "mint")) (slice 10 1 (node "mint")) (slice 12 1 (node "mint")))
+		(or (net "sum_3") (slice 7 1 (node "mint")) (slice 2 1 (node "sopint")))
+		(or (net "co_0") (slice 0 1 (node "mint")) (slice 0 1 (node "sopint")) (net "sum_2") (net "sum_3"))
+		(or (net "co_1") (slice 11 1 (node "mint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")) (slice 15 1 (node "mint")))
+		(or (net "s_0") (net "sum_1") (net "sum_0") (slice 1 1 (node "sopint")) (slice 7 1 (node "mint")))
+		(or (net "s_1") (slice 2 1 (node "sopint")) (slice 8 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-dual-rail-ncl-carry-adder-overflow"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+		("s_0" output 1)
+		("s_1" output 1)
+	)
+	(nodes
+		("mint" 6 0 1)
+		("sopint" 3 0 1)
+		("sumint" 6 0 1)
+		("carint" 5 0 1)
+		("exint" 4 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 0 1 (node "sopint"))
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_0")
+		)
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 1 1 (node "sopint"))
+			(slice 1 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(or (slice 2 1 (node "sopint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 0 1 (node "sumint")) (slice 0 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_0")
+			(slice 0 1 (node "sumint"))
+			(slice 5 1 (node "mint"))
+			(net "ci_1")
+		)
+		(c-element (slice 1 1 (node "sumint")) (slice 1 1 (node "sopint")) (net "ci_0"))
+		(or (slice 2 1 (node "sumint")) (slice 0 1 (node "sopint")) (slice 4 1 (node "mint")))
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 1 1 (node "sumint"))
+			(slice 2 1 (node "sumint"))
+			(net "ci_1")
+		)
+		(c-element (slice 3 1 (node "sumint")) (slice 2 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_2")
+			(slice 3 1 (node "sumint"))
+			(slice 1 1 (node "sopint"))
+			(net "ci_1")
+		)
+		(c-element (slice 4 1 (node "sumint")) (slice 2 1 (node "sopint")) (net "ci_1"))
+		(or (slice 5 1 (node "sumint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")))
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 4 1 (node "sumint"))
+			(slice 5 1 (node "sumint"))
+			(net "ci_0")
+		)
+		(c-element (slice 0 1 (node "carint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23"
+			(slice 1 1 (node "carint"))
+			(slice 0 1 (node "carint"))
+			(slice 1 1 (node "sopint"))
+			(net "ci_0")
+		)
+		(cell
+			"th23w2"
+			(slice 2 1 (node "carint"))
+			(slice 1 1 (node "carint"))
+			(slice 0 1 (node "carint"))
+			(net "ci_1")
+		)
+		(or (net "co_0") (slice 2 1 (node "carint")) (net "sum_2") (net "sum_3"))
+		(c-element (slice 3 1 (node "carint")) (slice 0 1 (node "mint")) (net "ci_0"))
+		(or (slice 4 1 (node "carint")) (slice 0 1 (node "mint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")))
+		(cell
+			"th23w2"
+			(net "co_1")
+			(slice 3 1 (node "carint"))
+			(slice 4 1 (node "carint"))
+			(net "ci_1")
+		)
+		(cell
+			"th23"
+			(slice 0 1 (node "exint"))
+			(net "ci_1")
+			(slice 1 1 (node "sopint"))
+			(slice 2 1 (node "mint"))
+		)
+		(cell
+			"th23w2"
+			(slice 1 1 (node "exint"))
+			(slice 0 1 (node "exint"))
+			(slice 2 1 (node "mint"))
+			(net "ci_0")
+		)
+		(or (net "s_0") (net "sum_1") (net "sum_0") (slice 1 1 (node "exint")))
+		(or (slice 2 1 (node "exint")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")))
+		(c-element (slice 3 1 (node "exint")) (slice 2 1 (node "exint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "s_1")
+			(slice 3 1 (node "exint"))
+			(slice 3 1 (node "mint"))
+			(net "ci_1")
+		)
+	)
+)
+
+(cell "one-of-four-dual-rail-dims-primed-carry-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0") (net "ci_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_0") (net "ci_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_1") (net "ci_0"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_1") (net "ci_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0") (net "ci_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_0") (net "ci_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_1") (net "ci_0"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_1") (net "ci_1"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0") (net "ci_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_0") (net "ci_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_1") (net "ci_0"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_1") (net "ci_1"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0") (net "ci_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_0") (net "ci_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_1") (net "ci_0"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_1") (net "ci_1"))
+		(or (net "sum_0") (slice 3 1 (node "mint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 8 1 (node "mint")))
+		(or (net "sum_1") (slice 7 1 (node "mint")) (slice 9 1 (node "mint")) (slice 10 1 (node "mint")) (slice 12 1 (node "mint")))
+		(or (net "sum_2") (slice 0 1 (node "mint")) (slice 11 1 (node "mint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")))
+		(or (net "sum_3") (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 4 1 (node "mint")) (slice 15 1 (node "mint")))
+		(or (net "co_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 4 1 (node "mint")))
+		(or (slice 0 1 (node "sopint")) (slice 11 1 (node "mint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")) (slice 15 1 (node "mint")))
+		(or (net "co_1") (slice 0 1 (node "sopint")) (net "sum_0") (net "sum_1"))
+	)
+)
+
+(cell "one-of-four-dual-rail-ncl-primed-carry-adder"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+	)
+	(nodes
+		("mint" 5 0 1)
+		("sopint" 4 0 1)
+		("sumint" 4 0 1)
+		("carint" 2 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(or (slice 0 1 (node "sopint")) (slice 0 1 (node "mint")) (slice 1 1 (node "mint")))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 1 1 (node "sopint"))
+			(slice 2 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 2 1 (node "sopint"))
+			(slice 3 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+		)
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 3 1 (node "sopint"))
+			(slice 4 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+		)
+		(c-element (slice 0 1 (node "sumint")) (slice 2 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_0")
+			(slice 0 1 (node "sumint"))
+			(slice 1 1 (node "sopint"))
+			(net "ci_1")
+		)
+		(c-element (slice 1 1 (node "sumint")) (slice 3 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 1 1 (node "sumint"))
+			(slice 2 1 (node "sopint"))
+			(net "ci_1")
+		)
+		(c-element (slice 2 1 (node "sumint")) (slice 0 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_2")
+			(slice 2 1 (node "sumint"))
+			(slice 3 1 (node "sopint"))
+			(net "ci_1")
+		)
+		(c-element (slice 3 1 (node "sumint")) (slice 1 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_3")
+			(slice 3 1 (node "sumint"))
+			(slice 0 1 (node "sopint"))
+			(net "ci_1")
+		)
+		(cell
+			"th23"
+			(slice 0 1 (node "carint"))
+			(slice 1 1 (node "sopint"))
+			(slice 0 1 (node "mint"))
+			(net "ci_0")
+		)
+		(cell
+			"th23w2"
+			(net "co_0")
+			(slice 0 1 (node "carint"))
+			(slice 0 1 (node "mint"))
+			(net "ci_1")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "carint"))
+			(slice 3 1 (node "sopint"))
+			(slice 1 1 (node "mint"))
+			(net "ci_1")
+		)
+		(cell
+			"th23w2"
+			(net "co_1")
+			(slice 1 1 (node "carint"))
+			(slice 1 1 (node "mint"))
+			(net "ci_0")
+		)
+	)
+)
+
+(cell "one-of-four-dual-rail-dims-primed-carry-adder-overflow"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+		("s_0" output 1)
+		("s_1" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("sopint" 2 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0") (net "ci_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_0") (net "ci_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_1") (net "ci_0"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_1") (net "ci_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0") (net "ci_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_0") (net "ci_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_1") (net "ci_0"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_1") (net "ci_1"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0") (net "ci_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_0") (net "ci_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_1") (net "ci_0"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_1") (net "ci_1"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0") (net "ci_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_0") (net "ci_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_1") (net "ci_0"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_1") (net "ci_1"))
+		(or (net "sum_0") (slice 3 1 (node "mint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 8 1 (node "mint")))
+		(or (net "sum_1") (slice 7 1 (node "mint")) (slice 9 1 (node "mint")) (slice 10 1 (node "mint")) (slice 12 1 (node "mint")))
+		(or (net "sum_2") (slice 0 1 (node "mint")) (slice 11 1 (node "mint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")))
+		(or (net "sum_3") (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 4 1 (node "mint")) (slice 15 1 (node "mint")))
+		(or (net "co_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 4 1 (node "mint")))
+		(or (slice 0 1 (node "sopint")) (slice 11 1 (node "mint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")) (slice 15 1 (node "mint")))
+		(or (net "co_1") (slice 0 1 (node "sopint")) (net "sum_0") (net "sum_1"))
+		(or (net "s_0") (slice 3 1 (node "mint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 7 1 (node "mint")))
+		(or (slice 1 1 (node "sopint")) (slice 8 1 (node "mint")) (slice 9 1 (node "mint")) (slice 10 1 (node "mint")) (slice 12 1 (node "mint")))
+		(or (net "s_1") (slice 1 1 (node "sopint")) (net "sum_2") (net "sum_3"))
+	)
+)
+
+(cell "one-of-four-dual-rail--ncl-primed-carry-adder-overflow"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("ci_0" input 1)
+		("ci_1" input 1)
+		("co_0" output 1)
+		("co_1" output 1)
+		("sum_0" output 1)
+		("sum_1" output 1)
+		("sum_2" output 1)
+		("sum_3" output 1)
+		("s_0" output 1)
+		("s_1" output 1)
+	)
+	(nodes
+		("mint" 5 0 1)
+		("sopint" 4 0 1)
+		("sumint" 4 0 1)
+		("carint" 2 0 1)
+		("exint" 3 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(or (slice 0 1 (node "sopint")) (slice 0 1 (node "mint")) (slice 1 1 (node "mint")))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 1 1 (node "sopint"))
+			(slice 2 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(or (slice 2 1 (node "sopint")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")))
+		(c-element (slice 5 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 3 1 (node "sopint"))
+			(slice 5 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+		)
+		(c-element (slice 0 1 (node "sumint")) (slice 2 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_0")
+			(slice 0 1 (node "sumint"))
+			(slice 1 1 (node "sopint"))
+			(net "ci_1")
+		)
+		(c-element (slice 1 1 (node "sumint")) (slice 3 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_1")
+			(slice 1 1 (node "sumint"))
+			(slice 2 1 (node "sopint"))
+			(net "ci_1")
+		)
+		(c-element (slice 2 1 (node "sumint")) (slice 0 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_2")
+			(slice 2 1 (node "sumint"))
+			(slice 3 1 (node "sopint"))
+			(net "ci_1")
+		)
+		(c-element (slice 3 1 (node "sumint")) (slice 1 1 (node "sopint")) (net "ci_0"))
+		(cell
+			"th23w2"
+			(net "sum_3")
+			(slice 3 1 (node "sumint"))
+			(slice 0 1 (node "sopint"))
+			(net "ci_1")
+		)
+		(cell
+			"th23"
+			(slice 0 1 (node "carint"))
+			(slice 1 1 (node "sopint"))
+			(slice 0 1 (node "mint"))
+			(net "ci_0")
+		)
+		(cell
+			"th23w2"
+			(net "co_0")
+			(slice 0 1 (node "carint"))
+			(slice 0 1 (node "mint"))
+			(net "ci_1")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "carint"))
+			(slice 3 1 (node "sopint"))
+			(slice 1 1 (node "mint"))
+			(net "ci_1")
+		)
+		(cell
+			"th23w2"
+			(net "co_1")
+			(slice 1 1 (node "carint"))
+			(slice 1 1 (node "mint"))
+			(net "ci_0")
+		)
+		(cell
+			"th23"
+			(slice 0 1 (node "exint"))
+			(net "ci_1")
+			(slice 1 1 (node "sopint"))
+			(slice 3 1 (node "mint"))
+		)
+		(cell
+			"th23w2"
+			(net "s_0")
+			(slice 0 1 (node "exint"))
+			(slice 3 1 (node "mint"))
+			(net "ci_0")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "exint"))
+			(net "ci_0")
+			(slice 3 1 (node "sopint"))
+			(slice 4 1 (node "mint"))
+		)
+		(cell
+			"th23w2"
+			(slice 2 1 (node "exint"))
+			(slice 1 1 (node "exint"))
+			(slice 4 1 (node "mint"))
+			(net "ci_1")
+		)
+		(or (net "s_1") (net "sum_2") (net "sum_3") (slice 2 1 (node "exint")))
+	)
+)
+
+(cell "one-of-four-dims-and2"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+		("q0_3" output 1)
+	)
+	(nodes
+		("mint" 15 0 1)
+		("sopint" 2 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_2"))
+		(c-element (net "q0_3") (net "i0_3") (net "i1_3"))
+		(or (slice 0 1 (node "sopint")) (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(or (slice 1 1 (node "sopint")) (slice 4 1 (node "mint")) (slice 6 1 (node "mint")) (slice 8 1 (node "mint")) (slice 9 1 (node "mint")))
+		(or (net "q0_0") (slice 12 1 (node "mint")) (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")))
+		(or (net "q0_1") (slice 5 1 (node "mint")) (slice 7 1 (node "mint")) (slice 13 1 (node "mint")))
+		(or (net "q0_2") (slice 10 1 (node "mint")) (slice 11 1 (node "mint")) (slice 14 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-ncl-and2"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+		("q0_3" output 1)
+	)
+	(nodes
+		("mint" 6 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(cell
+			"th23"
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(cell
+			"th23"
+			(slice 2 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+			(net "i1_2")
+		)
+		(cell
+			"th23"
+			(slice 3 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(or (slice 0 1 (node "sopint")) (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(cell
+			"th23w2"
+			(net "q0_0")
+			(slice 0 1 (node "sopint"))
+			(net "i0_3")
+			(net "i1_0")
+		)
+		(cell
+			"th23"
+			(slice 4 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_1")
+			(net "i1_3")
+		)
+		(cell
+			"th23w2"
+			(net "q0_1")
+			(slice 4 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 5 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(cell
+			"th23w2"
+			(net "q0_2")
+			(slice 5 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_2")
+		)
+		(c-element (net "q0_3") (net "i0_3") (net "i1_3"))
+	)
+)
+
+(cell "one-of-four-dims-or2"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+		("q0_3" output 1)
+	)
+	(nodes
+		("mint" 15 0 1)
+		("sopint" 2 0 1)
+	)
+	(gates
+		(c-element (net "q0_0") (net "i0_0") (net "i1_0"))
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_2"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_3"))
+		(or (net "q0_1") (slice 0 1 (node "mint")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")))
+		(or (net "q0_2") (slice 1 1 (node "mint")) (slice 7 1 (node "mint")) (slice 9 1 (node "mint")))
+		(or (slice 0 1 (node "sopint")) (slice 2 1 (node "mint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 8 1 (node "mint")))
+		(or (slice 1 1 (node "sopint")) (slice 10 1 (node "mint")) (slice 11 1 (node "mint")) (slice 12 1 (node "mint")) (slice 13 1 (node "mint")))
+		(or (net "q0_3") (slice 14 1 (node "mint")) (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")))
+	)
+)
+
+(cell "one-of-four-ncl-or2"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+		("q0_3" output 1)
+	)
+	(nodes
+		("mint" 6 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (net "q0_0") (net "i0_0") (net "i1_0"))
+		(cell
+			"th23"
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(net "q0_1")
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_2")
+		)
+		(cell
+			"th23w2"
+			(net "q0_2")
+			(slice 1 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_2")
+		)
+		(cell
+			"th23"
+			(slice 2 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(cell
+			"th23"
+			(slice 3 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_1")
+			(net "i1_3")
+		)
+		(cell
+			"th23"
+			(slice 4 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 5 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(or (slice 0 1 (node "sopint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")))
+		(cell
+			"th23w2"
+			(net "q0_3")
+			(slice 0 1 (node "sopint"))
+			(net "i0_0")
+			(net "i1_3")
+		)
+	)
+)
+
+(cell "one-of-four-dims-xor2"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+		("q0_3" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_2"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_3"))
+		(or (net "q0_0") (slice 0 1 (node "mint")) (slice 5 1 (node "mint")) (slice 10 1 (node "mint")) (slice 15 1 (node "mint")))
+		(or (net "q0_1") (slice 1 1 (node "mint")) (slice 4 1 (node "mint")) (slice 11 1 (node "mint")) (slice 14 1 (node "mint")))
+		(or (net "q0_2") (slice 2 1 (node "mint")) (slice 7 1 (node "mint")) (slice 8 1 (node "mint")) (slice 13 1 (node "mint")))
+		(or (net "q0_3") (slice 3 1 (node "mint")) (slice 6 1 (node "mint")) (slice 9 1 (node "mint")) (slice 12 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-ncl-xor2"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+		("q0_3" output 1)
+	)
+	(nodes
+		("mint" 8 0 1)
+		("sopint" 8 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23w2"
+			(slice 0 1 (node "sopint"))
+			(slice 0 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_3")
+		)
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 1 1 (node "sopint"))
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_2")
+		)
+		(or (net "q0_0") (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 2 1 (node "sopint"))
+			(slice 2 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+		(c-element (slice 3 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(cell
+			"th23w2"
+			(slice 3 1 (node "sopint"))
+			(slice 3 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_2")
+		)
+		(or (net "q0_1") (slice 2 1 (node "sopint")) (slice 3 1 (node "sopint")))
+		(c-element (slice 4 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(cell
+			"th23w2"
+			(slice 4 1 (node "sopint"))
+			(slice 4 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+		)
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(cell
+			"th23w2"
+			(slice 5 1 (node "sopint"))
+			(slice 5 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_1")
+		)
+		(or (net "q0_2") (slice 4 1 (node "sopint")) (slice 5 1 (node "sopint")))
+		(c-element (slice 6 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(cell
+			"th23w2"
+			(slice 6 1 (node "sopint"))
+			(slice 6 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+		)
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(cell
+			"th23w2"
+			(slice 7 1 (node "sopint"))
+			(slice 7 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_1")
+		)
+		(or (net "q0_3") (slice 6 1 (node "sopint")) (slice 7 1 (node "sopint")))
+	)
+)
+
+(cell "oof_dims_equal"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("sopint" 3 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_2"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_3"))
+		(or (slice 0 1 (node "sopint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")))
+		(or (slice 1 1 (node "sopint")) (slice 6 1 (node "mint")) (slice 7 1 (node "mint")) (slice 8 1 (node "mint")) (slice 9 1 (node "mint")))
+		(or (slice 2 1 (node "sopint")) (slice 11 1 (node "mint")) (slice 12 1 (node "mint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")))
+		(or (net "q0_0") (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")) (slice 2 1 (node "sopint")))
+		(or (net "q0_1") (slice 0 1 (node "mint")) (slice 5 1 (node "mint")) (slice 10 1 (node "mint")) (slice 15 1 (node "mint")))
+	)
+)
+
+(cell "oof_ncl_equal"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 6 0 1)
+		("sopint" 2 0 1)
+	)
+	(gates
+		(cell
+			"th34w2"
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_1")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(cell
+			"th34w2"
+			(slice 1 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(cell
+			"th34w2"
+			(slice 2 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+			(net "i1_3")
+		)
+		(cell
+			"th34w2"
+			(slice 3 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_1")
+			(net "i1_1")
+			(net "i1_2")
+		)
+		(or (net "q0_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(c-element (slice 4 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23w2"
+			(slice 0 1 (node "sopint"))
+			(slice 4 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_3")
+		)
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 1 1 (node "sopint"))
+			(slice 5 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_2")
+		)
+		(or (net "q0_1") (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")))
+	)
+)
+
+(cell "oof_dr_dims_equal"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q1_0" output 1)
+		("q1_1" output 1)
+	)
+	(nodes
+		("mint" 8 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(or (slice 0 1 (node "sopint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 7 1 (node "mint")))
+		(or (net "q0_0") (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 0 1 (node "sopint")))
+		(or (net "q0_1") (slice 0 1 (node "mint")) (slice 3 1 (node "mint")))
+	)
+)
+
+(cell "oof_dr_ncl_equal"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q1_0" output 1)
+		("q1_1" output 1)
+	)
+	(nodes
+		("mint" 8 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(cell
+			"th23"
+			(slice 0 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(slice 0 1 (node "sopint"))
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(slice 1 1 (node "sopint"))
+			(slice 1 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+		(or (net "q0_0") (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23w2"
+			(net "q0_1")
+			(slice 2 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_1")
+		)
+	)
+)
+
+(cell "oof_dims_inequal"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("sopint" 3 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_2"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_3"))
+		(or (net "q0_0") (slice 0 1 (node "mint")) (slice 5 1 (node "mint")) (slice 10 1 (node "mint")) (slice 15 1 (node "mint")))
+		(or (slice 0 1 (node "sopint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")))
+		(or (slice 1 1 (node "sopint")) (slice 6 1 (node "mint")) (slice 7 1 (node "mint")) (slice 8 1 (node "mint")) (slice 9 1 (node "mint")))
+		(or (slice 2 1 (node "sopint")) (slice 11 1 (node "mint")) (slice 12 1 (node "mint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")))
+		(or (net "q0_1") (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")) (slice 2 1 (node "sopint")))
+	)
+)
+
+(cell "one-of-four-ncl-inequal"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 6 0 1)
+		("sopint" 2 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23w2"
+			(slice 0 1 (node "sopint"))
+			(slice 0 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_3")
+		)
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 1 1 (node "sopint"))
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_2")
+		)
+		(or (net "q0_0") (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")))
+		(cell
+			"th34w2"
+			(slice 2 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_1")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(cell
+			"th34w2"
+			(slice 3 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(cell
+			"th34w2"
+			(slice 4 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+			(net "i1_3")
+		)
+		(cell
+			"th34w2"
+			(slice 5 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_1")
+			(net "i1_1")
+			(net "i1_2")
+		)
+		(or (net "q0_1") (slice 2 1 (node "mint")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")))
+	)
+)
+
+(cell "oof_dr_dims_inequal"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 8 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(or (net "q0_0") (slice 0 1 (node "mint")) (slice 3 1 (node "mint")))
+		(or (slice 0 1 (node "sopint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 7 1 (node "mint")))
+		(or (net "q0_1") (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 0 1 (node "sopint")))
+	)
+)
+
+(cell "one-of-four-dual-rail-ncl-inequal"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 3 0 1)
+		("sopint" 2 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23w2"
+			(net "q0_0")
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 2 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(slice 0 1 (node "sopint"))
+			(slice 1 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(slice 1 1 (node "sopint"))
+			(slice 2 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+		(or (net "q0_1") (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")))
+	)
+)
+
+(cell "one-of-four-dims-comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("sopint" 2 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_2"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_3"))
+		(or (slice 0 1 (node "sopint")) (slice 4 1 (node "mint")) (slice 8 1 (node "mint")) (slice 9 1 (node "mint")) (slice 12 1 (node "mint")))
+		(or (net "q0_0") (slice 0 1 (node "sopint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")))
+		(or (net "q0_1") (slice 0 1 (node "mint")) (slice 5 1 (node "mint")) (slice 10 1 (node "mint")) (slice 15 1 (node "mint")))
+		(or (slice 1 1 (node "sopint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")) (slice 6 1 (node "mint")))
+		(or (net "q0_2") (slice 1 1 (node "sopint")) (slice 7 1 (node "mint")) (slice 11 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-ncl-comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("sopint" 2 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(cell
+			"th23"
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th34w2"
+			(slice 2 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+			(net "i1_1")
+			(net "i1_2")
+		)
+		(or (net "q0_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23w2"
+			(slice 0 1 (node "sopint"))
+			(slice 3 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_3")
+		)
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(cell
+			"th23w2"
+			(slice 1 1 (node "sopint"))
+			(slice 4 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_2")
+		)
+		(or (net "q0_1") (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")))
+		(c-element (slice 5 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(cell
+			"th23"
+			(slice 6 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(cell
+			"th34w2"
+			(slice 7 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_1")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(or (net "q0_2") (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 7 1 (node "mint")))
+	)
+)
+
+(cell "oof_dr_dims_ineq_comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+	)
+	(nodes
+		("mint" 7 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (net "q0_2") (net "i0_0") (net "i1_1"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(or (slice 0 1 (node "sopint")) (slice 1 1 (node "mint")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")))
+		(or (net "q0_0") (slice 6 1 (node "mint")) (slice 0 1 (node "sopint")))
+		(or (net "q0_1") (slice 0 1 (node "mint")) (slice 2 1 (node "mint")))
+	)
+)
+
+(cell "oof_dr_ncl_ineq_comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+	)
+	(nodes
+		("mint" 7 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(cell
+			"th23"
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 2 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(or (net "q0_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23w2"
+			(net "q0_1")
+			(slice 3 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_1")
+		)
+		(c-element (net "q0_2") (net "i0_0") (net "i1_1"))
+	)
+)
+
+(cell "oof_dr_dims_ineq_sgn_comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+	)
+	(nodes
+		("mint" 7 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (net "q0_0") (net "i0_1") (net "i1_0"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(or (slice 0 1 (node "sopint")) (slice 1 1 (node "mint")) (slice 3 1 (node "mint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")))
+		(or (net "q0_2") (slice 6 1 (node "mint")) (slice 0 1 (node "sopint")))
+		(or (net "q0_1") (slice 0 1 (node "mint")) (slice 2 1 (node "mint")))
+	)
+)
+
+(cell "oof_dr_ncl_ineq_sgn_comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+	)
+	(nodes
+		("mint" 7 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (net "q0_0") (net "i0_1") (net "i1_0"))
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23w2"
+			(net "q0_1")
+			(slice 1 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_1")
+		)
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(cell
+			"th23"
+			(slice 2 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 3 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(or (net "q0_2") (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-dims-less-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("sopint" 3 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_2"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_3"))
+		(or (slice 0 1 (node "sopint")) (slice 0 1 (node "mint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")) (slice 8 1 (node "mint")))
+		(or (slice 1 1 (node "sopint")) (slice 9 1 (node "mint")) (slice 10 1 (node "mint")) (slice 12 1 (node "mint")) (slice 13 1 (node "mint")))
+		(or (net "q0_0") (slice 14 1 (node "mint")) (slice 15 1 (node "mint")) (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")))
+		(or (slice 2 1 (node "sopint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")) (slice 6 1 (node "mint")))
+		(or (net "q0_1") (slice 2 1 (node "sopint")) (slice 7 1 (node "mint")) (slice 11 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-ncl-less-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 8 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23"
+			(slice 1 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th34w2"
+			(slice 2 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+			(net "i1_2")
+		)
+		(cell
+			"th23"
+			(slice 3 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 4 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(or (slice 0 1 (node "sopint")) (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")))
+		(or (net "q0_0") (slice 3 1 (node "mint")) (slice 4 1 (node "mint")) (slice 0 1 (node "sopint")))
+		(c-element (slice 5 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(cell
+			"th23"
+			(slice 6 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(cell
+			"th34w2"
+			(slice 7 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_1")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(or (slice 0 1 (node "q0_1")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 7 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-dims-greater-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 16 0 1)
+		("sopint" 3 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_0") (net "i1_3"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_1") (net "i1_3"))
+		(c-element (slice 8 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 9 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 10 1 (node "mint")) (net "i0_2") (net "i1_2"))
+		(c-element (slice 11 1 (node "mint")) (net "i0_2") (net "i1_3"))
+		(c-element (slice 12 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 13 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(c-element (slice 14 1 (node "mint")) (net "i0_3") (net "i1_2"))
+		(c-element (slice 15 1 (node "mint")) (net "i0_3") (net "i1_3"))
+		(or (slice 0 1 (node "sopint")) (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(or (slice 1 1 (node "sopint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 7 1 (node "mint")) (slice 10 1 (node "mint")))
+		(or (net "q0_0") (slice 11 1 (node "mint")) (slice 15 1 (node "mint")) (slice 0 1 (node "sopint")) (slice 1 1 (node "sopint")))
+		(or (slice 2 1 (node "sopint")) (slice 4 1 (node "mint")) (slice 8 1 (node "mint")) (slice 9 1 (node "mint")) (slice 12 1 (node "mint")))
+		(or (net "q0_1") (slice 2 1 (node "sopint")) (slice 13 1 (node "mint")) (slice 14 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-ncl-greater-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("i1_3" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 8 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(cell
+			"th23"
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(cell
+			"th34w2"
+			(slice 2 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_1")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(cell
+			"th23"
+			(slice 3 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_2")
+			(net "i1_3")
+		)
+		(c-element (slice 4 1 (node "mint")) (net "i0_3") (net "i1_3"))
+		(or (slice 0 1 (node "sopint")) (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")))
+		(or (net "q0_0") (slice 3 1 (node "mint")) (slice 4 1 (node "mint")) (slice 0 1 (node "sopint")))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(cell
+			"th23"
+			(slice 6 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th34w2"
+			(slice 7 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+			(net "i1_1")
+			(net "i1_2")
+		)
+		(or (net "q0_1") (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 7 1 (node "mint")))
+	)
+)
+
+(cell "one-of-four-dual-rail-dims-less-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 7 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (net "q0_1") (net "i0_0") (net "i1_1"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(or (slice 0 1 (node "sopint")) (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(or (net "q0_0") (slice 4 1 (node "mint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 0 1 (node "sopint")))
+	)
+)
+
+(cell "one-of-four-dual-rail-ncl-less-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 3 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(cell
+			"th23"
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 2 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(or (slice 0 1 (node "sopint")) (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")))
+		(cell
+			"th23w2"
+			(net "q0_0")
+			(slice 0 1 (node "sopint"))
+			(net "i0_0")
+			(net "i1_0")
+		)
+		(c-element (net "q0_1") (net "i0_0") (net "i1_1"))
+	)
+)
+
+(cell "one-of-four-dual-rail-dims-greater-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 8 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_3") (net "i1_0"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_3") (net "i1_1"))
+		(or (net "q0_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 3 1 (node "mint")))
+		(or (slice 0 1 (node "sopint")) (slice 2 1 (node "mint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")))
+		(or (net "q0_1") (slice 7 1 (node "mint")) (slice 0 1 (node "sopint")))
+	)
+)
+
+(cell "one-of-four-dual-rail-ncl-greater-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i0_3" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 3 0 1)
+		("sopint" 1 0 1)
+	)
+	(gates
+		(cell
+			"th23"
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(net "q0_0")
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23"
+			(slice 2 1 (node "mint"))
+			(net "i0_3")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(or (slice 0 1 (node "sopint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")))
+		(cell
+			"th23w2"
+			(net "q0_1")
+			(slice 0 1 (node "sopint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+	)
+)
+
+(cell "dual-rail-dims-comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+	)
+	(nodes
+		("mint" 2 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (net "q0_2") (net "i0_0") (net "i1_1"))
+		(c-element (net "q0_0") (net "i0_1") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(or (net "q0_1") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")))
+	)
+)
+
+(cell "dual-rail-ncl-comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+	)
+	(nodes
+		("mint" 1 0 1)
+	)
+	(gates
+		(c-element (net "q0_0") (net "i0_1") (net "i1_0"))
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(cell
+			"th23w2"
+			(net "q0_1")
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_1")
+		)
+		(c-element (net "q0_2") (net "i0_0") (net "i1_1"))
+	)
+)
+
+(cell "dual-rail-dims-less-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 3 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (net "q0_1") (net "i0_0") (net "i1_1"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(or (net "q0_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")))
+	)
+)
+
+(cell "dual-rail-ncl-less-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 1 0 1)
+	)
+	(gates
+		(cell
+			"th23"
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(net "q0_0")
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_0")
+		)
+		(c-element (net "q0_1") (net "i0_0") (net "i1_1"))
+	)
+)
+
+(cell "dual-rail-dims-greater-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 2 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (net "q0_1") (net "i0_1") (net "i1_0"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(or (net "q0_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")))
+	)
+)
+
+(cell "dual-rail-ncl-greater-than"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 1 0 1)
+	)
+	(gates
+		(cell
+			"th23"
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(net "q0_0")
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_1")
+		)
+		(c-element (net "q0_1") (net "i0_1") (net "i1_0"))
+	)
+)
+
+(cell "one-of-three-dual-rail-dims-comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 6 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "i1_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(or (net "q0_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")))
+		(or (net "q0_1") (slice 3 1 (node "mint")) (slice 4 1 (node "mint")) (slice 5 1 (node "mint")))
+	)
+)
+
+(cell "one-of-three-dual-rail-ncl-comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+	)
+	(nodes
+		("mint" 2 0 1)
+	)
+	(gates
+		(cell
+			"th23"
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_0")
+			(net "i1_1")
+		)
+		(cell
+			"th23w2"
+			(net "q0_0")
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+		(cell
+			"th23"
+			(slice 1 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_1")
+			(net "i1_2")
+		)
+		(cell
+			"th23w2"
+			(net "q0_1")
+			(slice 1 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_2")
+		)
+	)
+)
+
+(cell "one-of-three-dims-comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+	)
+	(nodes
+		("mint" 9 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "mint")) (net "i0_0") (net "i1_0"))
+		(c-element (slice 1 1 (node "mint")) (net "i0_0") (net "i1_1"))
+		(c-element (slice 2 1 (node "mint")) (net "i0_0") (net "i1_2"))
+		(c-element (slice 3 1 (node "mint")) (net "i0_1") (net "i1_0"))
+		(c-element (net "q0_1") (net "i0_1") (net "i1_1"))
+		(c-element (slice 4 1 (node "mint")) (net "i0_1") (net "i1_2"))
+		(c-element (slice 5 1 (node "mint")) (net "i0_2") (net "i1_0"))
+		(c-element (slice 6 1 (node "mint")) (net "i0_2") (net "i1_1"))
+		(c-element (slice 7 1 (node "mint")) (net "i0_2") (net "i1_2"))
+		(or (net "q0_0") (slice 0 1 (node "mint")) (slice 1 1 (node "mint")) (slice 2 1 (node "mint")) (slice 3 1 (node "mint")))
+		(or (net "q0_2") (slice 4 1 (node "mint")) (slice 5 1 (node "mint")) (slice 6 1 (node "mint")) (slice 7 1 (node "mint")))
+	)
+)
+
+(cell "one-of-three-ncl-comp"
+	(ports
+		("i0_0" input 1)
+		("i0_1" input 1)
+		("i0_2" input 1)
+		("i1_0" input 1)
+		("i1_1" input 1)
+		("i1_2" input 1)
+		("q0_0" output 1)
+		("q0_1" output 1)
+		("q0_2" output 1)
+	)
+	(nodes
+		("mint" 2 0 1)
+	)
+	(gates
+		(cell
+			"th34w2"
+			(slice 0 1 (node "mint"))
+			(net "i0_0")
+			(net "i1_0")
+			(net "i1_1")
+			(net "i1_2")
+		)
+		(cell
+			"th23w2"
+			(net "q0_0")
+			(slice 0 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_0")
+		)
+		(c-element (net "q0_1") (net "i0_1") (net "i1_1"))
+		(cell
+			"th34w2"
+			(slice 1 1 (node "mint"))
+			(net "i0_2")
+			(net "i1_0")
+			(net "i1_1")
+			(net "i1_2")
+		)
+		(cell
+			"th23w2"
+			(net "q0_2")
+			(slice 1 1 (node "mint"))
+			(net "i0_1")
+			(net "i1_2")
+		)
+	)
+)
+
+(cell "dual-rail-latch"
+	(ports
+		("in_0" input 1)
+		("in_1" input 1)
+		("in_a" output 1)
+		("out_0" output 1)
+		("out_1" output 1)
+	)
+	(nodes
+	)
+	(gates
+		(nor (net "out_1") (net "in_0") (net "out_0"))
+		(nor (net "out_0") (net "in_1") (net "out_1"))
+		(cell
+			"and-or22"
+			(net "in_a")
+			(net "in_0")
+			(net "out_0")
+			(net "in_1")
+			(net "out_1")
+		)
+	)
+	(attributes
+		(simulation-initialise
+			((net "out_0") 1)
+		)
+	)
+)
+
+(cell "dual-rail-spacer-latch"
+	(ports
+		("in_0" input 1)
+		("in_1" input 1)
+		("in_a" output 1)
+		("out_0" output 1)
+		("out_1" output 1)
+	)
+	(nodes
+		("phaseOne" 2 0 1)
+		("incomp" 1 0 1)
+		("outcomp" 1 0 1)
+	)
+	(gates
+		(nor (slice 0 1 (node "phaseOne")) (slice 0 1 (node "outcomp")) (net "in_0") (slice 1 1 (node "phaseOne")))
+		(nor (slice 1 1 (node "phaseOne")) (slice 0 1 (node "outcomp")) (net "in_1") (slice 0 1 (node "phaseOne")))
+		(nor (net "out_0") (slice 0 1 (node "incomp")) (slice 0 1 (node "phaseOne")) (net "out_1"))
+		(nor (net "out_1") (slice 0 1 (node "incomp")) (slice 1 1 (node "phaseOne")) (net "out_0"))
+		(or (slice 0 1 (node "incomp")) (net "in_0") (net "in_1"))
+		(or (slice 0 1 (node "outcomp")) (net "out_0") (net "out_1"))
+		(or (net "in_a") (slice 0 1 (node "phaseOne")) (slice 1 1 (node "phaseOne")))
+	)
+	(attributes
+		(simulation-initialise
+			((net "out_0") 1)
+		)
+	)
+)
+
+(cell "dual-rail-ncl-latch"
+	(ports
+		("in_0" input 1)
+		("in_1" input 1)
+		("in_a" output 1)
+		("out_0" output 1)
+		("out_1" output 1)
+	)
+	(nodes
+		("phaseOne" 2 0 1)
+		("incomp" 1 0 1)
+		("outcomp" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "phaseOne")) (net "in_0") (slice 0 1 (node "outcomp")))
+		(c-element (slice 1 1 (node "phaseOne")) (net "in_1") (slice 0 1 (node "outcomp")))
+		(c-element (net "out_0") (slice 0 1 (node "phaseOne")) (slice 0 1 (node "incomp")))
+		(c-element (net "out_1") (slice 1 1 (node "phaseOne")) (slice 0 1 (node "incomp")))
+		(nor (slice 0 1 (node "incomp")) (net "in_0") (net "in_1"))
+		(nor (slice 0 1 (node "outcomp")) (net "out_0") (net "out_1"))
+		(or (net "in_a") (slice 0 1 (node "phaseOne")) (slice 1 1 (node "phaseOne")))
+	)
+)
+
+(cell "dual-rail-true-ncl-latch"
+	(ports
+		("in_0" input 1)
+		("in_1" input 1)
+		("in_a" output 1)
+		("out_r" input 1)
+		("out_0" output 1)
+		("out_1" output 1)
+	)
+	(nodes
+		("writeSel" 2 0 1)
+		("phaseOne" 2 0 1)
+		("phaseTwo" 2 0 1)
+		("readStore" 2 0 1)
+		("wrcomp" 1 0 1)
+		("incomp" 1 0 1)
+		("pocomp" 1 0 1)
+		("outcomp" 1 0 1)
+	)
+	(gates
+		(or (slice 0 1 (node "writeSel")) (net "in_0") (slice 0 1 (node "readStore")))
+		(or (slice 1 1 (node "writeSel")) (net "in_1") (slice 1 1 (node "readStore")))
+		(c-element (slice 0 1 (node "phaseOne")) (slice 0 1 (node "writeSel")) (slice 0 1 (node "outcomp")))
+		(c-element (slice 1 1 (node "phaseOne")) (slice 1 1 (node "writeSel")) (slice 0 1 (node "outcomp")))
+		(c-element (slice 0 1 (node "phaseTwo")) (slice 0 1 (node "phaseOne")) (slice 0 1 (node "incomp")))
+		(c-element (slice 1 1 (node "phaseTwo")) (slice 1 1 (node "phaseOne")) (slice 0 1 (node "incomp")))
+		(c-element (slice 0 1 (node "readStore")) (slice 0 1 (node "phaseTwo")) (net "out_r"))
+		(c-element (slice 1 1 (node "readStore")) (slice 1 1 (node "phaseTwo")) (net "out_r"))
+		(c-element (net "out_0") (slice 0 1 (node "readStore")) (slice 0 1 (node "pocomp")))
+		(c-element (net "out_1") (slice 1 1 (node "readStore")) (slice 0 1 (node "pocomp")))
+		(or (slice 0 1 (node "wrcomp")) (net "in_0") (net "in_1"))
+		(nor (slice 0 1 (node "incomp")) (slice 0 1 (node "writeSel")) (slice 1 1 (node "writeSel")))
+		(nor (slice 0 1 (node "outcomp")) (slice 0 1 (node "phaseTwo")) (slice 1 1 (node "phaseTwo")))
+		(or (slice 0 1 (node "pocomp")) (slice 0 1 (node "phaseOne")) (slice 1 1 (node "phaseOne")))
+		(c-element (net "in_a") (slice 0 1 (node "pocomp")) (slice 0 1 (node "wrcomp")))
+	)
+)
+
+(cell "one-of-four-latch"
+	(ports
+		("in_0" input 1)
+		("in_1" input 1)
+		("in_2" input 1)
+		("in_3" input 1)
+		("in_a" output 1)
+		("out_0" output 1)
+		("out_1" output 1)
+		("out_2" output 1)
+		("out_3" output 1)
+        ("initialise" input 1)
+	)
+	(nodes
+		("inp_nor" 4 0 1)
+		("cross_na" 2 0 1)
+		("nor_latch" 4 0 1)
+		("group_na" 4 0 1)
+		("ack_na" 2 0 1)
+		("ninitialise" 1 0 1)
+	)
+	(gates
+		(inv (node "ninitialise") (net "initialise"))
+		(nor (slice 0 1 (node "inp_nor")) (net "in_0") (slice 0 1 (node "nor_latch")))
+		(nor (slice 1 1 (node "inp_nor")) (net "in_1") (slice 1 1 (node "nor_latch")))
+		(nor (slice 2 1 (node "inp_nor")) (net "in_2") (slice 2 1 (node "nor_latch")))
+		(nor (slice 3 1 (node "inp_nor")) (net "in_3") (slice 3 1 (node "nor_latch")))
+		(nand (net "out_0") (slice 0 1 (node "inp_nor")) (node "ninitialise"))
+		(inv (net "out_1") (slice 1 1 (node "inp_nor")))
+		(inv (net "out_2") (slice 2 1 (node "inp_nor")))
+		(inv (net "out_3") (slice 3 1 (node "inp_nor")))
+		(nand (slice 0 1 (node "cross_na")) (slice 0 1 (node "inp_nor")) (slice 1 1 (node "inp_nor")) (node "ninitialise"))
+		(nand (slice 1 1 (node "cross_na")) (slice 2 1 (node "inp_nor")) (slice 3 1 (node "inp_nor")))
+		(nor (slice 0 1 (node "nor_latch")) (slice 1 1 (node "cross_na")) (net "out_1"))
+		(nor (slice 1 1 (node "nor_latch")) (slice 1 1 (node "cross_na")) (net "out_0"))
+		(nor (slice 2 1 (node "nor_latch")) (slice 0 1 (node "cross_na")) (net "out_3"))
+		(nor (slice 3 1 (node "nor_latch")) (slice 0 1 (node "cross_na")) (net "out_2"))
+		(nand (slice 0 1 (node "group_na")) (net "in_0") (slice 0 1 (node "nor_latch")))
+		(nand (slice 1 1 (node "group_na")) (net "in_1") (slice 1 1 (node "nor_latch")))
+		(nand (slice 2 1 (node "group_na")) (net "in_2") (slice 2 1 (node "nor_latch")))
+		(nand (slice 3 1 (node "group_na")) (net "in_3") (slice 3 1 (node "nor_latch")))
+		(nand (slice 0 1 (node "ack_na")) (slice 0 1 (node "group_na")) (slice 1 1 (node "group_na")))
+		(nand (slice 1 1 (node "ack_na")) (slice 2 1 (node "group_na")) (slice 3 1 (node "group_na")))
+		(or (net "in_a") (slice 0 1 (node "ack_na")) (slice 1 1 (node "ack_na")))
+	)
+	(attributes
+		(global-ports (net "initialise"))
+	)
+)
+
+(cell "one-of-four-ncl-latch"
+	(ports
+		("in_0" input 1)
+		("in_1" input 1)
+		("in_2" input 1)
+		("in_3" input 1)
+		("in_a" output 1)
+		("out_0" output 1)
+		("out_1" output 1)
+		("out_2" output 1)
+		("out_3" output 1)
+	)
+	(nodes
+		("PhaseOne" 4 0 1)
+		("incomp" 1 0 1)
+		("outcomp" 1 0 1)
+	)
+	(gates
+		(c-element (slice 0 1 (node "PhaseOne")) (net "in_0") (slice 0 1 (node "outcomp")))
+		(c-element (slice 1 1 (node "PhaseOne")) (net "in_1") (slice 0 1 (node "outcomp")))
+		(c-element (slice 2 1 (node "PhaseOne")) (net "in_2") (slice 0 1 (node "outcomp")))
+		(c-element (slice 3 1 (node "PhaseOne")) (net "in_3") (slice 0 1 (node "outcomp")))
+		(c-element (net "out_0") (slice 0 1 (node "PhaseOne")) (slice 0 1 (node "incomp")))
+		(c-element (net "out_1") (slice 1 1 (node "PhaseOne")) (slice 0 1 (node "incomp")))
+		(c-element (net "out_2") (slice 2 1 (node "PhaseOne")) (slice 0 1 (node "incomp")))
+		(c-element (net "out_3") (slice 3 1 (node "PhaseOne")) (slice 0 1 (node "incomp")))
+		(nor (slice 0 1 (node "incomp")) (net "in_0") (net "in_1") (net "in_2") (net "in_3"))
+		(nor (slice 0 1 (node "outcomp")) (net "out_0") (net "out_1") (net "out_2") (net "out_3"))
+		(or (net "in_a") (slice 0 1 (node "PhaseOne")) (slice 1 1 (node "PhaseOne")) (slice 2 1 (node "PhaseOne")) (slice 3 1 (node "PhaseOne")))
+	)
+)
+
+(cell "one-of-four-true-ncl-reg"
+	(ports
+		("in_0" input 1)
+		("in_1" input 1)
+		("in_2" input 1)
+		("in_3" input 1)
+		("in_a" output 1)
+		("out_r" input 1)
+		("out_0" output 1)
+		("out_1" output 1)
+		("out_2" output 1)
+		("out_3" output 1)
+	)
+	(nodes
+		("WriteSel" 4 0 1)
+		("PhaseOne" 4 0 1)
+		("PhaseTwo" 4 0 1)
+		("ReadStore" 4 0 1)
+		("wrcomp" 1 0 1)
+		("incomp" 1 0 1)
+		("pocomp" 1 0 1)
+		("outcomp" 1 0 1)
+	)
+	(gates
+		(or (slice 0 1 (node "WriteSel")) (net "in_0") (slice 0 1 (node "ReadStore")))
+		(or (slice 1 1 (node "WriteSel")) (net "in_1") (slice 1 1 (node "ReadStore")))
+		(or (slice 2 1 (node "WriteSel")) (net "in_2") (slice 2 1 (node "ReadStore")))
+		(or (slice 3 1 (node "WriteSel")) (net "in_3") (slice 3 1 (node "ReadStore")))
+		(c-element (slice 0 1 (node "PhaseOne")) (slice 0 1 (node "WriteSel")) (slice 0 1 (node "outcomp")))
+		(c-element (slice 1 1 (node "PhaseOne")) (slice 1 1 (node "WriteSel")) (slice 0 1 (node "outcomp")))
+		(c-element (slice 2 1 (node "PhaseOne")) (slice 2 1 (node "WriteSel")) (slice 0 1 (node "outcomp")))
+		(c-element (slice 3 1 (node "PhaseOne")) (slice 3 1 (node "WriteSel")) (slice 0 1 (node "outcomp")))
+		(c-element (slice 0 1 (node "PhaseTwo")) (slice 0 1 (node "PhaseOne")) (slice 0 1 (node "incomp")))
+		(c-element (slice 1 1 (node "PhaseTwo")) (slice 1 1 (node "PhaseOne")) (slice 0 1 (node "incomp")))
+		(c-element (slice 2 1 (node "PhaseTwo")) (slice 2 1 (node "PhaseOne")) (slice 0 1 (node "incomp")))
+		(c-element (slice 3 1 (node "PhaseTwo")) (slice 3 1 (node "PhaseOne")) (slice 0 1 (node "incomp")))
+		(c-element (slice 0 1 (node "ReadStore")) (slice 0 1 (node "PhaseTwo")) (net "out_r"))
+		(c-element (slice 1 1 (node "ReadStore")) (slice 1 1 (node "PhaseTwo")) (net "out_r"))
+		(c-element (slice 2 1 (node "ReadStore")) (slice 2 1 (node "PhaseTwo")) (net "out_r"))
+		(c-element (slice 3 1 (node "ReadStore")) (slice 3 1 (node "PhaseTwo")) (net "out_r"))
+		(c-element (net "out_0") (slice 0 1 (node "ReadStore")) (slice 0 1 (node "pocomp")))
+		(c-element (net "out_1") (slice 1 1 (node "ReadStore")) (slice 0 1 (node "pocomp")))
+		(c-element (net "out_2") (slice 2 1 (node "ReadStore")) (slice 0 1 (node "pocomp")))
+		(c-element (net "out_3") (slice 3 1 (node "ReadStore")) (slice 0 1 (node "pocomp")))
+		(or (slice 0 1 (node "wrcomp")) (net "in_0") (net "in_1") (net "in_2") (net "in_3"))
+		(nor (slice 0 1 (node "incomp")) (slice 0 1 (node "WriteSel")) (slice 1 1 (node "WriteSel")) (slice 2 1 (node "WriteSel")) (slice 3 1 (node "WriteSel")))
+		(nor (slice 0 1 (node "outcomp")) (slice 0 1 (node "PhaseTwo")) (slice 1 1 (node "PhaseTwo")) (slice 2 1 (node "PhaseTwo")) (slice 3 1 (node "PhaseTwo")))
+		(or (slice 0 1 (node "pocomp")) (slice 0 1 (node "PhaseOne")) (slice 1 1 (node "PhaseOne")) (slice 2 1 (node "PhaseOne")) (slice 3 1 (node "PhaseOne")))
+		(c-element (net "in_a") (slice 0 1 (node "pocomp")) (slice 0 1 (node "wrcomp")))
+	)
+)
+

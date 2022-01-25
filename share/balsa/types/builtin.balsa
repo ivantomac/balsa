@@ -1,0 +1,50 @@
+(--
+	The Balsa Asynchronous Hardware Synthesis System
+	Copyright (C) 1995-2003 Department of Computer Science
+	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+	`builtin.balsa'
+	Balsa built-in types
+	This file is implicitly imported by balsa-c whenever it is run
+
+	$Id: builtin.balsa,v 1.12 2003/08/24 18:24:41 bardslea Exp $
+--)
+
+-- bit: guard type
+type bit is 1 bits
+
+-- BalsaError: error types for print
+type BalsaError is enumeration
+	runtime, -- simulation time printing (the default)
+	fatal,	-- kill the compiler
+	error,	-- report as an error
+	warning, -- give only a warning
+	report	-- just print without incuring an error
+end
+
+-- String, StringAppend : these are defined here as the compiler depends on them
+--	The function String creates a string object from its parameter
+type String is builtin
+function String (parameter string : String) is builtin : String
+function StringAppend (str1, str2 : String) is builtin : String
+
+-- ToString : function which can convert a value of (nearly) any type to a default
+--	formatted string, used within the compiler to implement runtime printing
+function ToString (parameter X : type; value : X) is builtin : String
+
+-- WriteMessage : write a runtime printing message string, returns 1
+function WriteMessage (str : String) is builtin : bit

@@ -1,0 +1,21 @@
+(defines
+	(PPstyle (style-option "PP" "ovlp"))
+	(FVstyle (if (= PPstyle "conv") "conv" (style-option "FV" "ovlp")))
+)
+(nodes
+	("data" (param "width") 0 1)
+
+)
+(gates
+	(case FVstyle
+		(("ovlp")
+			(cell "t-element" (req "write") (ack "write") (req "signal") (ack "signal"))
+		)
+		(else
+			(s-element (req "write") (ack "write") (req "signal") (ack "signal"))
+		)
+	)
+	(macro single-rail-connect-read-ports (param "width") (param "readPortCount") (param "specification") "data")
+	(connect (data "write") (node "data"))
+	(connect (combine (req (each "read"))) (combine (ack (each "read"))))
+)

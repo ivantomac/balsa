@@ -1,0 +1,29 @@
+(defines
+	(plural (> (param "width") 1))
+)
+(nodes
+	("sourceId" (param "inputCount") 0 1)
+)
+(gates
+	(or (req0 "out") (req0 (each "inp")))
+	(or (req1 "out") (req1 (each "inp")))
+	(if plural
+		(gates
+			(or (req2 "out") (req2 (each "inp")))
+			(or (req3 "out") (req3 (each "inp")))
+			(or (node "sourceId") 
+				(combine (slice 0 1 (req0 (each "inp"))))
+				(combine (slice 0 1 (req1 (each "inp"))))
+				(combine (slice 0 1 (req2 (each "inp"))))
+				(combine (slice 0 1 (req3 (each "inp"))))
+			)
+		)
+		(or (node "sourceId") 
+			(combine (slice 0 1 (req0 (each "inp"))))
+			(combine (slice 0 1 (req1 (each "inp"))))
+		)
+	)
+	(c-element (combine (ack (each "inp")))
+		(node "sourceId") (combine (dup (param "inputCount") (ack "out"))))
+)
+(connections)

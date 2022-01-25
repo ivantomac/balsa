@@ -1,0 +1,59 @@
+(defines
+	(FVstyle (style-option "FV" "ovlp"))
+	(width-even (quotient (param "width") 2))
+	(width-odd (quotient (+ 1 (param "width")) 2))
+	(plural? (> (param "width") 1))
+	(odd-width (odd? (param "width")))
+)
+(nodes
+	("writeSigPart" width-odd 0 1)
+	("writeSig" 1 0 1)
+	("writeAck" 1 0 1)
+	("sigAck" (case FVstyle (("ovlp") 1) (else 0)) 0 1)
+	("rReqOr" (case FVstyle (("ovlp") 1) (else 0)) 0 1)
+	("store" width-odd 0 4 (list width-odd width-odd width-even width-even))
+	("readReq" 1 0 (param "readPortCount"))
+)
+(gates
+	(if plural?
+		(gates
+			(if odd-width
+				(or (slice (- width-odd 1) 1 (node "writeSigPart"))
+					(slice (- width-odd 1) 1 (ack1 "write"))
+					(slice (- width-odd 1) 1 (ack0 "write")))
+			)
+			(or (slice 0 width-even (node "writeSigPart"))
+				(slice 0 width-even (ack0 "write"))
+				(slice 0 width-even (ack1 "write"))
+				(slice 0 width-even (ack2 "write"))
+				(slice 0 width-even (ack3 "write"))
+			)
+		)
+		(or (node "writeSigPart") (ack0 "write") (ack1 "write"))
+	)
+
+	(c-element (node "writeSig") (smash (node "writeSigPart")))
+	(case FVstyle
+		(("ovlp")
+			(cell "t-element" (req "trigger") (node "sigAck") (req "signal") (ack "signal"))
+			(nor (node "rReqOr") (node (each "readReq")))
+			(and (node "writeAck") (node "sigAck") (node "rReqOr"))
+		)
+		(else
+			(s-element (req "trigger") (node "writeAck") (req "signal") (ack "signal"))
+		)
+	)
+	(c-element (ack "trigger") (node "writeAck") (node "writeSig"))
+	(connect (ack0 "write") (node (bundle "store" 0)))
+	(connect (ack1 "write") (node (bundle "store" 1)))
+	(if plural?
+		(gates
+			(connect (ack2 "write") (node (bundle "store" 2)))
+			(connect (ack3 "write") (node (bundle "store" 3)))
+		)
+	)
+	(connect (combine (req (each "read"))) (combine (node (each "readReq"))))
+	
+	(macro one-of-four-connect-read-ports (param "width") (param "readPortCount") (param "specification") "store" "readReq")
+	(connect (req "trigger") (req "write"))
+)

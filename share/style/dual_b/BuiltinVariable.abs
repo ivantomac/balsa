@@ -1,0 +1,39 @@
+(defines
+	(storage-cell
+		(case variable-type
+			(("switchable") "dual-rail-switchable-latch")
+			(("spacer") "dual-rail-spacer-latch")
+			(("ncl") "dual-rail-ncl-latch")
+			(else	"dual-rail-latch")
+		)
+	)
+)
+(nodes
+	("qt" 64 0 1)
+	("qf" 64 0 1)
+	("wack" 64 0 1)
+	("readReq" (param "readPortCount") 0 1)
+)
+(gates
+	(unarrayed-cell "builtin-unref" (ack "write") (req1 "write"))
+	; storage section
+	(cell storage-cell
+		(req0 "write") (req1 "write")
+		(node "wack")
+		(node "qf") (node "qt")
+	)
+	(connect (combine (req (each "read"))) (node "readReq"))
+	; read ports
+	(and
+		(combine (ack1 (each "read")))
+		(combine (dup-each 64 (smash (node "readReq"))))
+		(combine (dup (param "readPortCount") (node "qt")))
+	)
+	(and
+		(combine (ack0 (each "read")))
+		(combine (dup-each 64 (smash (node "readReq"))))
+		(combine (dup (param "readPortCount") (node "qf")))
+	)
+	; completion detection on writes
+	(c-element (ack "write") (smash (node "wack")))
+)

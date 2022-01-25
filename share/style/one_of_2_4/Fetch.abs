@@ -1,0 +1,17 @@
+(defines
+	(plural (> (param "width") 1)) ;; more than one
+)
+(nodes)
+(gates
+	(connect (req "activate") (req "inp"))
+	(connect (ack0 "inp") (req0 "out"))
+	(connect (ack1 "inp") (req1 "out"))
+	(if plural
+		(gates
+			(connect (ack2 "inp") (req2 "out"))
+			(connect (ack3 "inp") (req3 "out"))
+		)
+	)
+	(connect (ack "out") (ack "activate"))
+)
+(connections)

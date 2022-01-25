@@ -1,0 +1,14 @@
+(defines)
+(nodes
+	("rout" (param "inputCount") 0 1)
+)
+(gates
+	(cell "e-element"
+		(combine (req (each "inp")))
+		(combine (ack (each "inp")))
+		(node "rout")
+		(combine (dup (param "inputCount") (ack "out")))
+	)
+	(or (req "out") (smash (node "rout")))
+)
+(connections)

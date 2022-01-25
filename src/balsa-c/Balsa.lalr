@@ -1,0 +1,984 @@
+SCANNER BalsaScan PARSER Balsa
+GLOBAL {
+
+#include "BalsaScan.h"
+#include "Tree.h"
+#include "BalsaScanSource.h"
+#include "arith.h"
+#include "ports.h"
+#include "implicants.h"
+#include <string.h>
+
+	/* AppendDeclTrees : append tree2 onto tree1 */
+	tTree AppendDeclTrees (tTree tree1, tTree tree2)
+	{
+		tTree ret = tree2;
+
+		if (tree1->Kind != kNullDecls)
+		{
+			tTree leaf = tree1;
+			ret = tree1;
+			while (leaf->Decl.next && leaf->Decl.next->Kind != kNullDecls)
+			{ leaf = leaf->Decl.next; }
+			leaf->Decl.next = tree2;
+		}
+		return ret;
+	}
+
+
+#include "Tree.h"
+
+typedef struct { tTree Tree; } yyprogram;
+typedef struct { tTree Tree; } yyimports;
+typedef struct { tTree Tree; } yyimport;
+typedef struct { tTree Tree; } yyqualified_decl;
+typedef struct { tTree Tree; } yydecl;
+typedef struct { bool multicast; } yychannel_options;
+typedef struct { tTree Tree; } yyrange;
+typedef struct { tTree Tree; } yytype;
+typedef struct { tTree Tree; } yytype_decl_body;
+typedef struct { tTree Tree; } yynumeric_type;
+typedef struct { tTree Tree; } yyval_decls;
+typedef struct { tTree Tree; } yyval_decl;
+typedef struct { tTree Tree; } yyexpr;
+typedef struct { PortSense portSense; } yyport_sense;
+typedef struct { bool isOutput; } yyport_direction;
+typedef struct { tTree Tree; } yyport;
+typedef struct { tTree Tree; } yyblock;
+typedef struct { tTree Tree; } yyprocedure_block;
+typedef struct { tTree Tree; } yycommand;
+typedef struct { tTree Tree; } yyprocedure_params;
+typedef struct { tTree Tree; } yyfunction_params;
+typedef struct { tTree Tree; } yycomposed_type;
+typedef struct { tTree Tree; } yyprocedure_param;
+typedef struct { tTree Tree; } yyfunction_param;
+typedef struct { bool isParallel; bool isPermissive; } yypar_seq;
+typedef struct { tTree Tree; } yyguard;
+typedef struct { tTree Tree; } yyport_guard;
+typedef struct { tTree Tree; } yydecl_guard;
+typedef struct { tTree Tree; } yychannel_guard;
+typedef struct { tTree Tree; } yycase_guard;
+typedef struct { tTree Tree; } yylvalue;
+typedef struct { tTree Tree; } yydecls;
+typedef struct { tTree Tree; } yypath;
+typedef struct { tTree Tree; } yyidents;
+typedef struct { tTree Tree; } yyexprs;
+typedef struct { tTree Tree; } yychannels;
+typedef struct { tTree Tree; } yylvalues;
+typedef struct { tTree Tree; } yycase_range_elem;
+typedef struct { tTree Tree; } yycase_matches;
+typedef struct { tTree Tree; } yyformal_ports;
+typedef struct { tTree Tree; } yyguards;
+typedef struct { tTree Tree; } yyport_guards;
+typedef struct { tTree Tree; } yydecl_guards;
+typedef struct { tTree Tree; } yycase_guards;
+typedef struct { tTree Tree; } yychannel_guards;
+typedef struct { tTree Tree; } yyrecord_elems;
+typedef struct { tTree Tree; } yyenum_elems;
+typedef struct { tTree Tree; } yyenum_elem;
+typedef struct { tTree Tree; } yylinked_typed_idents;
+typedef struct { tTree Tree; } yylinked_ident;
+typedef struct { tTree Tree; } yylinked_expr;
+typedef struct { tTree Tree; } yylinked_channel;
+typedef struct { tTree Tree; } yylinked_lvalue;
+
+typedef union {
+ BalsaScan_tScanAttribute Scan;
+ yyprogram program;
+ yyimports imports;
+ yyimport import;
+ yyqualified_decl qualified_decl;
+ yydecl decl;
+ yychannel_options channel_options;
+ yyrange range;
+ yytype type;
+ yytype_decl_body type_decl_body;
+ yynumeric_type numeric_type;
+ yyval_decls val_decls;
+ yyval_decl val_decl;
+ yyexpr expr;
+ yyport_sense port_sense;
+ yyport_direction port_direction;
+ yyport port;
+ yyblock block;
+ yyprocedure_block procedure_block;
+ yycommand command;
+ yyprocedure_params procedure_params;
+ yyfunction_params function_params;
+ yycomposed_type composed_type;
+ yyprocedure_param procedure_param;
+ yyfunction_param function_param;
+ yypar_seq par_seq;
+ yyguard guard;
+ yyport_guard port_guard;
+ yydecl_guard decl_guard;
+ yychannel_guard channel_guard;
+ yycase_guard case_guard;
+ yylvalue lvalue;
+ yydecls decls;
+ yypath path;
+ yyidents idents;
+ yyexprs exprs;
+ yychannels channels;
+ yylvalues lvalues;
+ yycase_range_elem case_range_elem;
+ yycase_matches case_matches;
+ yyformal_ports formal_ports;
+ yyguards guards;
+ yyport_guards port_guards;
+ yydecl_guards decl_guards;
+ yycase_guards case_guards;
+ yychannel_guards channel_guards;
+ yyrecord_elems record_elems;
+ yyenum_elems enum_elems;
+ yyenum_elem enum_elem;
+ yylinked_typed_idents linked_typed_idents;
+ yylinked_ident linked_ident;
+ yylinked_expr linked_expr;
+ yylinked_channel linked_channel;
+ yylinked_lvalue linked_lvalue;
+} tParsAttribute;
+}
+
+EXPORT {
+}
+
+LOCAL {
+}
+
+BEGIN {
+
+	BalsaScan_BeginScanner ();
+
+}
+
+CLOSE {
+}
+
+TOKEN
+
+literal = 1
+implicant = 2
+ident = 3
+string = 4
+import_keyword = 5
+open_brace_in_import = 6
+dot_in_import = 7
+close_brace_in_import = 8
+'type' = 9
+'is' = 10
+'?' = 11
+'{' = 12
+',' = 13
+'}' = 14
+"'" = 15
+'-' = 16
+'+' = 17
+'not' = 18
+'log' = 19
+'sizeof' = 20
+'*' = 21
+'/' = 22
+'%' = 23
+'^' = 24
+'=' = 25
+'/=' = 26
+'<' = 27
+'>' = 28
+'<=' = 29
+'>=' = 30
+'and' = 31
+'or' = 32
+'xor' = 33
+'.' = 34
+'[' = 35
+']' = 36
+'..' = 37
+'over' = 38
+'(' = 39
+'as' = 40
+')' = 41
+'#' = 42
+'let' = 43
+'val' = 44
+'in' = 45
+'@' = 46
+'bits' = 47
+'signed' = 48
+'array' = 49
+'of' = 50
+'builtin' = 51
+'new' = 52
+'record' = 53
+':' = 54
+';' = 55
+'end' = 56
+'enumeration' = 57
+'constant' = 58
+'variable' = 59
+'multicast' = 60
+'channel' = 61
+'sync' = 62
+'procedure' = 63
+'active' = 64
+'passive' = 65
+'input' = 66
+'output' = 67
+'parameter' = 68
+'if' = 69
+'then' = 70
+'|' = 71
+'else' = 72
+'begin' = 73
+'continue' = 74
+'halt' = 75
+'local' = 76
+'->' = 77
+'->!' = 78
+'<-' = 79
+':=' = 80
+'||' = 81
+'||!' = 82
+'loop' = 83
+'while' = 84
+'also' = 85
+'case' = 86
+'for' = 87
+'select' = 88
+'select!' = 89
+'arbitrate' = 90
+'print' = 91
+'sink' = 92
+'function' = 93
+'shared' = 94
+
+OPER
+
+LEFT  'let'
+LEFT  'or' 'xor'
+LEFT  'and'
+LEFT  '=' '/='
+LEFT  '<' '>' '<=' '>='
+LEFT  '+' '-' '@'
+LEFT  '*' '/' '%'
+RIGHT '^'
+RIGHT 'not' 'log'
+LEFT  '['
+LEFT  '#'
+LEFT  '.'
+LEFT  ';'
+LEFT  '||' '||!'
+LEFT  ':'
+
+RULE
+
+program : imports decls {
+		$$.program.Tree = TreeRoot = mBalsaProgram (ReverseTree (
+			AppendDeclTrees ($2.decls.Tree, $1.imports.Tree)));
+	;
+
+;
+} .
+imports : { $$.imports.Tree = mNullDecls (NoPosition);
+ ;
+} .
+imports : imports import { $2.import.Tree->Decl.next = $1.imports.Tree; $$.imports.Tree = $2.import.Tree; ;
+ ;
+} .
+import : import_keyword open_brace_in_import path close_brace_in_import {
+	$$.import.Tree = mImportDecl ($2.Scan.Position, NoTree, $3.path.Tree);
+
+	if (ReportImports)
+	{
+		printf ("\"%s\" ", MakePathFromDottedPath ($3.path.Tree, '.'));
+	}
+;
+ ;
+} .
+qualified_decl : decl { $$.qualified_decl.Tree  =  $1.decl.Tree;
+ ;
+} .
+qualified_decl : 'if' decl_guards 'end' { $$.qualified_decl.Tree = mIfDecls ($1.Scan.Position, NoTree, ReverseTree ($2.decl_guards.Tree));
+ ;
+} .
+qualified_decl : 'if' decl_guards 'else' decls 'end' { $$.qualified_decl.Tree = mIfElseDecls ($1.Scan.Position, NoTree, ReverseTree ($2.decl_guards.Tree), ReverseTree ($4.decls.Tree));
+ ;
+} .
+decl : 'type' ident 'is' type_decl_body { $$.decl.Tree = mTypeDecl ($3.Scan.Position, NoTree, $2.Scan.ident.ident, $4.type_decl_body.Tree);
+ ;
+} .
+decl : 'constant' ident '=' expr { $$.decl.Tree = mConstantDecl ($3.Scan.Position, NoTree,
+	$2.Scan.ident.ident, mCoercedExpr ($4.expr.Tree), mNullType (NoPosition));
+ ;
+} .
+decl : 'constant' ident '=' expr ':' type { $$.decl.Tree = mConstantDecl ($3.Scan.Position, NoTree,
+	$2.Scan.ident.ident, mCoercedExpr ($4.expr.Tree), $6.type.Tree);
+ ;
+} .
+decl : 'variable' idents ':' type { $$.decl.Tree = mVariableDecl ($1.Scan.Position, NoTree,
+	ReverseTree ($2.idents.Tree), $4.type.Tree);
+ ;
+} .
+decl : 'variable' idents '=' expr ':' type { $$.decl.Tree = mInitVariableDecl ($1.Scan.Position, NoTree,
+	ReverseTree ($2.idents.Tree), mCoercedExpr ($4.expr.Tree), $6.type.Tree);
+ ;
+} .
+decl : channel_options 'channel' idents ':' type { $$.decl.Tree = mChannelDecl ($2.Scan.Position, NoTree,
+	ReverseTree ($3.idents.Tree), $5.type.Tree, $1.channel_options.multicast);
+ ;
+} .
+decl : channel_options 'array' range 'of' 'channel' idents ':' type { $$.decl.Tree = mChannelArrayDecl ($5.Scan.Position, NoTree,
+	ReverseTree ($6.idents.Tree), $8.type.Tree, $3.range.Tree, $1.channel_options.multicast);
+ ;
+} .
+decl : channel_options 'sync' idents { $$.decl.Tree = mSyncDecl ($2.Scan.Position, NoTree, ReverseTree ($3.idents.Tree),
+	$1.channel_options.multicast);
+ ;
+} .
+decl : channel_options 'array' range 'of' 'sync' idents { $$.decl.Tree = mSyncArrayDecl ($5.Scan.Position, NoTree, ReverseTree ($6.idents.Tree),
+	$3.range.Tree, $1.channel_options.multicast);
+ ;
+} .
+decl : 'procedure' ident '(' formal_ports ')' 'is' procedure_block { $$.decl.Tree = mProcedureDecl ($1.Scan.Position, NoTree, $2.Scan.ident.ident,
+	ReverseTree ($4.formal_ports.Tree), $7.procedure_block.Tree);
+ ;
+} .
+decl : 'procedure' ident 'is' procedure_block { $$.decl.Tree = mProcedureDecl ($1.Scan.Position, NoTree, $2.Scan.ident.ident,
+	mNullFormalPorts (NoPosition), $4.procedure_block.Tree);
+ ;
+} .
+decl : 'procedure' ident 'is' ident { $$.decl.Tree = mProcAliasDecl ($1.Scan.Position, NoTree,
+	$2.Scan.ident.ident, $4.Scan.ident.ident, mNullProcParams ($1.Scan.Position));
+ ;
+} .
+decl : 'procedure' ident 'is' ident '(' procedure_params ')' { $$.decl.Tree = mProcAliasDecl ($1.Scan.Position, NoTree,
+	$2.Scan.ident.ident, $4.Scan.ident.ident, ReverseTree ($6.procedure_params.Tree));
+ ;
+} .
+decl : 'function' ident '=' expr { $$.decl.Tree = mFunctionDecl ($1.Scan.Position, NoTree, $2.Scan.ident.ident,
+	mNullFormalPorts (NoPosition), mCoercedExpr ($4.expr.Tree), mNullType (NoPosition));
+ ;
+} .
+decl : 'function' ident '=' expr ':' type { $$.decl.Tree = mFunctionDecl ($1.Scan.Position, NoTree, $2.Scan.ident.ident,
+	mNullFormalPorts (NoPosition), mCoercedExpr ($4.expr.Tree), $6.type.Tree);
+ ;
+} .
+decl : 'function' ident '(' formal_ports ')' '=' expr { $$.decl.Tree = mFunctionDecl ($1.Scan.Position, NoTree, $2.Scan.ident.ident,
+	ReverseTree ($4.formal_ports.Tree), mCoercedExpr ($7.expr.Tree), mNullType (NoPosition));
+ ;
+} .
+decl : 'function' ident '(' formal_ports ')' '=' expr ':' type { $$.decl.Tree = mFunctionDecl ($1.Scan.Position, NoTree, $2.Scan.ident.ident,
+	ReverseTree ($4.formal_ports.Tree), mCoercedExpr ($7.expr.Tree), $9.type.Tree);
+ ;
+} .
+decl : 'function' ident 'is' 'builtin' ':' type { $$.decl.Tree = mBuiltinFunctionDecl ($1.Scan.Position, NoTree, $2.Scan.ident.ident,
+	mNullFormalPorts (NoPosition), $6.type.Tree);
+ ;
+} .
+decl : 'function' ident '(' formal_ports ')' 'is' 'builtin' ':' type { $$.decl.Tree = mBuiltinFunctionDecl ($1.Scan.Position, NoTree, $2.Scan.ident.ident,
+	ReverseTree ($4.formal_ports.Tree), $9.type.Tree);
+ ;
+} .
+decl : 'shared' ident 'is' procedure_block { $$.decl.Tree = mSharedDecl ($1.Scan.Position, NoTree, $2.Scan.ident.ident, $4.procedure_block.Tree);
+} .
+decl : 'print' expr { $$.decl.Tree = mPrintDecl ($1.Scan.Position, NoTree, $2.expr.Tree, mNullExprLists (NoPosition));
+ ;
+} .
+decl : 'print' expr ',' exprs { $$.decl.Tree = mPrintDecl ($1.Scan.Position, NoTree, $2.expr.Tree, ReverseTree ($4.exprs.Tree));
+ ;
+} .
+channel_options : { $$.channel_options.multicast = false;
+ ;
+} .
+channel_options : 'multicast' { $$.channel_options.multicast = true;
+ ;
+} .
+range : expr { $$.range.Tree = mSpecifiedRange ($1.expr.Tree->Expr.position, mNullExpr (NoPosition), $1.expr.Tree);
+ ;
+} .
+range : expr '..' expr { $$.range.Tree = mSpecifiedRange ($2.Scan.Position, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+range : 'over' type { $$.range.Tree = mTypeRange ($1.Scan.Position, $2.type.Tree);
+ ;
+} .
+type : ident { $$.type.Tree = mExistingType ($1.Scan.Position, $1.Scan.ident.ident);
+ ;
+} .
+type : composed_type { $$.type.Tree  =  $1.composed_type.Tree;
+ ;
+} .
+type_decl_body : type { $$.type_decl_body.Tree  =  $1.type.Tree;
+ ;
+} .
+type_decl_body : 'builtin' { $$.type_decl_body.Tree = mBuiltinType ($1.Scan.Position);
+ ;
+} .
+type_decl_body : 'new' type { $$.type_decl_body.Tree = mNewType ($1.Scan.Position, $2.type.Tree);
+ ;
+} .
+type_decl_body : 'record' record_elems 'end' { $$.type_decl_body.Tree = mRecordType ($1.Scan.Position, ReverseTree ($2.record_elems.Tree), mNullType (NoPosition));
+ ;
+} .
+type_decl_body : 'record' record_elems 'over' type { $$.type_decl_body.Tree = mRecordType ($1.Scan.Position, ReverseTree ($2.record_elems.Tree), $4.type.Tree);
+ ;
+} .
+type_decl_body : 'enumeration' enum_elems 'end' { $$.type_decl_body.Tree = mEnumType ($1.Scan.Position, ReverseTree ($2.enum_elems.Tree), mNullType (NoPosition));
+ ;
+} .
+type_decl_body : 'enumeration' enum_elems 'over' type { $$.type_decl_body.Tree = mEnumType ($1.Scan.Position, ReverseTree ($2.enum_elems.Tree), $4.type.Tree);
+ ;
+} .
+numeric_type : expr 'bits' { $$.numeric_type.Tree = mNumericType ($2.Scan.Position, false, $1.expr.Tree);
+ ;
+} .
+numeric_type : expr 'signed' 'bits' { $$.numeric_type.Tree = mNumericType ($3.Scan.Position, true, $1.expr.Tree);
+ ;
+} .
+val_decls : { $$.val_decls.Tree = mNullValDecls (NoPosition);
+ ;
+} .
+val_decls : val_decls val_decl { $2.val_decl.Tree->ValDecl.next = $1.val_decls.Tree; $$.val_decls.Tree = $2.val_decl.Tree; ;
+ ;
+} .
+val_decl : 'val' ident '=' expr { $$.val_decl.Tree = mValDecl ($1.Scan.Position, NoTree, $2.Scan.ident.ident, $4.expr.Tree);
+ ;
+} .
+expr : literal { $$.expr.Tree = mLiteralExpr ($1.Scan.Position, $1.Scan.literal.value);
+ ;
+} .
+expr : ident { $$.expr.Tree = mIdentExpr ($1.Scan.Position, $1.Scan.ident.ident);
+ ;
+} .
+expr : string { $$.expr.Tree = mStringExpr ($1.Scan.Position, $1.Scan.string.string);
+ ;
+} .
+expr : implicant { $$.expr.Tree = mImplicantExpr ($1.Scan.Position, $1.Scan.implicant.implicant);
+ ;
+} .
+expr : '?' { $$.expr.Tree = mDontCareExpr ($1.Scan.Position);
+ ;
+} .
+expr : ident '{' exprs '}' { $$.expr.Tree = mAggregateConsExpr ($1.Scan.Position, $1.Scan.ident.ident, ReverseTree ($3.exprs.Tree));
+ ;
+} .
+expr : '{' exprs '}' { $$.expr.Tree = mAggregateConsExpr ($1.Scan.Position, NoIdent, ReverseTree ($2.exprs.Tree));
+ ;
+} .
+expr : ident "'" ident { $$.expr.Tree = mNamedEnumElemExpr ($2.Scan.Position, $1.Scan.ident.ident, $3.Scan.ident.ident);
+ ;
+} .
+expr : '-' expr { $$.expr.Tree = mUnaryExpr ($1.Scan.Position, NegateOperator, $2.expr.Tree);
+ ;
+} PREC 'not' .
+expr : '+' expr { $$.expr.Tree  =  $2.expr.Tree;
+ ;
+} PREC 'not' .
+expr : 'not' expr { $$.expr.Tree = mUnaryExpr ($1.Scan.Position, InvertOperator, $2.expr.Tree);
+ ;
+} .
+expr : 'log' expr { $$.expr.Tree = mUnaryExpr ($1.Scan.Position, LogOperator, $2.expr.Tree);
+ ;
+} .
+expr : 'sizeof' ident { $$.expr.Tree = mSizeofExpr ($1.Scan.Position, $2.Scan.ident.ident);
+ ;
+} .
+expr : expr '+' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, AddOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '-' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, SubtractOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '*' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, MultiplyOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '/' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, DivideOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '%' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, ModuloOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '^' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, PowerOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '=' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, EqualOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '/=' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, NotEqualOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '<' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, LTOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '>' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, GTOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '<=' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, LEOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '>=' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, GEOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr 'and' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, AndOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr 'or' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, OrOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr 'xor' expr { $$.expr.Tree = mBinaryExpr ($2.Scan.Position, XorOperator, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+expr : expr '.' ident { $$.expr.Tree = mRecordElemExtractExpr ($2.Scan.Position, $1.expr.Tree, $3.Scan.ident.ident);
+ ;
+} .
+expr : expr '[' expr ']' { $$.expr.Tree = mArrayExtractExpr ($2.Scan.Position, $1.expr.Tree, mCoercedExpr($3.expr.Tree));
+ ;
+} .
+expr : expr '[' expr '..' expr ']' { $$.expr.Tree = mArraySliceExpr ($2.Scan.Position, $1.expr.Tree,
+	mSpecifiedRange ($4.Scan.Position, $3.expr.Tree, $5.expr.Tree));
+ ;
+} .
+expr : expr '[' 'over' type ']' { $$.expr.Tree = mArraySliceExpr ($2.Scan.Position, $1.expr.Tree,
+	mTypeRange ($3.Scan.Position, $4.type.Tree));
+ ;
+} .
+expr : '(' expr 'as' type ')' { $$.expr.Tree = mAsExpr ($3.Scan.Position, $2.expr.Tree, $4.type.Tree);
+ ;
+} .
+expr : '#' expr { $$.expr.Tree = mBitArrayCastExpr ($1.Scan.Position, $2.expr.Tree);
+ ;
+} .
+expr : '(' expr ')' { $$.expr.Tree  =  $2.expr.Tree;
+ ;
+} .
+expr : 'let' val_decls 'in' expr { $$.expr.Tree = mLetExpr ($1.Scan.Position, ReverseTree ($2.val_decls.Tree), $4.expr.Tree);
+ ;
+} .
+expr : ident '(' ')' { $$.expr.Tree = mFunctionCallExpr ($2.Scan.Position, $1.Scan.ident.ident, mNullFuncParams ($2.Scan.Position));
+ ;
+} .
+expr : ident '(' function_params ')' { $$.expr.Tree = mFunctionCallExpr ($2.Scan.Position, $1.Scan.ident.ident, ReverseTree ($3.function_params.Tree));
+ ;
+} .
+expr : expr '@' expr { $$.expr.Tree = mArrayAppendExpr ($2.Scan.Position, $1.expr.Tree, $3.expr.Tree);
+ ;
+} .
+port_sense : { $$.port_sense.portSense = DefaultPortSense;
+  ;
+} .
+port_sense : 'active' { $$.port_sense.portSense = ActivePortSense;
+ ;
+} .
+port_sense : 'passive' { $$.port_sense.portSense = PassivePortSense;
+ ;
+} .
+port_direction : 'input' { $$.port_direction.isOutput = false;
+ ;
+} .
+port_direction : 'output' { $$.port_direction.isOutput = true;
+ ;
+} .
+port : idents ':' type { $$.port.Tree = mValuePort ($2.Scan.Position, NoTree, ReverseTree ($1.idents.Tree), $3.type.Tree);
+ ;
+} .
+port : port_sense port_direction idents ':' type { $$.port.Tree = mChannelPort ($4.Scan.Position, NoTree, ReverseTree ($3.idents.Tree), $5.type.Tree,
+	$1.port_sense.portSense, $2.port_direction.isOutput, NULL);
+ ;
+} .
+port : 'array' range 'of' port_sense port_direction idents ':' type { $$.port.Tree = mChannelPortArray ($1.Scan.Position, NoTree, ReverseTree ($6.idents.Tree), $8.type.Tree,
+	$4.port_sense.portSense, $5.port_direction.isOutput, $2.range.Tree, NULL);
+ ;
+} .
+port : port_sense 'sync' idents { $$.port.Tree = mSyncPort ($2.Scan.Position, NoTree, ReverseTree ($3.idents.Tree), $1.port_sense.portSense, NULL);
+ ;
+} .
+port : 'array' range 'of' port_sense 'sync' idents { $$.port.Tree = mSyncPortArray ($1.Scan.Position, NoTree, ReverseTree ($6.idents.Tree),
+	$4.port_sense.portSense, $2.range.Tree, NULL);
+ ;
+} .
+port : 'parameter' idents ':' type { $$.port.Tree = mParamPort ($3.Scan.Position, NoTree, ReverseTree ($2.idents.Tree), $4.type.Tree);
+ ;
+} .
+port : 'parameter' idents ':' 'type' { $$.port.Tree = mTypeParamPort ($3.Scan.Position, NoTree, ReverseTree ($2.idents.Tree));
+ ;
+} .
+port : 'if' port_guards 'end' { $$.port.Tree = mIfPorts ($1.Scan.Position, NoTree, ReverseTree ($2.port_guards.Tree));
+ ;
+} .
+port : 'if' port_guards 'else' formal_ports 'end' { $$.port.Tree = mIfElsePorts ($1.Scan.Position, NoTree, ReverseTree ($2.port_guards.Tree),
+	ReverseTree ($4.formal_ports.Tree));
+ ;
+} .
+block : 'local' decls 'begin' command 'end' { $$.block.Tree = mBlock ($1.Scan.Position, ReverseTree ($2.decls.Tree), $4.command.Tree);
+ ;
+} .
+block : 'begin' command 'end' { $$.block.Tree = mBlock ($1.Scan.Position, mNullDecls (NoPosition), $2.command.Tree);
+ ;
+} .
+block : '[' command ']' { $$.block.Tree = mBlock ($1.Scan.Position, mNullDecls (NoPosition), $2.command.Tree);
+ ;
+} .
+procedure_block : decls 'begin' command 'end' { $$.procedure_block.Tree = mBlock ($2.Scan.Position, ReverseTree ($1.decls.Tree), $3.command.Tree);
+ ;
+} .
+procedure_block : 'local' decls 'begin' command 'end' { $$.procedure_block.Tree = mBlock ($3.Scan.Position, ReverseTree ($2.decls.Tree), $4.command.Tree);
+ ;
+} .
+command : 'continue' { $$.command.Tree = mContinueCommand ($1.Scan.Position);
+ ;
+} .
+command : 'halt' { $$.command.Tree = mHaltCommand ($1.Scan.Position);
+ ;
+} .
+command : lvalues '->' lvalue {
+	if ($1.lvalues.Tree->LvalueList.next->Kind != kNullLvalueLists)
+	{
+		LOG_ERROR (TooManyChannelsInInputCommand, NoIdent, $2.Scan.Position);
+		$1.lvalues.Tree->LvalueList.next = mNullLvalueLists ($2.Scan.Position);
+	}
+	$$.command.Tree = mInputCommand ($2.Scan.Position, $1.lvalues.Tree->LinkedChannel.Lvalue, $3.lvalue.Tree);
+;
+} .
+command : lvalues '->' 'then' command 'end' { $$.command.Tree = mInputEncloseCommand ($2.Scan.Position, $1.lvalues.Tree, $4.command.Tree);
+ ;
+} .
+command : lvalues '->!' 'then' command 'end' { if (NoEagerInputs)
+	$$.command.Tree = mInputEncloseCommand ($2.Scan.Position, $1.lvalues.Tree, $4.command.Tree);
+	else $$.command.Tree = mInputEncloseBangCommand ($2.Scan.Position, $1.lvalues.Tree, $4.command.Tree); ;
+ ;
+} .
+command : lvalue '<-' expr { $$.command.Tree = mOutputCommand ($2.Scan.Position, $1.lvalue.Tree, mCoercedExpr ($3.expr.Tree));
+ ;
+} .
+command : 'sync' lvalue { $$.command.Tree = mSyncCommand ($1.Scan.Position, $2.lvalue.Tree);
+ ;
+} .
+command : lvalue ':=' expr { $$.command.Tree = mAssignmentCommand ($2.Scan.Position, $1.lvalue.Tree, mCoercedExpr ($3.expr.Tree));
+ ;
+} .
+command : block { $$.command.Tree = mBlockCommand (NoPosition, $1.block.Tree);
+ ;
+} .
+command : command ';' command { $$.command.Tree = mSequentialCommand ($2.Scan.Position, $1.command.Tree, $3.command.Tree);
+ ;
+} .
+command : command '||' command { $$.command.Tree = mParallelCommand ($2.Scan.Position, false, $1.command.Tree, $3.command.Tree);
+ ;
+} .
+command : command '||!' command { $$.command.Tree = mParallelCommand ($2.Scan.Position, true, $1.command.Tree, $3.command.Tree);
+ ;
+} .
+command : 'loop' command 'end' { $$.command.Tree = mLoopCommand ($1.Scan.Position, $2.command.Tree);
+ ;
+} .
+command : 'loop' 'while' guards 'end' { $$.command.Tree = mWhileGuardsCommand ($1.Scan.Position, ReverseTree ($3.guards.Tree));
+ ;
+} .
+command : 'loop' 'while' guards 'also' command 'end' { $$.command.Tree = mWhileGuardsAlsoCommand ($1.Scan.Position, ReverseTree ($3.guards.Tree), $5.command.Tree);
+ ;
+} .
+command : 'loop' command 'while' expr 'end' { $$.command.Tree = mCommandWhileExprCommand ($1.Scan.Position, $2.command.Tree, $4.expr.Tree);
+ ;
+} .
+command : 'loop' command 'while' guards 'end' { $$.command.Tree = mCommandWhileGuardsCommand ($1.Scan.Position, $2.command.Tree, ReverseTree ($4.guards.Tree));
+ ;
+} .
+command : 'loop' command 'while' guards 'also' command 'end' { $$.command.Tree = mCommandWhileGuardsAlsoCommand ($1.Scan.Position, $2.command.Tree, ReverseTree ($4.guards.Tree),
+	$6.command.Tree);
+ ;
+} .
+command : 'if' guards 'end' { $$.command.Tree = mIfCommand ($1.Scan.Position, ReverseTree ($2.guards.Tree));
+ ;
+} .
+command : 'if' guards 'else' command 'end' { $$.command.Tree = mIfElseCommand ($1.Scan.Position, ReverseTree ($2.guards.Tree), $4.command.Tree);
+ ;
+} .
+command : 'case' expr 'of' case_guards 'end' { $$.command.Tree = mCaseCommand ($1.Scan.Position, $2.expr.Tree,
+	ReverseTree ($4.case_guards.Tree), mNullCommand (NoPosition));
+ ;
+} .
+command : 'case' expr 'of' case_guards 'else' command 'end' { $$.command.Tree = mCaseCommand ($1.Scan.Position, $2.expr.Tree,
+	ReverseTree($4.case_guards.Tree), $6.command.Tree);
+ ;
+} .
+command : 'for' par_seq ident 'in' range 'then' command 'end' { $$.command.Tree = mForCommand ($1.Scan.Position, $2.par_seq.isParallel, $2.par_seq.isPermissive, $3.Scan.ident.ident,
+	$5.range.Tree, $7.command.Tree);
+ ;
+} .
+command : ident '(' procedure_params ')' { $$.command.Tree = mProcedureCallCommonCommand ($2.Scan.Position, $1.Scan.ident.ident,
+	ReverseTree ($3.procedure_params.Tree));
+ ;
+} .
+command : ident '(' ')' { $$.command.Tree = mProcedureCallCommonCommand ($2.Scan.Position, $1.Scan.ident.ident,
+	mNullProcParams ($2.Scan.Position));
+ ;
+} .
+command : ident ':' command { $$.command.Tree  =  $3.command.Tree;
+ ;
+} .
+command : 'select' channel_guards 'end' { $$.command.Tree = mSelectCommand ($1.Scan.Position, $2.channel_guards.Tree);
+ ;
+} .
+command : 'select!' channel_guards 'end' { if (NoEagerInputs)
+	$$.command.Tree = mSelectCommand ($1.Scan.Position, $2.channel_guards.Tree);
+	else $$.command.Tree = mSelectBangCommand ($1.Scan.Position, $2.channel_guards.Tree); ;
+ ;
+} .
+command : 'arbitrate' channel_guards 'end' { $$.command.Tree = mArbitrateCommand ($1.Scan.Position, $2.channel_guards.Tree);
+ ;
+} .
+command : 'print' expr { $$.command.Tree = mPrintCommand ($1.Scan.Position, $2.expr.Tree, mNullExprLists (NoPosition));
+ ;
+} .
+command : 'print' expr ',' exprs { $$.command.Tree = mPrintCommand ($1.Scan.Position, $2.expr.Tree, ReverseTree ($4.exprs.Tree));
+ ;
+} .
+command : 'sink' expr { $$.command.Tree = mSinkCommand ($1.Scan.Position, $2.expr.Tree);
+ ;
+} .
+procedure_params : procedure_param { $1.procedure_param.Tree->ProcParam.next =
+	mNullProcParams ($1.procedure_param.Tree->ProcedureParams.position);
+	$$.procedure_params.Tree = $1.procedure_param.Tree;;
+} .
+procedure_params : procedure_params ',' procedure_param { $3.procedure_param.Tree->ProcParam.next = $1.procedure_params.Tree;
+	$$.procedure_params.Tree = $3.procedure_param.Tree; ;
+ ;
+} .
+function_params : function_param { $1.function_param.Tree->FuncParam.next =
+	mNullFuncParams ($1.function_param.Tree->FunctionParams.position);
+	$$.function_params.Tree = $1.function_param.Tree;;
+} .
+function_params : function_params ',' function_param { $3.function_param.Tree->FuncParam.next = $1.function_params.Tree;
+	$$.function_params.Tree = $3.function_param.Tree; ;
+ ;
+} .
+composed_type : numeric_type { $$.composed_type.Tree  =  $1.numeric_type.Tree;
+ ;
+} .
+composed_type : 'array' range 'of' type { $$.composed_type.Tree = mArrayType ($1.Scan.Position, $4.type.Tree, $2.range.Tree);
+ ;
+} .
+procedure_param : expr { $$.procedure_param.Tree = mExprProcParam ($1.expr.Tree->Expr.position, NoTree, mCoercedExpr ($1.expr.Tree));
+ ;
+} .
+procedure_param : composed_type { $$.procedure_param.Tree = mTypeProcParam ($1.composed_type.Tree->AType.position, NoTree, $1.composed_type.Tree);
+ ;
+} .
+procedure_param : 'type' type { $$.procedure_param.Tree = mTypeProcParam ($1.Scan.Position, NoTree, $2.type.Tree);
+ ;
+} .
+procedure_param : '<-' expr { $$.procedure_param.Tree = mVarReadProcParam ($1.Scan.Position, NoTree, mCoercedExpr ($2.expr.Tree));
+ ;
+} .
+procedure_param : '->' lvalue { $$.procedure_param.Tree = mVarWriteProcParam ($1.Scan.Position, NoTree, $2.lvalue.Tree);
+ ;
+} .
+procedure_param : block { $$.procedure_param.Tree = mBlockProcParam ($1.block.Tree->Block.position, NoTree, $1.block.Tree);
+ ;
+} .
+function_param : expr { $$.function_param.Tree = mExprFuncParam ($1.expr.Tree->Expr.position, NoTree, mCoercedExpr ($1.expr.Tree));
+ ;
+} .
+function_param : composed_type { $$.function_param.Tree = mTypeFuncParam ($1.composed_type.Tree->AType.position, NoTree, $1.composed_type.Tree);
+ ;
+} .
+function_param : 'type' type { $$.function_param.Tree = mTypeFuncParam ($1.Scan.Position, NoTree, $2.type.Tree);
+ ;
+} .
+par_seq : ';' { $$.par_seq.isParallel = false;
+ $$.par_seq.isPermissive = false;
+ ;
+} .
+par_seq : '||' { $$.par_seq.isParallel = true;
+ $$.par_seq.isPermissive = false;
+ ;
+} .
+par_seq : '||!' { $$.par_seq.isParallel = true;
+ $$.par_seq.isPermissive = true;
+ ;
+} .
+guard : expr 'then' command { $$.guard.Tree = mGuard ($2.Scan.Position, NoTree, $1.expr.Tree, $3.command.Tree);
+ ;
+} .
+port_guard : expr 'then' formal_ports { $$.port_guard.Tree = mPortGuard ($2.Scan.Position, NoTree, $1.expr.Tree, ReverseTree ($3.formal_ports.Tree));
+ ;
+} .
+decl_guard : expr 'then' decls { $$.decl_guard.Tree = mDeclGuard ($2.Scan.Position, NoTree, $1.expr.Tree, ReverseTree ($3.decls.Tree));
+ ;
+} .
+channel_guard : channels 'then' command { $$.channel_guard.Tree = mChannelGuard ($2.Scan.Position, NoTree, ReverseTree ($1.channels.Tree), $3.command.Tree);
+ ;
+} .
+case_guard : case_matches 'then' command { $$.case_guard.Tree = mCaseMatchGuard ($2.Scan.Position, NoTree, $1.case_matches.Tree, $3.command.Tree);
+ ;
+} .
+case_guard : 'for' ident 'in' case_matches 'then' command { $$.case_guard.Tree = mForCaseGuard ($5.Scan.Position, NoTree, $2.Scan.ident.ident, $4.case_matches.Tree, $6.command.Tree);
+ ;
+} .
+lvalue : ident { $$.lvalue.Tree = mIdentLvalue ($1.Scan.Position, $1.Scan.ident.ident);
+ ;
+} .
+lvalue : lvalue '.' ident { $$.lvalue.Tree = mRecordElemLvalue ($2.Scan.Position, $1.lvalue.Tree, $3.Scan.ident.ident);
+ ;
+} .
+lvalue : lvalue '[' expr ']' { $$.lvalue.Tree = mArrayElemLvalue ($2.Scan.Position, $1.lvalue.Tree, mCoercedExpr ($3.expr.Tree));
+ ;
+} .
+lvalue : lvalue '[' expr '..' expr ']' { $$.lvalue.Tree = mArraySliceLvalue ($2.Scan.Position, $1.lvalue.Tree,
+	mSpecifiedRange ($4.Scan.Position, $3.expr.Tree, $5.expr.Tree));
+ ;
+} .
+lvalue : lvalue '[' 'over' type ']' { $$.lvalue.Tree = mArraySliceLvalue ($2.Scan.Position, $1.lvalue.Tree,
+	mTypeRange ($3.Scan.Position, $4.type.Tree));
+ ;
+} .
+lvalue : lvalue '@' lvalue { $$.lvalue.Tree = mArrayAppendLvalue ($2.Scan.Position, $1.lvalue.Tree, $3.lvalue.Tree);
+ ;
+} .
+lvalue : '{' channels '}' { $$.lvalue.Tree = mArrayConsLvalue ($1.Scan.Position, ReverseTree ($2.channels.Tree));
+ ;
+} .
+lvalue : '(' lvalue 'as' type ')' { $$.lvalue.Tree = mAsLvalue ($1.Scan.Position, $2.lvalue.Tree, $4.type.Tree);
+ ;
+} .
+lvalue : '#' lvalue { $$.lvalue.Tree = mBitArrayCastLvalue ($1.Scan.Position, $2.lvalue.Tree);
+ ;
+} .
+decls : { $$.decls.Tree = mNullDecls (NoPosition);
+ ;
+} .
+decls : decls qualified_decl { $2.qualified_decl.Tree->Decl.next = $1.decls.Tree; $$.decls.Tree = $2.qualified_decl.Tree; ;
+ ;
+} .
+path : linked_ident { $1.linked_ident.Tree->Ident.next = mNullIdents (NoPosition); $$.path.Tree = $1.linked_ident.Tree;;
+} .
+path : path dot_in_import linked_ident { $3.linked_ident.Tree->Ident.next = $1.path.Tree; $$.path.Tree = $3.linked_ident.Tree; ;
+ ;
+} .
+idents : linked_ident { $1.linked_ident.Tree->Ident.next = mNullIdents (NoPosition); $$.idents.Tree = $1.linked_ident.Tree;;
+} .
+idents : idents ',' linked_ident { $3.linked_ident.Tree->Ident.next = $1.idents.Tree; $$.idents.Tree = $3.linked_ident.Tree; ;
+ ;
+} .
+exprs : linked_expr { $1.linked_expr.Tree->ExprList.next =
+	mNullExprLists ($1.linked_expr.Tree->ExprList.position); $$.exprs.Tree = $1.linked_expr.Tree; ;
+ ;
+} .
+exprs : exprs ',' linked_expr { $3.linked_expr.Tree->ExprList.next = $1.exprs.Tree; $$.exprs.Tree = $3.linked_expr.Tree; ;
+ ;
+} .
+channels : linked_channel { $1.linked_channel.Tree->LvalueList.next =
+	mNullLvalueLists ($1.linked_channel.Tree->NullLvalueLists.position); $$.channels.Tree = $1.linked_channel.Tree; ;
+ ;
+} .
+channels : channels ',' linked_channel { $3.linked_channel.Tree->LvalueList.next = $1.channels.Tree;
+	$$.channels.Tree = $3.linked_channel.Tree; ;
+ ;
+} .
+lvalues : linked_lvalue { $1.linked_lvalue.Tree->LvalueList.next =
+	mNullLvalueLists ($1.linked_lvalue.Tree->NullLvalueLists.position); $$.lvalues.Tree = $1.linked_lvalue.Tree; ;
+ ;
+} .
+lvalues : lvalues ',' linked_lvalue { $3.linked_lvalue.Tree->LvalueList.next = $1.lvalues.Tree;
+	$$.lvalues.Tree = $3.linked_lvalue.Tree; ;
+ ;
+} .
+case_range_elem : expr '..' expr { $$.case_range_elem.Tree = mCaseRange ($2.Scan.Position, NoTree,
+	mSpecifiedRange ($2.Scan.Position, $1.expr.Tree, $3.expr.Tree));
+
+;
+} .
+case_range_elem : expr { $$.case_range_elem.Tree = mCaseImplicant ($1.expr.Tree->Expr.position, NoTree, $1.expr.Tree);
+ ;
+} .
+case_matches : case_range_elem { $1.case_range_elem.Tree->CaseMatch.next =
+	mNullCaseMatchs (NoPosition); $$.case_matches.Tree = $1.case_range_elem.Tree; ;
+ ;
+} .
+case_matches : case_matches ',' case_range_elem { $3.case_range_elem.Tree->CaseMatch.next = $1.case_matches.Tree;
+	$$.case_matches.Tree = $3.case_range_elem.Tree; ;
+ ;
+} .
+formal_ports : port { $1.port.Tree->FormalPort.next = mNullFormalPorts (NoPosition); $$.formal_ports.Tree = $1.port.Tree; ;
+ ;
+} .
+formal_ports : formal_ports ';' port { $3.port.Tree->FormalPort.next = $1.formal_ports.Tree; $$.formal_ports.Tree = $3.port.Tree; ;
+ ;
+} .
+guards : guard { $1.guard.Tree->Guard.next = mNullGuards (NoPosition); $$.guards.Tree = $1.guard.Tree; ;
+ ;
+} .
+guards : guards '|' guard { $3.guard.Tree->Guard.next = $1.guards.Tree; $$.guards.Tree = $3.guard.Tree; ;
+ ;
+} .
+port_guards : port_guard { $1.port_guard.Tree->PortGuard.next = mNullPortGuards (NoPosition); $$.port_guards.Tree = $1.port_guard.Tree; ;
+ ;
+} .
+port_guards : port_guards '|' port_guard { $3.port_guard.Tree->PortGuard.next = $1.port_guards.Tree; $$.port_guards.Tree = $3.port_guard.Tree; ;
+ ;
+} .
+decl_guards : decl_guard { $1.decl_guard.Tree->DeclGuard.next = mNullDeclGuards (NoPosition); $$.decl_guards.Tree = $1.decl_guard.Tree; ;
+ ;
+} .
+decl_guards : decl_guards '|' decl_guard { $3.decl_guard.Tree->DeclGuard.next = $1.decl_guards.Tree; $$.decl_guards.Tree = $3.decl_guard.Tree; ;
+ ;
+} .
+case_guards : case_guard { $1.case_guard.Tree->CaseGuard.next = mNullCaseGuards (NoPosition); $$.case_guards.Tree = $1.case_guard.Tree; ;
+ ;
+} .
+case_guards : case_guards '|' case_guard { $3.case_guard.Tree->CaseGuard.next = $1.case_guards.Tree; $$.case_guards.Tree = $3.case_guard.Tree; ;
+ ;
+} .
+channel_guards : channel_guard { $1.channel_guard.Tree->ChannelGuard.next = mNullChannelGuards (NoPosition);
+	$$.channel_guards.Tree = $1.channel_guard.Tree; ;
+ ;
+} .
+channel_guards : channel_guards '|' channel_guard { $3.channel_guard.Tree->ChannelGuard.next = $1.channel_guards.Tree;
+	$$.channel_guards.Tree = $3.channel_guard.Tree; ;
+ ;
+} .
+record_elems : linked_typed_idents { $1.linked_typed_idents.Tree->RecordElem.next = mNullRecordElems (NoPosition);
+	$$.record_elems.Tree = $1.linked_typed_idents.Tree; ;
+ ;
+} .
+record_elems : record_elems ';' linked_typed_idents { $3.linked_typed_idents.Tree->RecordElem.next = $1.record_elems.Tree;
+	$$.record_elems.Tree = $3.linked_typed_idents.Tree; ;
+ ;
+} .
+enum_elems : enum_elem { $1.enum_elem.Tree->EnumElem.next = mNullEnumElems (NoPosition); $$.enum_elems.Tree = $1.enum_elem.Tree; ;
+ ;
+} .
+enum_elems : enum_elems ',' enum_elem { $3.enum_elem.Tree->EnumElem.next = $1.enum_elems.Tree; $$.enum_elems.Tree = $3.enum_elem.Tree; ;
+ ;
+} .
+enum_elem : ident { $$.enum_elem.Tree = mDefaultValuedEnumElem ($1.Scan.Position, NoTree, $1.Scan.ident.ident);
+ ;
+} .
+enum_elem : ident '=' expr { $$.enum_elem.Tree = mValuedEnumElem ($1.Scan.Position, NoTree, $1.Scan.ident.ident,
+	mCoercedExpr ($3.expr.Tree));
+ ;
+} .
+linked_typed_idents : idents ':' type { $$.linked_typed_idents.Tree = mRecordElem ($2.Scan.Position, NoTree, ReverseTree ($1.idents.Tree), $3.type.Tree);
+ ;
+} .
+linked_ident : ident { $$.linked_ident.Tree = mIdent ($1.Scan.Position, NoTree, $1.Scan.ident.ident);
+ ;
+} .
+linked_expr : expr { $$.linked_expr.Tree = mExprList ($1.expr.Tree->Expr.position, NoTree, mCoercedExpr ($1.expr.Tree));
+ ;
+} .
+linked_channel : block { $$.linked_channel.Tree = mLinkedBlock ($1.block.Tree->Block.position, NoTree, $1.block.Tree);
+ ;
+} .
+linked_channel : lvalue { $$.linked_channel.Tree = mLinkedChannel ($1.lvalue.Tree->Lvalue.position, NoTree, NoIdent, $1.lvalue.Tree);
+ ;
+} .
+linked_channel : lvalue 'is' ident { $$.linked_channel.Tree = mLinkedChannel ($1.lvalue.Tree->Lvalue.position, NoTree, $3.Scan.ident.ident, $1.lvalue.Tree);
+ ;
+} .
+linked_channel : lvalue '->' ident { $$.linked_channel.Tree = mLinkedChannel ($1.lvalue.Tree->Lvalue.position, NoTree, $3.Scan.ident.ident, $1.lvalue.Tree);
+ ;
+} .
+linked_lvalue : lvalue { $$.linked_lvalue.Tree = mLinkedChannel ($1.lvalue.Tree->Lvalue.position, NoTree, NoIdent, $1.lvalue.Tree);
+ ;
+} .

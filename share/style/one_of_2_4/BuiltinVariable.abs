@@ -1,0 +1,56 @@
+(defines
+	(oof-variable
+		(case variable-type
+			(("ncl") "one-of-four-ncl-latch")
+			(("asym") "one-of-four-asym-latch")
+			(("spacer") "one-of-four-spacer-asym-latch")
+			(else "one-of-four-latch")
+		)
+	)
+	(data-extract (lambda ()
+		(foldl.. (lambda (gates index)
+			(let 
+				((binary-index (* 2 index)))
+				(append gates
+					(list
+						'(or (slice ,binary-index 1 (node "data")) (slice ,index 1 (node "store1")) (slice ,index 1 (node "store3")))
+						'(or (slice ,(+ binary-index 1) 1 (node "data")) (slice ,index 1 (node "store2")) (slice ,index 1 (node "store3")))
+					)
+				)
+			)
+		) '(gates) 0 32)
+	))
+)
+(nodes
+	("store0" 32 0 1)
+	("store1" 32 0 1)
+	("store2" 32 0 1)
+	("store3" 32 0 1)
+	("ackcomp" 32 0 1)
+	("data" 64 0 1)
+)
+(gates
+	(unarrayed-cell "builtin-unref" (ack "write") (node "data"))
+	(cell oof-variable
+		(slice 0 32 (req0 "write"))
+		(slice 0 32 (req1 "write"))
+		(slice 0 32 (req2 "write"))
+		(slice 0 32 (req3 "write"))
+		(slice 0 32 (node "ackcomp"))
+		(slice 0 32 (node "store0"))
+		(slice 0 32 (node "store1"))
+		(slice 0 32 (node "store2"))
+		(slice 0 32 (node "store3"))
+	)
+	(c-element (ack "write") (smash (node "ackcomp")))
+	
+	(and (combine (ack0 (each "read"))) (combine (dup-each 32 (req (each "read"))))
+		(combine (dup (param "readPortCount") (node "store0"))))
+	(and (combine (ack1 (each "read"))) (combine (dup-each 32 (req (each "read"))))
+		(combine (dup (param "readPortCount") (node "store1"))))
+	(and (combine (ack2 (each "read"))) (combine (dup-each 32 (req (each "read"))))
+				(combine (dup (param "readPortCount") (node "store2"))))
+	(and (combine (ack3 (each "read"))) (combine (dup-each 32 (req (each "read"))))
+		(combine (dup (param "readPortCount") (node "store3"))))
+)
+(connections)

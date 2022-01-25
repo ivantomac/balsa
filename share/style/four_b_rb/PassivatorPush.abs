@@ -1,0 +1,33 @@
+(defines
+	(PPstyle (style-option "PP" "broad"))
+)
+(nodes
+	("stl" (case PPstyle (("broad") 1) (else 0)) 0 1)
+	("lti" (case PPstyle (("broad") 1) (else 0)) 0 1)
+	("brin" (case PPstyle (("broad") 1) (else 0)) 0 1)
+	("lrin" (case PPstyle (("broad") 1) (else 0)) 0 1)
+	("ldata" (case PPstyle (("broad") (param "width")) (else 0)) 0 1)
+)
+(gates
+	(case PPstyle
+		(("conv")
+			(c-element (ack "inp") (req "inp") (req (each "out")))
+			(connect (data "inp") (data (each "out")))
+			(connect (ack "inp") (ack (each "out")))
+		)
+		(else
+			(c-element (node "lti") (req (each "out")))
+			(latch
+				(combine (dup (param "width") (node "lti")))
+				(data "inp")
+				(node "ldata")
+			)
+			(c-element (node "brin") (req "inp") (node "lti"))
+			(c-element (node "lrin") (node "brin") (node "lti"))
+			(or (ack "inp") (node "lrin") (node "brin"))
+			(and (node "stl") (node "lrin") (node "brin"))
+			(connect (node "ldata") (data (each "out")))
+			(connect (node "stl") (ack (each "out")))
+		)
+	)
+)

@@ -1,0 +1,70 @@
+(defines
+	(plural (> (param "width") 1)) ;; more than one
+	(width-even (quotient (param "width") 2))
+	(width-odd (quotient (+ (param "width") 1) 2))
+	(odd (not (= width-even width-odd)))
+)
+(nodes
+	("outReq" 1 0 1)
+	("poutReq" 1 0 1)
+	("outComplete" width-odd 0 1)
+)
+(gates
+	(connect (node "outReq") (node "poutReq"))
+	(c-element (node "outReq") (req (each "out")))
+	(c-element
+		(ack0 (bundle "out" 0))
+		(req0 "inp")
+		(combine (dup width-odd (node "poutReq")))
+	)
+	(c-element
+		(ack1 (bundle "out" 0))
+		(req1 "inp")
+		(combine (dup width-odd (node "poutReq")))
+	)
+	(if plural
+		(gates
+			(c-element
+				(ack2 (bundle "out" 0))
+				(req2 "inp")
+				(combine (dup width-even (node "poutReq")))
+			)
+			(c-element
+				(ack3 (bundle "out" 0))
+				(req3 "inp")
+				(combine (dup width-even (node "poutReq")))
+			)
+			(or (slice 0 width-even (node "outComplete"))
+				(slice 0 width-even (ack0 (bundle "out" 0)))
+				(slice 0 width-even (ack1 (bundle "out" 0)))
+				(slice 0 width-even (ack2 (bundle "out" 0)))
+				(slice 0 width-even (ack3 (bundle "out" 0)))
+				
+			)
+			(if odd
+				(or (slice width-even 1 (node "outComplete"))
+					(slice width-even 1 (ack0 (bundle "out" 0)))
+					(slice width-even 1 (ack1 (bundle "out" 0)))
+				)
+			)
+		)
+		(or ; FIXME, do a full completion detect?
+				(node "outComplete")
+				(ack0 (bundle "out" 0))
+				(ack1 (bundle "out" 0))
+		)
+	)
+	(c-element (ack "inp") (smash (node "outComplete")))
+	(if (>= (param "outputCount") 2)
+		(gates
+			(connect (ack0 (bundle "out" 0)) (ack0 (bundles "out" 1 (- (param "outputCount") 1))))
+			(connect (ack1 (bundle "out" 0)) (ack1 (bundles "out" 1 (- (param "outputCount") 1))))
+			(if plural
+				(gates
+					(connect (ack2 (bundle "out" 0)) (ack2 (bundles "out" 1 (- (param "outputCount") 1))))
+					(connect (ack3 (bundle "out" 0)) (ack3 (bundles "out" 1 (- (param "outputCount") 1))))
+				)
+			)
+		)
+	)
+)

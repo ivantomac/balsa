@@ -1,0 +1,20 @@
+(nodes
+	("einpr" 1 0 1)
+	("einpa" 1 0 1)
+)
+(gates
+	(cell "e-element"
+		(req "inp")
+		(ack "inp")
+		(node "einpr")
+		(node "einpa")
+	)
+	(c-element
+		(node "einpa")
+		(smash (ack (each "out")))
+	)
+)
+(connections
+	(connect (node "einpr") (req (each "out")))
+	(connect (data "inp") (data (each "out")))
+)

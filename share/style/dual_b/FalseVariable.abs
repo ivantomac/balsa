@@ -1,0 +1,42 @@
+(defines
+	(FVstyle (style-option "FV" "ovlp"))
+)
+(nodes
+	("cd" 1 0 1)
+	("partCD" (param "width") 0 1)
+	("store" (param "width") 0 2)
+	("readReq" 1 0 (param "readPortCount"))
+	("sigAck" (case FVstyle (("ovlp") 1) (else 0)) 0 1)
+	("writeAck" (case FVstyle (("ovlp") 1) (else 0)) 0 1)
+	("rReqOr" (case FVstyle (("ovlp") 1) (else 0)) 0 1)
+)
+(gates
+	; do completion detection on the input.
+	(or (node "partCD") (node (bundle "store" 0)) (node (bundle "store" 1)))
+	(case FVstyle
+		(("ovlp")
+			(if (> (param "width") 1)
+				(gates
+					(c-element (node "cd") (smash (slice 1 (- (param "width") 1) (node "partCD"))))
+					(c-element (ack "write") (node "writeAck") (node "cd"))
+				)
+				(connect (node "writeAck") (ack "write"))
+			)
+			(cell "t-element" (slice 0 1 (node "partCD")) (node "sigAck") (req "signal") (ack "signal"))
+			(nor (node "rReqOr") (node (each "readReq")))
+			(and (node "writeAck") (node "sigAck") (node "rReqOr"))
+		)
+		(else
+			(c-element (node "cd") (smash (node "partCD")))
+			; use s-element to adjust data-validity protocols
+			(s-element (node "cd") (ack "write") (req "signal") (ack "signal"))
+		)
+	)
+	
+	(connect (req0 "write") (node (bundle "store" 0)))
+	(connect (req1 "write") (node (bundle "store" 1)))
+	(connect (combine (req (each "read"))) (combine (node (each "readReq"))))
+	
+	; data read ports
+	(macro dual-rail-connect-read-ports (param "width") (param "readPortCount") (param "specification") "store" "readReq")
+)

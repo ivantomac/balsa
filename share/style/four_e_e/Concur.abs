@@ -1,0 +1,31 @@
+(defines
+	(PARstyle (style-option "PAR" "ovlp"))
+)
+(nodes
+	("acks" (param "outputCount") 0 1)
+	("actReq" 1 0 1)
+)
+(gates
+	(if (and suggest-buffers (> (param "outputCount") 4))
+		(cell "suggested-buffer" (node "actReq") (req "activate"))
+		(connect (req "activate") (node "actReq"))
+	)
+	(case PARstyle
+		(("broad")
+			(s-element (combine (dup (param "outputCount") (node "actReq")))
+				(node "acks")
+				(combine (req (each "activateOut")))
+				(combine (ack (each "activateOut")))
+			)
+		)
+		(else
+			(cell "t-element"
+				(combine (dup (param "outputCount") (node "actReq")))
+				(node "acks")
+				(combine (req (each "activateOut")))
+				(combine (ack (each "activateOut")))
+			)
+		)
+	)
+	(c-element (ack "activate") (smash (node "acks")))
+)

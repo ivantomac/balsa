@@ -1,0 +1,17 @@
+(nodes
+	("moA" 1 0 1)
+	("moB" 1 0 1)
+	("notAa" 1 0 1)
+	("notBa" 1 0 1)
+)
+(gates
+	(mutex (req "inpA") (req "inpB") (node "moA") (node "moB"))
+	(inv (node "notAa") (ack "outA"))
+	(inv (node "notBa") (ack "outB"))
+	(and (req "outA") (node "moA") (node "notBa"))
+	(and (req "outB") (node "moB") (node "notAa"))
+)
+(connections
+	(connect (ack "outA") (ack "inpA"))
+	(connect (ack "outB") (ack "inpB"))
+)

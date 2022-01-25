@@ -1,0 +1,18 @@
+(defines
+	(FVstyle (style-option "FV" "ovlp"))
+)
+(nodes
+	("sigAck" 1 0 1)
+)
+(gates
+	(case FVstyle
+		(("ovlp")
+			(cell "t-element" (req "trigger") (node "sigAck") (req "signal") (ack "signal"))
+		)
+		(else
+			(s-element (req "trigger") (node "sigAck") (req "signal") (ack "signal"))
+		)
+	)
+	(c-element (ack "trigger") (node "sigAck") (req "inp"))
+	(connect (ack "trigger") (ack "inp"))
+)

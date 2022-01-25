@@ -1,0 +1,124 @@
+(defines
+	(ms-plural (> (param "MSOutputWidth") 1))
+	(ls-plural (> (param "LSOutputWidth") 1))
+	(ms-width-even (quotient (param "MSOutputWidth") 2))
+	(ms-width-odd (quotient (+ (param "MSOutputWidth") 1) 2))
+	(ls-width-even (quotient (param "LSOutputWidth") 2))
+	(ls-width-odd (quotient (+ (param "LSOutputWidth") 1) 2))
+	(in-width-even (quotient (param "inputWidth") 2))
+	(ms-odd (= (modulo (param "MSOutputWidth") 2) 1))
+	(ls-odd (= (modulo (param "LSOutputWidth") 2) 1))
+	(ms-remainder (quotient (- (param "MSOutputWidth") 1) 2))
+	(msl-node-size 	;; to stop nodes being created when unnecessary
+		(if ls-odd  ;; i.e when LS even (simple concatenation)
+			ms-width-odd
+			0
+		)
+	)
+	(msh-node-size 	;; high bit (one less for odd MS)
+		(if ls-odd  
+			ms-remainder
+			0
+		)
+	)
+)
+(nodes
+	("r0lowerbits" msl-node-size 0 1)
+	("r0higherbits" msh-node-size 0 1) ;; Counter intuitive as odd LS-msb takes first low bit
+	("r1lowerbits" msl-node-size 0 1)
+	("r1higherbits" msh-node-size 0 1)
+)
+(gates
+	(c-element (ack "inp") (ack "LSOut") (ack "MSOut"))
+	(if (not ls-odd) ;;Simple Connect
+		(gates
+			(connect (slice 0 ls-width-even (req0 "inp")) (req0 "LSOut"))
+			(connect (slice 0 ls-width-even (req1 "inp")) (req1 "LSOut"))
+			(connect (slice 0 ls-width-even (req2 "inp")) (req2 "LSOut"))
+			(connect (slice 0 ls-width-even (req3 "inp")) (req3 "LSOut"))
+			(if ms-plural
+				(gates
+					(connect (slice ls-width-even ms-width-even (req0 "inp")) (slice 0 ms-width-even (req0 "MSOut")))
+					(connect (slice ls-width-even ms-width-even (req1 "inp")) (slice 0 ms-width-even (req1 "MSOut")))
+					(connect (slice ls-width-even ms-width-even (req2 "inp")) (slice 0 ms-width-even (req2 "MSOut")))
+					(connect (slice ls-width-even ms-width-even (req3 "inp")) (slice 0 ms-width-even (req3 "MSOut")))
+				)
+			)
+			(if ms-odd
+				(gates
+					(connect (slice in-width-even 1 (req0 "inp")) (slice ms-width-even 1 (req0 "MSOut")))
+					(connect (slice in-width-even 1 (req1 "inp")) (slice ms-width-even 1 (req1 "MSOut")))
+				)
+			)	
+		)
+		(gates
+			(if ls-plural ;; Connect even part of LS
+				(gates
+					(connect (slice 0 ls-width-even (req0 "inp")) (slice 0 ls-width-even (req0 "LSOut")))
+					(connect (slice 0 ls-width-even (req1 "inp")) (slice 0 ls-width-even (req1 "LSOut")))
+					(connect (slice 0 ls-width-even (req2 "inp")) (slice 0 ls-width-even (req2 "LSOut")))
+					(connect (slice 0 ls-width-even (req3 "inp")) (slice 0 ls-width-even (req3 "LSOut")))
+				)
+			)
+			(or (slice ls-width-even 1 (req0 "LSOut")) ;; Get LS top bit
+				(slice ls-width-even 1 (req0 "inp"))
+				(slice ls-width-even 1 (req2 "inp"))
+			)
+			(or (slice ls-width-even 1 (req1 "LSOut")) 
+				(slice ls-width-even  1 (req1 "inp"))
+				(slice ls-width-even  1 (req3 "inp"))
+			)
+			;; Calculate Lower Bits of MS
+			(or (node "r0lowerbits") (slice ls-width-even ms-width-odd (req0 "inp")) (slice ls-width-even ms-width-odd (req1 "inp")))
+			(or (node "r1lowerbits") (slice ls-width-even ms-width-odd (req2 "inp")) (slice ls-width-even ms-width-odd (req3 "inp")))
+			(if (> (param "MSOutputWidth") 2) ;; Fill in upto Last Bit
+				(gates
+					(or (node "r0higherbits") (slice ls-width-odd ms-remainder (req0 "inp")) (slice ls-width-odd ms-remainder (req2 "inp")))
+					(or (node "r1higherbits") (slice ls-width-odd ms-remainder (req1 "inp")) (slice ls-width-odd ms-remainder (req3 "inp")))
+					(c-element (slice 0 ms-remainder (req0 "MSOut"))
+						 (slice 0 ms-remainder (node "r0lowerbits"))
+						 (node "r0higherbits")
+					)
+					(c-element (slice 0 ms-remainder (req1 "MSOut"))
+						 (slice 0 ms-remainder (node "r1lowerbits"))
+						 (node "r0higherbits")
+					)
+					(c-element (slice 0 ms-remainder (req2 "MSOut"))
+						(slice 0 ms-remainder (node "r0lowerbits"))
+				 		(node "r1higherbits")
+					)
+					(c-element (slice 0 ms-remainder (req3 "MSOut"))
+						(slice 0 ms-remainder (node "r1lowerbits"))
+						 (node "r1higherbits")
+					)
+				)
+			)
+			(if ms-odd ;; Do last bit
+				(gates
+					(connect (slice ms-remainder 1 (node "r0lowerbits")) (slice ms-remainder 1 (req0 "MSOut")))
+					(connect (slice ms-remainder 1 (node "r1lowerbits")) (slice ms-remainder 1 (req1 "MSOut")))		
+				)
+				(gates
+					(c-element (slice ms-remainder 1 (req0 "MSOut")) 
+						(slice ms-remainder 1 (node "r0lowerbits"))
+						(slice in-width-even 1 (req0 "inp"))
+					)
+					(c-element (slice ms-remainder 1 (req1 "MSOut")) 
+						(slice ms-remainder 1 (node "r1lowerbits"))
+						(slice in-width-even 1 (req0 "inp"))
+					)
+					(c-element (slice ms-remainder 1 (req2 "MSOut")) 
+						(slice ms-remainder 1 (node "r0lowerbits"))
+						(slice in-width-even 1 (req1 "inp"))
+					)
+					(c-element (slice ms-remainder 1 (req3 "MSOut")) 
+						(slice ms-remainder 1 (node "r1lowerbits"))
+						(slice in-width-even 1 (req1 "inp"))
+					)
+				)
+			)	
+		)
+	)
+)
+(connections
+)

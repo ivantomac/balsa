@@ -1,0 +1,29 @@
+(defines
+	(input-width (param "inputWidth"))
+	(output-width (param "outputWidth"))
+	(out-extend-width (- output-width input-width))
+)
+(nodes
+	("extend" 1 0 1)
+)
+(gates
+	(cond
+		((>= 0 out-extend-width)
+			(connect (slice 0 output-width (data "inp")) (data "out"))
+		)
+		((= "true" (param "inputIsSigned"))
+			(connect (data "inp") (slice 0 input-width (data "out")))
+			(connect (slice (- input-width 1) 1 (data "inp")) (node "extend"))
+			(connect
+				(combine (dup out-extend-width (node "extend")))
+				(slice input-width out-extend-width (data "out"))
+			)
+		)
+		(else
+			(connect (data "inp") (slice 0 input-width (data "out")))
+			(gnd (slice input-width out-extend-width (data "out")))
+		)
+	)
+	(connect (req "out") (req "inp"))
+	(connect (ack "inp") (ack "out"))
+)

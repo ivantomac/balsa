@@ -1,0 +1,26 @@
+(nodes
+	("gr" 1 0 1)
+	("ga" 1 0 1)
+	("guardReq" 1 0 1)
+	("guardAck" 1 0 1)
+	("nReq" 1 0 1)
+	("gdata" 1 0 1)
+	("latchEnable" 1 0 1)
+	("lenDelay" 1 0 1)
+)
+(gates
+	(nor (node "guardReq") (node "nReq") (ack "activateOut"))
+	(inv (node "nReq") (req "activate"))
+	(cell "e-s-element" (node "guardReq") (req "activateOut") (node "gr") (node "guardAck"))
+	(demux2 (node "ga") (ack "activate") (node "guardAck") (node "gdata"))
+	
+	(and (node "latchEnable") (node "gr") (ack "guard"))
+	(latch (node "latchEnable") (data "guard") (node "gdata"))
+
+	;; delay to write guard data
+	(cell "min-latch-delay" (node "ga") (ack "guard") (node "latchEnable"))
+	
+	;; delay to stop writing guard data before sending guard req down
+	(and (node "lenDelay") (node "latchEnable") (node "latchEnable"))
+	(cell "c-element2_n" (req "guard") (node "gr") (node "lenDelay"))	
+)

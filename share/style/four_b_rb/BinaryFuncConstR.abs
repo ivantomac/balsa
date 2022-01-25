@@ -1,0 +1,275 @@
+(defines
+	; operation types
+	(logical-op (case (param "op") (("And" "Or" "Xor") #t) (else #f)))
+	(arith-op (case (param "op") (("Add" "Subtract" "ReverseSubtract") #t) (else #f)))
+	(equality-op (case (param "op") (("Equals" "NotEquals") #t) (else #f)))
+	(inequality-op (case (param "op") (("LessThan" "GreaterThan" "LessOrEquals"
+		"GreaterOrEquals") #t) (else #f)))
+	(reverse-subtract-op (= (param "op") "ReverseSubtract"))
+	(subtractive-op (or (= (param "op") "Subtract") reverse-subtract-op inequality-op))
+	; widths and signedness of wide and narrow inputs
+	(max-input-width (max (param "inputAWidth") (param "inputBWidth")))
+	(output-width (param "outputWidth"))
+	; max-width should be wider than either input for an equality/inequality op
+	; so that a proper comparison is possible 2 bits should do fine
+	(max-width (if (or equality-op inequality-op) (+ 2 max-input-width)
+		(if (> output-width max-input-width)
+			output-width
+			(min output-width max-input-width)
+		)
+	))
+	(a-width (min max-width (param "inputAWidth")))
+	(b-width (min max-width (+ (if subtractive-op 1 0) (param "inputBWidth"))))
+	(a-signed (or (= (param "op") "ReverseSubtract") (= "true" (param "inputAIsSigned"))))
+	(b-signed (or (= (param "op") "Subtract") (= "true" (param "inputBIsSigned"))))
+	(a-is-widest (>= a-width b-width))
+	(w-width (if a-is-widest a-width b-width))
+	(w-signed (if a-is-widest a-signed b-signed))
+	(n-width (if a-is-widest b-width a-width))
+	(n-signed (if a-is-widest b-signed a-signed))
+	; doing signed x unsigned need to extend range of the unsigned input giving
+	; an extra 2 bits to the output instead of the usual one
+	(signed-unsigned-op (and (not logical-op) (> output-width w-width) (/= w-signed n-signed)
+			(or (not w-signed) ; unsigned is largest or equal
+				(and w-signed (= w-width n-width))))) ; unsigned is equal
+	(full-add-width (+ (if signed-unsigned-op 1 0) w-width))
+	(n-extend-width (- full-add-width n-width))
+	(w-extend-width (- (param "outputWidth") full-add-width))
+	(signed-op (or n-signed w-signed))
+	; Is this a pull (#t) or push (#f) operation
+	(pull-op (= component-name "BinaryFuncConstR"))
+)
+(nodes
+	("start" 1 0 1)
+	("nStart" 1 0 1)
+	("nCv" (+ 1 full-add-width) 0 1)
+	("c" (+ 1 full-add-width) 0 1)
+	("eq" full-add-width 0 1)
+	("addOut" full-add-width 0 1)
+	("w" full-add-width 0 1)
+	("n" full-add-width 0 1)
+	("v" 1 0 1)
+	("z" 1 0 1)
+	("nz" 1 0 1)
+	("nxv" 1 0 1)
+	("done" 1 0 1)
+)
+(gates
+	; control stuff first
+	(if pull-op
+		(gates
+			(connect (req "out") (req "inpA"))
+			(connect (ack "inpA") (node "start"))
+			(connect (node "done") (ack "out"))
+		)
+		(gates
+			(connect (req "inpA") (node "start"))
+			(connect (node "done") (req "out"))
+			(connect (ack "out") (ack "inpA"))
+		)
+	)
+	; setup wide/narrow words
+	(if a-is-widest ; wide connections
+		(if reverse-subtract-op
+			(inv (slice 0 w-width (node "w")) (slice 0 w-width (data "inpA")))
+			(connect (slice 0 w-width (data "inpA")) (slice 0 w-width (node "w")))
+		)
+		(if (and (not reverse-subtract-op) subtractive-op)
+			(constant (- (- (param "inputBValue")) 1) (slice 0 w-width (node "w")))
+			(constant (param "inputBValue") (slice 0 w-width (node "w")))
+		)
+	)
+	(if a-is-widest ; narrow connections
+		(if (and (not reverse-subtract-op) subtractive-op)
+			(constant (- (- (param "inputBValue")) 1) (slice 0 n-width (node "n")))
+			(constant (param "inputBValue") (slice 0 n-width (node "n")))
+		)
+		(if reverse-subtract-op
+			(inv (slice 0 n-width (node "n")) (slice 0 n-width (data "inpA")))
+			(connect (slice 0 n-width (data "inpA")) (slice 0 n-width (node "n")))
+		)
+	)
+	(if (not logical-op)
+		(gates ; extend inputs
+			(if (< 0 n-extend-width)
+				(if n-signed
+					(connect (slice (- n-width 1) 1 (node "n"))
+						(smash (slice n-width n-extend-width (node "n"))))
+					(if a-is-widest ; B is narrow
+						(if (and (not reverse-subtract-op) subtractive-op)
+							(vcc (slice n-width n-extend-width (node "n"))) ; vcc extend inverted B
+							(gnd (slice n-width n-extend-width (node "n"))) ; gnd extend uninverted
+								; B or B standing in as A
+						)
+						(if reverse-subtract-op
+							(vcc (slice n-width n-extend-width (node "n"))) ; vcc extend inverted A
+								; standing in for B
+							(gnd (slice n-width n-extend-width (node "n"))) ; gnd extend uninverted A
+						)
+					)
+				)
+			)
+			(if signed-unsigned-op ; extend wide input
+				(if w-signed
+					(connect (slice (- w-width 1) 1 (node "w")) (slice w-width 1 (node "w")))
+					(gnd (slice w-width 1 (node "w")))
+				)
+			)
+		)
+		(gates ; do logical ops
+			(case (param "op")
+				(("And")
+					(and (slice 0 n-width (data "out")) (slice 0 n-width (node "n"))
+						(slice 0 n-width (node "w")))
+					(if (< 0 (- (param "outputWidth") n-width))
+						(gnd (smash (slice n-width (- (param "outputWidth") n-width) (data "out"))))
+					)
+				)
+				(("Or" "Xor")
+					(if (= (param "op") "Or")
+						(or (slice 0 n-width (data "out")) (slice 0 n-width (node "n"))
+							(slice 0 n-width (node "w")))
+						(xor2 (slice 0 n-width (data "out")) (slice 0 n-width (node "n"))
+							(slice 0 n-width (node "w")))
+					)
+					(if (< 0 n-extend-width)
+						(connect (slice n-width n-extend-width (node "w")) (slice n-width n-extend-width (data "out")))
+						(if (< 0 w-extend-width)
+							(gnd (smash (slice w-width w-extend-width (data "out"))))
+						)
+					)
+				)
+			)
+		)
+	)
+	(cond
+		((or inequality-op arith-op)
+			(inv (node "nStart") (node "start"))
+			; perform the addition/subtraction
+			(if subtractive-op
+				(vcc (slice 0 1 (node "c")))
+				(gnd (slice 0 1 (node "c")))
+			)
+			(connect (node "nStart") (slice 0 1 (node "nCv")))
+			(adder
+				(combine (dup full-add-width (node "nStart")))
+				(node "n") (node "w")
+				(slice 0 full-add-width (node "nCv"))
+				(slice 0 full-add-width (node "c"))
+				(slice 1 full-add-width (node "nCv"))
+				(slice 1 full-add-width (node "c"))
+				(node "addOut")
+			)
+			(if arith-op
+				(gates ; do last bits/extend handling and completion
+					(if (< 0 w-extend-width)
+						(gates
+							(if subtractive-op
+								(inv (slice full-add-width 1 (data "out"))
+									(slice full-add-width 1 (node "c")))
+								(connect (slice full-add-width 1 (node "c")) 
+									(slice full-add-width 1 (data "out")))
+							)
+							(if (< 1 w-extend-width) ; have more bits to extend
+								(if signed-op
+									(connect (slice full-add-width 1 (data "out"))
+										(smash (slice (+ full-add-width 1)
+											(- w-extend-width 1) (data "out"))))
+									(gnd (smash (slice (+ full-add-width 1)
+											(- w-extend-width 1) (data "out"))))
+								)
+							)
+						)
+					)
+					(connect (node "addOut") (slice 0 full-add-width (data "out")))
+					(nor (node "done") (smash (slice 1 full-add-width (node "nCv"))))
+				)
+				(if signed-op
+					(gates
+						(xor2 (node "v") (slice (- full-add-width 1) 1 (node "c"))
+							(slice full-add-width 1 (node "c")))
+						(case (param "op")
+							(("LessThan" "GreaterOrEquals")
+								(nor (node "done") (slice (- full-add-width 1) 1 (node "nCv"))
+									(slice full-add-width 1 (node "nCv")))
+								(case (param "op")
+									(("LessThan") (xor2 (data "out") (node "v")
+										(slice (- full-add-width 1) 1 (node "addOut"))))
+									(("GreaterOrEquals") (xnor2 (data "out") (node "v")
+										(slice (- full-add-width 1) 1 (node "addOut"))))
+								)
+							)
+							(("LessOrEquals" "GreaterThan")
+								(nor (node "done") (smash (slice 1 full-add-width (node "nCv"))))
+								(nor (node "z") (smash (slice 0 full-add-width (node "addOut"))))
+								(xor2 (node "nxv") (node "v")
+									(slice (- full-add-width 1) 1 (node "addOut")))
+								(case (param "op")
+									(("LessOrEquals") (or (data "out") (node "z") (node "nxv")))
+									(("GreaterThan") (nor (data "out") (node "z") (node "nxv")))
+								)
+							)
+							(("Equals" "NotEquals")
+								(nor (node "done") (smash (slice 1 full-add-width (node "nCv"))))
+								(case (param "op")
+									(("Equals")
+										(nor (data "out") (smash
+											(slice 0 full-add-width (node "addOut")))))
+									(("NotEquals")
+										(or (data "out") (smash
+											(slice 0 full-add-width (node "addOut")))))
+								)
+							)
+						)
+					)
+					(gates
+						(case (param "op")
+							(("LessOrEquals" "GreaterThan")
+								(nor (node "done") (smash (slice 1 full-add-width (node "nCv"))))
+								(or (node "nz") (smash (slice 0 full-add-width (node "addOut"))))
+								(case (param "op")
+									(("LessOrEquals") (nand (data "out")
+										(slice full-add-width 1 (node "c")) (node "nz")))
+									(("GreaterThan") (and (data "out")
+										(slice full-add-width 1 (node "c")) (node "nz")))
+								)
+							)
+							(("LessThan" "GreaterOrEquals")
+								(inv (node "done") (slice full-add-width 1 (node "nCv")))
+								(case (param "op")
+									(("LessThan")
+										(inv (data "out") (slice full-add-width 1 (node "c"))))
+									(("GreaterOrEquals")
+										(connect (slice full-add-width 1 (node "c")) (data "out")))
+								)
+							)
+							(("Equals" "NotEquals")
+								(nor (node "done") (smash (slice 1 full-add-width (node "nCv"))))
+								(nor (node "z") (smash (slice 0 full-add-width (node "addOut"))))
+								(case (param "op")
+									(("Equals")
+										(nor (data "out") (smash
+											(slice 0 full-add-width (node "addOut")))))
+									(("NotEquals")
+										(or (data "out") (smash
+											(slice 0 full-add-width (node "addOut")))))
+								)
+							)
+						)
+					)
+				)
+			)
+		)
+		(equality-op
+			(connect (node "start") (node "done"))
+			(xor2 (node "eq") (node "w") (node "n"))
+			(case (param "op")
+				(("Equals") (nor (data "out") (smash (node "eq"))))
+				(("NotEquals") (or (data "out") (smash (node "eq"))))
+			)
+		)
+		(else 
+			(connect (node "start") (node "done"))
+		)
+	)
+)

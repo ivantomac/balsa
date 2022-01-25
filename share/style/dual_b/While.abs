@@ -1,0 +1,12 @@
+(nodes
+	("guardReq" 1 0 1)
+	("nReq" 1 0 1)
+)
+(gates
+	(nor (node "guardReq") (node "nReq") (ack "activateOut"))
+	(inv (node "nReq") (req "activate"))
+	(s-element (node "guardReq") (req "activateOut") (req "guard") (ack1 "guard"))
+)
+(connections
+	(connect (ack0 "guard") (ack "activate"))
+)

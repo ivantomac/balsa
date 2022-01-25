@@ -1,0 +1,8 @@
+(nodes)
+(gates
+	(c-element (req "inp") (req (each "pout")))
+)
+(connections
+	(connect (ack0 "inp") (ack0 (each "pout")))
+	(connect (ack1 "inp") (ack1 (each "pout")))
+)

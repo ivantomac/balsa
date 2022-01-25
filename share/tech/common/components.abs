@@ -1,0 +1,967 @@
+;;;
+;;;	The Balsa Asynchronous Hardware Synthesis System
+;;;	Copyright (C) 1995-2003 Department of Computer Science
+;;;	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+;;;	
+;;;	This program is free software; you can redistribute it and/or modify
+;;;	it under the terms of the GNU General Public License as published by
+;;;	the Free Software Foundation; either version 2 of the License, or
+;;;	(at your option) any later version.
+;;;	
+;;;	This program is distributed in the hope that it will be useful,
+;;;	but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;	GNU General Public License for more details.
+;;;	
+;;;	You should have received a copy of the GNU General Public License
+;;;	along with this program; if not, write to the Free Software
+;;;	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+;;;
+;;;	`components.abs'
+;;;	Breeze primitive components
+;;;
+;;;	$Id: components.abs,v 1.23 2003/08/24 18:24:41 bardslea Exp $
+;;;
+
+(include tech "common" "definitions")
+
+(primitive-part
+    "ActiveEagerFalseVariable"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("readPortCount" (named-type "cardinal")) ("specification" (string))
+    )
+    (ports
+        (sync-port "trigger" passive)
+        (port "write" active input (numeric-type #f (param "width")))
+        (sync-port "signal" active)
+        (arrayed-port "read" passive output
+            (variable-array-type (numeric-type #f (param "width")) 0 (param "readPortCount") (param "specification")) 0 (param "readPortCount"))
+    )
+    (symbol
+        (centre-string "aeFV")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "ActiveEagerNullAdapt"
+    (parameters
+        ("inputWidth" (named-type "cardinal"))
+    )
+    (ports
+        (sync-port "trigger" passive)
+        (port "inp" active inp (numeric-type #f (param "inputWidth")))
+        (sync-port "signal" active)
+    )
+    (symbol
+        (centre-string "aeNA")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Adapt"
+    (parameters
+        ("outputWidth" (named-type "cardinal"))
+        ("inputWidth" (named-type "cardinal"))
+        ("outputIsSigned" (named-type "boolean"))
+        ("inputIsSigned" (named-type "boolean"))
+    )
+    (ports
+        (port "out" passive output (numeric-type #f (param "outputWidth")))
+        (port "inp" active input (numeric-type #f (param "inputWidth")))
+    )
+    (symbol
+        (centre-string "Adapt")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Arbiter"
+    (parameters
+    )
+    (ports
+        (sync-port "inpA" passive)
+        (sync-port "inpB" passive)
+        (sync-port "outA" active)
+        (sync-port "outB" active)
+    )
+    (symbol
+        (centre-string "Arb")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Bar"
+    (parameters
+        ("guardCount" (named-type "cardinal"))
+    )
+    (ports
+        (port "guard" passive output (numeric-type #f 1))
+        (sync-port "activate" passive)
+        (arrayed-port "guardInput" active input (numeric-type #f 1) 0 (param "guardCount"))
+        (arrayed-sync-port "activateOut" active 0 (param "guardCount"))
+    )
+    (symbol
+        (centre-string "[]")
+    )
+    (implementation
+    )
+)
+
+(primitive-part "BinaryFunc"
+    (parameters
+        ("outputWidth" (named-type "cardinal"))
+        ("inputAWidth" (named-type "cardinal"))
+        ("inputBWidth" (named-type "cardinal"))
+        ("op" (named-type "BinaryOperator"))
+        ("outputIsSigned" (named-type "boolean"))
+        ("inputAIsSigned" (named-type "boolean"))
+        ("inputBIsSigned" (named-type "boolean"))
+    )
+    (ports
+        (port "out" passive output (numeric-type #f (param "outputWidth")))
+        (port "inpA" active input (numeric-type #f (param "inputAWidth")))
+        (port "inpB" active input (numeric-type #f (param "inputBWidth")))
+    )
+    (symbol
+        (centre-string (case (param "op")
+            (("Add") "+")
+            (("Subtract") "-")
+            (("Equals") "=")
+            (("NotEquals") "/=")
+            (("LessThan") "<")
+            (("GreaterThan") ">")
+            (("LessOrEquals") "<=")
+            (("GreaterOrEquals") ">=")
+            (("And") "and")
+            (("Or") "or")
+            (("Xor") "xor")
+            (else (param "op"))
+        ))
+    )
+    (implementation
+    )
+)
+
+(primitive-part "BinaryFuncConstR"
+    (parameters
+        ("outputWidth" (named-type "cardinal"))
+        ("inputAWidth" (named-type "cardinal"))
+        ("inputBWidth" (named-type "cardinal"))
+        ("op" (named-type "BinaryOperator"))
+        ("outputIsSigned" (named-type "boolean"))
+        ("inputAIsSigned" (named-type "boolean"))
+        ("inputBIsSigned" (named-type "boolean"))
+        ("inputBValue" (numeric-type #f (param "inputBWidth")))
+    )
+    (ports
+        (port "out" passive output (numeric-type #f (param "outputWidth")))
+        (port "inpA" active input (numeric-type #f (param "inputAWidth")))
+    )
+    (symbol
+        (centre-string (case (param "op")
+            (("Add") (string-append "a + " (number->string (param "inputBValue"))))
+            (("Subtract") (string-append "a - " (number->string (param "inputBValue"))))
+            (("ReverseSubtract") (string-append (number->string (param "inputBValue")) " - a"))
+            (("Equals") (string-append "a = " (number->string (param "inputBValue"))))
+            (("NotEquals") (string-append "a /= " (number->string (param "inputBValue"))))
+            (("LessThan") (string-append "a < " (number->string (param "inputBValue"))))
+            (("GreaterThan") (string-append "a > " (number->string (param "inputBValue"))))
+            (("LessOrEquals") (string-append "a <= " (number->string (param "inputBValue"))))
+            (("GreaterOrEquals") (string-append "a >= " (number->string (param "inputBValue"))))
+            (("And") (string-append "a and " (number->string (param "inputBValue"))))
+            (("Or") (string-append "a or " (number->string (param "inputBValue"))))
+            (("Xor") (string-append "a xor " (number->string (param "inputBValue"))))
+            (else (string-append (param "op") "k"))
+        ))
+    )
+    (implementation
+    )
+)
+
+(primitive-part "BinaryFuncConstRPush"
+    (parameters
+        ("outputWidth" (named-type "cardinal"))
+        ("inputAWidth" (named-type "cardinal"))
+        ("inputBWidth" (named-type "cardinal"))
+        ("op" (named-type "BinaryOperator"))
+        ("outputIsSigned" (named-type "boolean"))
+        ("inputAIsSigned" (named-type "boolean"))
+        ("inputBIsSigned" (named-type "boolean"))
+        ("inputBValue" (numeric-type #f (param "inputBWidth")))
+    )
+    (ports
+        (port "out" active output (numeric-type #f (param "outputWidth")))
+        (port "inpA" passive input (numeric-type #f (param "inputAWidth")))
+    )
+    (symbol
+        (centre-string (case (param "op")
+            (("Add") (string-append "a + " (number->string (param "inputBValue"))))
+            (("Subtract") (string-append "a - " (number->string (param "inputBValue"))))
+            (("ReverseSubtract") (string-append (number->string (param "inputBValue")) " - a"))
+            (("Equals") (string-append "a = " (number->string (param "inputBValue"))))
+            (("NotEquals") (string-append "a /= " (number->string (param "inputBValue"))))
+            (("LessThan") (string-append "a < " (number->string (param "inputBValue"))))
+            (("GreaterThan") (string-append "a > " (number->string (param "inputBValue"))))
+            (("LessOrEquals") (string-append "a <= " (number->string (param "inputBValue"))))
+            (("GreaterOrEquals") (string-append "a >= " (number->string (param "inputBValue"))))
+            (("And") (string-append "a and " (number->string (param "inputBValue"))))
+            (("Or") (string-append "a or " (number->string (param "inputBValue"))))
+            (("Xor") (string-append "a xor " (number->string (param "inputBValue"))))
+            (else (string-append (param "op") "k"))
+        ))
+    )
+    (implementation
+    )
+)
+
+(primitive-part "BinaryFuncPush"
+    (parameters
+        ("outputWidth" (named-type "cardinal"))
+        ("inputAWidth" (named-type "cardinal"))
+        ("inputBWidth" (named-type "cardinal"))
+        ("op" (named-type "BinaryOperator"))
+        ("outputIsSigned" (named-type "boolean"))
+        ("inputAIsSigned" (named-type "boolean"))
+        ("inputBIsSigned" (named-type "boolean"))
+    )
+    (ports
+        (port "out" active output (numeric-type #f (param "outputWidth")))
+        (port "inpA" passive input (numeric-type #f (param "inputAWidth")))
+        (port "inpB" passive input (numeric-type #f (param "inputBWidth")))
+    )
+    (symbol
+        (centre-string (case (param "op")
+            (("Add") "+")
+            (("Subtract") "-")
+            (("Equals") "=")
+            (("NotEquals") "/=")
+            (("LessThan") "<")
+            (("GreaterThan") ">")
+            (("LessOrEquals") "<=")
+            (("GreaterOrEquals") ">=")
+            (("And") "and")
+            (("Or") "or")
+            (("Xor") "xor")
+            (else (param "op"))
+        ))
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Call"
+    (parameters
+        ("inputCount" (named-type "cardinal"))
+    )
+    (ports
+        (arrayed-sync-port "inp" passive 0 (param "inputCount"))
+        (sync-port "out" active)
+    )
+    (symbol
+        (centre-string ">|")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "CallActive"
+    (parameters
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (sync-port "inp" passive)
+        (arrayed-sync-port "out" active 0 (param "outputCount"))
+    )
+    (symbol
+        (centre-string "-< !")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "CallDemux"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (arrayed-port "out" passive output (numeric-type #f (param "width")) 0 (param "outputCount"))
+        (port "inp" active input (numeric-type #f (param "width")))
+    )
+    (symbol
+        (centre-string ">- <-")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "CallDemuxPush"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (port "inp" passive input (numeric-type #f (param "width")))
+        (arrayed-port "out" active output (numeric-type #f (param "width")) 0 (param "outputCount"))
+    )
+    (symbol
+        (centre-string "-< -> !")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "CallMux"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("inputCount" (named-type "cardinal"))
+    )
+    (ports
+        (arrayed-port "inp" passive input (numeric-type #f (param "width")) 0 (param "inputCount"))
+        (port "out" active output (numeric-type #f (param "width")))
+    )
+    (symbol
+        (centre-string ">- ->")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Case"
+    (parameters
+        ("inputWidth" (named-type "cardinal"))
+        ("outputCount" (named-type "cardinal"))
+        ("specification" (string))
+    )
+    (ports
+        (port "inp" passive input (numeric-type #f (param "inputWidth")))
+        (arrayed-sync-port "activateOut" active 0 (param "outputCount"))
+    )
+    (symbol
+        (centre-string "@" (param "specification"))
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "CaseFetch"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("indexWidth" (named-type "cardinal"))
+        ("inputCount" (named-type "cardinal"))
+        ("specification" (string))
+    )
+    (ports
+        (port "out" passive output (numeric-type #f (param "width")))
+        (port "index" active input (numeric-type #f (param "indexWidth")))
+        (arrayed-port "inp" active input (numeric-type #f (param "width")) 0 (param "inputCount"))
+    )
+    (symbol
+        (centre-string "@->" (param "specification"))
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Combine"
+    (parameters
+        ("outputWidth" (named-type "cardinal"))
+        ("LSInputWidth" (named-type "cardinal"))
+        ("MSInputWidth" (named-type "cardinal"))
+    )
+    (ports
+        (port "out" passive output (numeric-type #f (param "outputWidth")))
+        (port "LSInp" active input (numeric-type #f (param "LSInputWidth")))
+        (port "MSInp" active input (numeric-type #f (param "MSInputWidth")))
+    )
+    (symbol
+        (centre-string "<<>>")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "CombineEqual"
+    (parameters
+        ("outputWidth" (named-type "cardinal"))
+        ("inputWidth" (named-type "cardinal"))
+        ("inputCount" (named-type "cardinal"))
+    )
+    (ports
+        (port "out" passive output (numeric-type #f (param "outputWidth")))
+        (arrayed-port "inp" active input (numeric-type #f (param "inputWidth")) 0 (param "inputCount"))
+    )
+    (symbol
+        (centre-string "<<>>")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Concur"
+    (parameters
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (sync-port "activate" passive)
+        (arrayed-sync-port "activateOut" active 0 (param "outputCount"))
+    )
+    (symbol
+        (centre-string "||")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Constant"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("value" (numeric-type #f (param "width")))
+    )
+    (ports
+        (port "out" passive output (numeric-type #f (param "width")))
+    )
+    (symbol
+        (centre-string (param "value"))
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Continue"
+    (parameters
+    )
+    (ports
+        (sync-port "inp" passive)
+    )
+    (symbol
+        (centre-string "run")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "ContinuePush"
+    (parameters
+        ("width" (named-type "cardinal"))
+    )
+    (ports
+        (port "inp" passive input (numeric-type #f (param "width")))
+    )
+    (symbol
+        (centre-string "run")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "DecisionWait"
+    (parameters
+        ("portCount" (named-type "cardinal"))
+    )
+    (ports
+        (sync-port "activate" passive)
+        (arrayed-sync-port "inp" passive 0 (param "portCount"))
+        (arrayed-sync-port "out" active 0 (param "portCount"))
+    )
+    (symbol
+        (centre-string "DW")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Encode"
+    (parameters
+        ("outputWidth" (named-type "cardinal"))
+        ("inputCount" (named-type "cardinal"))
+        ("specification" (string))
+    )
+    (ports
+        (arrayed-sync-port "inp" passive 0 (param "inputCount"))
+        (port "out" active output (numeric-type #f (param "outputWidth")))
+    )
+    (symbol
+        (centre-string "@" (param "specification"))
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "FalseVariable"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("readPortCount" (named-type "cardinal"))
+                ("specification" (string))
+    )
+    (ports
+        (port "write" passive input (numeric-type #f (param "width")))
+        (sync-port "signal" active)
+        (arrayed-port "read" passive output
+            (variable-array-type (numeric-type #f (param "width")) 0 (param "readPortCount") (param "specification")) 0 (param "readPortCount"))
+    )
+    (symbol
+        (centre-string "FV")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Fetch"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("broad" (named-type "boolean"))
+    )
+    (ports
+        (sync-port "activate" passive)
+        (port "inp" active input (numeric-type #f (param "width")))
+        (port "out" active output (numeric-type #f (param "width")))
+    )
+    (symbol
+        (centre-string "->")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Fork"
+    (parameters
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (sync-port "inp" passive)
+        (arrayed-sync-port "out" active 0 (param "outputCount"))
+    )
+    (symbol
+        (centre-string "^")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "ForkPush"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (port "inp" passive input (numeric-type #f (param "width")))
+        (arrayed-port "out" active output (numeric-type #f (param "width")) 0 (param "outputCount"))
+    )
+    (symbol
+        (centre-string "^")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Halt"
+    (parameters
+    )
+    (ports
+        (sync-port "inp" passive)
+    )
+    (symbol
+        (centre-string "stop")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "HaltPush"
+    (parameters
+        ("width" (named-type "cardinal"))
+    )
+    (ports
+        (port "inp" passive input (numeric-type #f (param "width")))
+    )
+    (symbol
+        (centre-string "stop")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Loop"
+    (parameters
+    )
+    (ports
+        (sync-port "activate" passive)
+        (sync-port "activateOut" active)
+    )
+    (symbol
+        (centre-string "*")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "NullAdapt"
+    (parameters
+        ("inputWidth" (named-type "cardinal"))
+    )
+    (ports
+        (sync-port "out" active)
+        (port "inp" passive input (numeric-type #f (param "inputWidth")))
+    )
+    (symbol
+        (centre-string "A")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Passivator"
+    (parameters
+        ("count" (named-type "cardinal"))
+    )
+    (ports
+        (arrayed-sync-port "inp" passive 0 (param "count"))
+    )
+    (symbol
+        (centre-string ".")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "PassivatorPush"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (arrayed-port "out" passive output (numeric-type #f (param "width")) 0 (param "outputCount"))
+        (port "inp" passive input (numeric-type #f (param "width")))
+    )
+    (symbol
+        (centre-string ".")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "PassiveEagerFalseVariable"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("readPortCount" (named-type "cardinal"))
+                ("specification" (string))
+    )
+    (ports
+        (sync-port "trigger" passive)
+        (port "write" passive input (numeric-type #f (param "width")))
+        (sync-port "signal" active)
+        (arrayed-port "read" passive output
+            (variable-array-type (numeric-type #f (param "width")) 0 (param "readPortCount") (param "specification")) 0 (param "readPortCount"))
+    )
+    (symbol
+        (centre-string "peFV")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "PassiveEagerNullAdapt"
+    (parameters
+        ("inputWidth" (named-type "cardinal"))
+    )
+    (ports
+        (sync-port "trigger" passive)
+        (port "inp" passive input (numeric-type #f (param "inputWidth")))
+        (sync-port "signal" active)
+    )
+    (symbol
+        (centre-string "peNA")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "PassiveSyncEagerFalseVariable"
+    (parameters
+    )
+    (ports
+        (sync-port "trigger" passive)
+        (sync-port "inp" passive)
+        (sync-port "signal" active)
+    )
+    (symbol
+        (centre-string "peFV")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Sequence"
+    (parameters
+        ("outputCount" (named-type "cardinal"))
+        ("specification" (string))
+    )
+    (ports
+        (sync-port "activate" passive)
+        (arrayed-sync-port "activateOut" active 0 (param "outputCount"))
+    )
+    (symbol
+        (centre-string ";")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Slice"
+    (parameters
+        ("outputWidth" (named-type "cardinal"))
+        ("inputWidth" (named-type "cardinal"))
+        ("lowIndex" (named-type "cardinal"))
+    )
+    (ports
+        (port "out" passive output (numeric-type #f (param "outputWidth")))
+        (port "inp" active input (numeric-type #f (param "inputWidth")))
+    )
+    (symbol
+        (centre-string "[" (+ (param "lowIndex") (param "outputWidth") -1) ":" (param "lowIndex") "]")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Split"
+    (parameters
+        ("inputWidth" (named-type "cardinal"))
+        ("LSOutputWidth" (named-type "cardinal"))
+        ("MSOutputWidth" (named-type "cardinal"))
+    )
+    (ports
+        (port "inp" passive input (numeric-type #f (param "inputWidth")))
+        (port "LSOut" active output (numeric-type #f (param "LSOutputWidth")))
+        (port "MSOut" active output (numeric-type #f (param "MSOutputWidth")))
+    )
+    (symbol
+        (centre-string ">><<")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "SplitEqual"
+    (parameters
+        ("inputWidth" (named-type "cardinal"))
+        ("outputWidth" (named-type "cardinal"))
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (port "inp" passive input (numeric-type #f (param "inputWidth")))
+        (arrayed-port "out" active output (numeric-type #f (param "outputWidth")) 0 (param "outputCount"))
+    )
+    (symbol
+        (centre-string ">><<")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Synch"
+    (parameters
+        ("inputCount" (named-type "cardinal"))
+    )
+    (ports
+        (arrayed-sync-port "inp" passive 0 (param "inputCount"))
+        (sync-port "out" active)
+    )
+    (symbol
+        (centre-string ".(s)")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "SynchPull"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (arrayed-port "pout" passive output (numeric-type #f (param "width")) 0 (param "outputCount"))
+        (port "inp" active input (numeric-type #f (param "width")))
+    )
+    (symbol
+        (centre-string ".(s)")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "SynchPush"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (port "inp" passive input (numeric-type #f (param "width")))
+        (arrayed-port "pout" passive output (numeric-type #f (param "width")) 0 (param "outputCount"))
+        (port "aout" active output (numeric-type #f (param "width")))
+    )
+    (symbol
+        (centre-string ".(s)")
+    )
+    (implementation
+    )
+)
+
+(primitive-part "UnaryFunc"
+    (parameters
+        ("outputWidth" (named-type "cardinal"))
+        ("inputWidth" (named-type "cardinal"))
+        ("op" (named-type "UnaryOperator"))
+        ("inputIsSigned" (named-type "boolean"))
+    )
+    (ports
+        (port "out" passive output (numeric-type #f (param "outputWidth")))
+        (port "inp" active input (numeric-type #f (param "inputWidth")))
+    )
+    (symbol
+        (centre-string (case (param "op")
+            (("Invert") "~")
+            (("Negate") "-")
+            (else (param "op"))
+        ))
+    )
+    (implementation
+    )
+)
+
+(primitive-part "UnaryFuncPush"
+    (parameters
+        ("outputWidth" (named-type "cardinal"))
+        ("inputWidth" (named-type "cardinal"))
+        ("op" (named-type "UnaryOperator"))
+        ("inputIsSigned" (named-type "boolean"))
+    )
+    (ports
+        (port "out" active output (numeric-type #f (param "outputWidth")))
+        (port "inp" passive input (numeric-type #f (param "inputWidth")))
+    )
+    (symbol
+        (centre-string (case (param "op")
+            (("Invert") "~")
+            (("Negate") "-")
+            (else (param "op"))
+        ))
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "Variable"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("readPortCount" (named-type "cardinal"))
+        ("name" (string) not-used)
+        ("specification" (string))
+    )
+    (ports
+        (port "write" passive input (numeric-type #f (param "width")))
+        (arrayed-port "read" passive output
+            (variable-array-type (numeric-type #f (param "width")) 0 (param "readPortCount") (param "specification")) 0 (param "readPortCount"))
+    )
+    (symbol
+        (centre-string (param "name"))
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "While"
+    (parameters
+    )
+    (ports
+        (sync-port "activate" passive)
+        (port "guard" active input (numeric-type #f 1))
+        (sync-port "activateOut" active)
+    )
+    (symbol
+        (centre-string "do")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "WireFork"
+    (parameters
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (sync-port "inp" passive)
+        (arrayed-sync-port "out" active 0 (param "outputCount"))
+    )
+    (symbol
+        (centre-string "W^")
+    )
+    (implementation
+    )
+)
+
+(primitive-part
+    "BuiltinVariable"
+    (parameters
+        ("readPortCount" (named-type "cardinal"))
+        ("name" (string) not-used)
+    )
+    (ports
+        (port "write" passive input (numeric-type #f 64))
+        (arrayed-port "read" passive output (numeric-type #f 64) 0 (param "readPortCount")) 
+    )
+    (symbol
+        (centre-string (param "name"))
+    )
+    (implementation
+    	; FIXME
+    )
+)

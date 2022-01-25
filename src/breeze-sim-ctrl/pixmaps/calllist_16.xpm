@@ -1,0 +1,31 @@
+/* XPM */
+static char *calllist_16_xpm[] = {
+/* columns rows colors chars-per-pixel */
+"16 16 9 1",
+"  c opaque",
+". c #7b7b7b",
+"X c gray67",
+"o c gray79",
+"O c #dddddd",
+"+ c #e7e7e7",
+"@ c #ececec",
+"# c white",
+"$ c None",
+/* pixels */
+"$$$$$$$$$$$$$$$$",
+"                ",
+" ####+####+###O ",
+" #@@@X@@@@X@@@o ",
+" +XXXXXXXXXXXX. ",
+" #@@@X@@@@X@@@o ",
+" #@@@X@@@@X@@@o ",
+" +XXXXXXXXXXXX. ",
+" #@@@X@@@@X@@@o ",
+" #@@@X@@@@X@@@o ",
+" +XXXXXXXXXXXX. ",
+" #@@@X@@@@X@@@o ",
+" oooo.oooo.oooo ",
+"                ",
+"$$$$$$$$$$$$$$$$",
+"        $$$$$$$$"
+};

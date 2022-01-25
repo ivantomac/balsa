@@ -1,0 +1,28 @@
+(defines
+	(plural (> (param "outputWidth") 1))
+)
+(nodes
+)
+(gates
+	(if plural
+		(encode (c-or m-of-n-mapping one-of-four-implicant-mapping) 
+			(param "specification")
+			(param "outputWidth")
+			((combine (req (each "inp"))))
+			((req0 "out") (req1 "out") (req2 "out") (req3 "out"))
+		)
+		(encode (c-or m-of-n-mapping one-of-four-implicant-mapping) 
+			(param "specification")
+			(param "outputWidth")
+			((combine (req (each "inp"))))
+			((req0 "out") (req1 "out"))
+		)
+	)
+	(c-element
+		(combine (ack (each "inp")))
+		(combine (req (each "inp")))
+		(combine (dup (param "inputCount") (ack "out")))
+	)
+)
+(connections
+)

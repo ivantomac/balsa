@@ -1,0 +1,31 @@
+(defines
+	(plural (> (param "width") 1)) ;; more than one
+	(width-even (quotient (param "width") 2))
+	(width-odd (quotient (+ (param "width") 1) 2))
+	(odd (not (= width-even width-odd)))
+)
+(nodes
+	("partAck" width-odd 0 1)
+)
+(gates
+	(if plural
+		(gates
+			(or (slice 0 width-even (node "partAck")) 
+				(slice 0 width-even (req0 "inp"))
+				(slice 0 width-even (req1 "inp"))
+				(slice 0 width-even (req2 "inp"))
+				(slice 0 width-even (req3 "inp"))
+			)
+			(if odd
+				(or (slice width-even 1 (node "partAck")) 
+					(slice width-even 1 (req0 "inp"))
+					(slice width-even 1 (req1 "inp"))
+				)
+			)
+		)
+		(or (node "partAck") (req0 "inp") (req1 "inp"))
+	)
+	(c-element (ack "inp") (smash (node "partAck")))
+)
+(connections
+)

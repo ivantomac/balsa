@@ -1,0 +1,54 @@
+(--
+	The Balsa Asynchronous Hardware Synthesis System
+	Copyright (C) 1995-2003 Department of Computer Science
+	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+	`counters.balsa'
+	Counters and repeaters
+
+	$Id: counters.balsa,v 1.5 2003/02/08 19:39:42 bardslea Exp $
+--)
+
+import [balsa.types.basic]
+
+-- Repeat: handshake on `o' `count' times
+procedure Repeat (
+	parameter count : cardinal;
+	sync o ) is
+begin
+	if count = 0 then
+		print error, "Repeat count must not be 0"	
+	|  count = 1 then
+		sync o
+	|  count = 2 then
+		sync o ; sync o
+	else
+		local
+			shared doNext is begin
+				Repeat (count / 2, o)
+			end
+		begin
+			if (count as bit) then
+				sync o
+			end ;
+			doNext () ; doNext ()
+		end
+	end
+end
+
+-- Dup: repeat twice
+procedure Dup is Repeat (2)

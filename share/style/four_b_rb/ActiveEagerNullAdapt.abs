@@ -1,0 +1,21 @@
+(defines
+	(PPstyle (style-option "PP" "ovlp"))
+	(FVstyle (if (= PPstyle "conv") "FV" (style-option "FV" "ovlp")))
+)
+(nodes
+	("inpAck" 1 0 1)
+)
+(gates
+	(case FVstyle
+		(("ovlp")
+			(cell "t-element" (req "trigger") (node "inpAck") (req "signal") (ack "signal"))
+		)
+		(else
+			(s-element (req "trigger") (node "inpAck") (req "signal") (ack "signal"))
+		)
+	)
+	(c-element (ack "trigger") (node "inpAck") (ack "inp"))
+)
+(connections
+	(connect (req "trigger") (req "inp"))
+)

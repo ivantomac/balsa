@@ -1,0 +1,238 @@
+;;;
+;;;	The Balsa Asynchronous Hardware Synthesis System
+;;;	Copyright (C) 1995-2003 Department of Computer Science
+;;;	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+;;;	
+;;;	This program is free software; you can redistribute it and/or modify
+;;;	it under the terms of the GNU General Public License as published by
+;;;	the Free Software Foundation; either version 2 of the License, or
+;;;	(at your option) any later version.
+;;;	
+;;;	This program is distributed in the hope that it will be useful,
+;;;	but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;	GNU General Public License for more details.
+;;;	
+;;;	You should have received a copy of the GNU General Public License
+;;;	along with this program; if not, write to the Free Software
+;;;	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+;;;
+;;;	`definitions.abs'
+;;;	Breeze .abs lambda and value (define ...)s
+;;;
+;;;	$Id: definitions.abs,v 1.7 2003/02/08 19:39:44 bardslea Exp $
+;;;
+
+;;; (define style-options ...) style-options is predefined
+
+;;; style-option: return the value of the style argument corresponding to
+;;;		the string `name'.  If the style option is not passed, returns
+;;;		(car default) if passed, or #f otherwise
+(define style-option (lambda (name . default)
+	(let
+		((arg (assoc name style-options)))
+		(if arg (cdr arg) (if (pair? default) (car default) #f))
+	)
+))
+
+;;; Common style-option to insert buffer insertion hints
+(define suggest-buffers (if (assoc "suggest-buffers" style-options) #t #f))
+
+;;; Set Variable type (sr default)
+(define variable-type (let ((variable-type (assoc "variable" style-options)))	
+	(if variable-type (cdr variable-type) "sr")))
+
+;;; Set Logic Type currently balanced, DIMS, NCL or unbal (unbal default)
+(define logic-type (let ((logic-type (assoc "logic" style-options)))	
+	(if logic-type (cdr logic-type) "unbal")))
+
+(include tech "common" "dual-rail-definitions")
+(include tech "common" "one-of-four-definitions")
+
+(define caddr (lambda (i) (car (cdr (cdr i)))))
+(define cadddr (lambda (i) (car (cdr (cdr (cdr i))))))
+(define caddddr (lambda (i) (car (cdr (cdr (cdr (cdr i)))))))
+(define cadar (lambda (i) (cadr (car i))))
+(define caddar (lambda (i) (cadr (cdr (car i)))))
+(define cddr (lambda (i) (cdr (cdr i))))
+(define cdddr (lambda (i) (cddr (cdr i))))
+
+(define map-single (lambda (fn ls)
+	(if (null? ls)
+		'()
+		(cons (fn (car ls)) (map-single fn (cdr ls)))
+	)
+))
+
+(define map (lambda (func . args)
+	(let 
+		((map-tail (lambda (acc fn ls)
+			(if (null? (car ls)) ; ls must be of the same length
+				acc
+				(map-tail
+					(cons
+						(apply fn (map-single car ls))
+						acc
+					)
+					fn
+					(map-single cdr ls)
+				)
+			)
+		))
+		)
+		(reverse! (map-tail '() func args))
+	)
+))
+
+(define map.. (lambda (func low high . args)
+	(let 
+		((map-tail (lambda (acc val ls)
+			(if (<= val high) ; ls must be of the same length
+				(map-tail
+					(cons
+						(apply func val (map-single car ls))
+						acc
+					)
+					(+ val 1)
+					(map-single cdr ls)
+				)
+				acc
+			)
+		))
+		)
+		(reverse! (map-tail '() low args))
+	)
+))
+
+(define map-until (lambda (func . args)
+	(let 
+		((map-tail (lambda (acc fn ls)
+			(if (null? (car ls)) ; ls must be of the same length
+				acc
+				(let
+					((value (apply fn (map-single car ls))))
+					(if value
+						(map-tail (cons value acc) fn (map-single cdr ls))
+						acc
+					)
+				)
+			)
+		))
+		)
+		(reverse! (map-tail '() func args))
+	)
+))
+
+(define reverse-map (lambda (func . args)
+	(let 
+		((map-tail (lambda (acc fn ls)
+			(if (null? (car ls)) ; ls must be of the same length
+				acc
+				(map-tail
+					(cons
+						(apply fn (map-single car ls))
+						acc
+					)
+					fn
+					(map-single cdr ls)
+				)
+			)
+		))
+		)
+		(map-tail '() func args)
+	)
+))
+
+
+(define foldl (lambda (func acc . args)
+	(let 
+		((foldl-tail (lambda (fn acc ls)
+			(if (null? (car ls)) ; ls must be of the same length
+				acc
+				(foldl-tail
+					fn
+					(apply fn acc (map-single car ls))
+					(map-single cdr ls)
+				)
+			)
+		))
+		)
+		(foldl-tail func acc args)
+	)
+))
+
+(define foldl.. (lambda (func acc low high . args)
+	(let 
+		((foldl-tail (lambda (acc val ls)
+			(if (<= val high) ; ls must be of the same length
+				(foldl-tail
+					(apply func acc val (map-single car ls))
+					(+ val 1)
+					(map-single cdr ls)
+				)
+				acc
+			)
+		))
+		)
+		(foldl-tail acc low  args)
+	)
+))
+
+(define for-each (lambda (func . args)
+	(let
+		((each-tail (lambda (fn ls) 
+			(if (null? (car ls)) ; ls must be of the same length
+				'()
+				(let
+					((val (apply fn (map-single car ls))))
+					(each-tail fn  (map-single cdr ls))
+				)
+			)
+		)))
+		(each-tail func args) 
+	)
+))
+
+(define single-rail-connect-read-ports (lambda (width-arg read-port-count-arg spec-string-arg store-node-name)
+	(let
+		((width (eval width-arg))
+		 (read-port-count (eval read-port-count-arg))
+		 (read-port-specification (parse-case-spec (eval spec-string-arg)))
+		 (spec-length (length read-port-specification))
+		 (specified-gates (map.. (lambda (index specification)
+			 (case (car specification)
+				 ((value)
+					 (let
+						 ((val (cadr specification)))
+						 (if val ;; single index
+							 '(connect (slice ,val 1 (node ,store-node-name)) (data (bundle "read" ,index)))
+							 '(connect (node ,store-node-name) (data (bundle "read" ,index))) 
+						 )
+					 )
+				 )
+				 ((range)
+					 (let
+						 ((start (cadr specification))
+							(end (caddr specification))
+							(low-index (min start end)) 
+							(high-index (max start end))
+							(count (- high-index low-index -1))
+						 )
+					 '(connect (slice ,low-index ,count (node ,store-node-name)) (data (bundle "read" ,index)))
+					 )
+				 )
+				 ((implicant) ;; just using 1s value 
+					 '(connect (filter ,(cadr specification) (node ,store-node-name)) (data (bundle "read" ,index)))
+				 )
+			 )
+		 ) 0 (- spec-length 1) read-port-specification))
+		)
+		(if (< spec-length read-port-count)
+			(append '(gates) specified-gates 
+				(map.. (lambda (i) '(connect (node ,store-node-name) (data (bundle "read" ,i)))) spec-length (- read-port-count 1)))
+			(append '(gates) specified-gates)
+		)
+	)
+))
+
+

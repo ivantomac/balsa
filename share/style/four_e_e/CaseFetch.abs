@@ -1,0 +1,186 @@
+(defines
+	(buffer-tree (lambda (inp out num_out_wires index out_b)
+		(let
+			((nwo (eval num_out_wires))
+			)
+			(if (<= nwo 4)
+				`(gates
+					(connect ,inp (smash ,out))
+				)
+				(let 
+					((level (inexact->exact (truncate (div (log (- nwo 1)) (log 4)))))
+					 (bufdiv (expt 4 level))
+					 (num_bufs (/ nwo bufdiv))
+					 (num_rem (modulo nwo bufdiv))
+					 (ind (eval index))
+					 (ind1 (+ 1 (* 4 ind)))
+					 (ind2 (+ 2 (* 4 ind)))
+					 (ind3 (+ 3 (* 4 ind)))
+					 (ind4 (+ 4 (* 4 ind)))
+					)
+					(if (= num_bufs 1)
+						`(gates
+							(cell "suggested-buffer" (slice ,ind1 1 ,out_b) ,inp )
+							(macro buffer-tree (slice ,ind1 1 ,out_b) (slice 0 ,bufdiv ,out) ,bufdiv ,ind1 ,out_b)
+							(if (> ,num_rem 0)
+								(gates
+									(cell "suggested-buffer" (slice ,ind2 1 ,out_b) ,inp)
+								 	(macro buffer-tree (slice ,ind2 1 ,out_b) (slice ,bufdiv ,num_rem ,out) ,num_rem ,ind2 ,out_b)
+								)
+							)
+						)
+						(if (= num_bufs 2)
+							`(gates
+								(cell "suggested-buffer" (slice ,ind1 1 ,out_b) ,inp)
+								(macro buffer-tree (slice ,ind1 1 ,out_b) (slice 0 ,bufdiv ,out) ,bufdiv ,ind1 ,out_b)
+								(cell "suggested-buffer" (slice ,ind2 1 ,out_b) ,inp)
+								(macro buffer-tree (slice ,ind2 1 ,out_b) (slice ,bufdiv ,bufdiv ,out) ,bufdiv ,ind2 ,out_b)
+								(if (> ,num_rem 0)
+									(gates
+										(cell "suggested-buffer" (slice ,ind3 1 ,out_b) ,inp)
+									 	(macro buffer-tree (slice ,ind3 1 ,out_b) (slice (* 2 ,bufdiv) ,num_rem ,out) ,num_rem ,ind3 ,out_b)
+									)
+								)
+							)
+							(if (= num_bufs 3)
+								`(gates
+									(cell "suggested-buffer" (slice ,ind1 1 ,out_b) ,inp)
+									(macro buffer-tree (slice ,ind1 1 ,out_b) (slice 0 ,bufdiv ,out) ,bufdiv ,ind1 ,out_b)
+									(cell "suggested-buffer" (slice ,ind2 1 ,out_b) ,inp)
+									(macro buffer-tree (slice ,ind2 1 ,out_b) (slice ,bufdiv ,bufdiv ,out) ,bufdiv ,ind2 ,out_b)
+									(cell "suggested-buffer" (slice ,ind3 1 ,out_b) ,inp)
+									(macro buffer-tree (slice ,ind3 1 ,out_b) (slice (* 2 ,bufdiv) ,bufdiv ,out) ,bufdiv ,ind3 ,out_b)
+									(if (> ,num_rem 0)
+										(gates
+											(cell "suggested-buffer" (slice ,ind4 1 ,out_b) ,inp)
+											(macro buffer-tree (slice ,ind4 1 ,out_b) (slice (* 3 ,bufdiv) ,num_rem ,out) ,num_rem ,ind4 ,out_b)
+										)
+									)
+								)
+								(if (= num_bufs 4)
+									`(gates
+										(cell "suggested-buffer" (slice ,ind1 1 ,out_b) ,inp)
+										(macro buffer-tree (slice ,ind1 1 ,out_b) (slice 0 ,bufdiv ,out) ,bufdiv ,ind1 ,out_b)
+										(cell "suggested-buffer" (slice ,ind2 1 ,out_b) ,inp)
+										(macro buffer-tree (slice ,ind2 1 ,out_b) (slice ,bufdiv ,bufdiv ,out) ,bufdiv ,ind2 ,out_b)
+										(cell "suggested-buffer" (slice ,ind3 1 ,out_b) ,inp)
+										(macro buffer-tree (slice ,ind3 1 ,out_b) (slice (* 2 ,bufdiv) ,bufdiv ,out) ,bufdiv ,ind3 ,out_b)
+										(cell "suggested-buffer" (slice ,ind4 1 ,out_b) ,inp)
+										(macro buffer-tree (slice ,ind4 1 ,out_b) (slice (* 3 ,bufdiv) ,bufdiv ,out) ,bufdiv ,ind4 ,out_b)
+									)
+								)
+							)
+						)
+					)
+				)
+			)
+		)
+	))
+	(iterate-select (lambda (input-count-arg width sel buf-sel out-b)
+    	    (let
+        	((input-count (eval input-count-arg))
+	         (it-sel (lambda (ret count)
+        	    (if (= count input-count)
+                	(cons 'gates (reverse! ret))
+	                (it-sel
+        	            (cons
+                	        (list 'macro 'buffer-tree
+                        	    (list 'slice count 1 (list 'node (list 'bundle sel count)))
+	                            (list 'slice 0 width  (list 'node (list 'bundle buf-sel count)))
+        	                    width
+				    0
+                	            (list 'slice 0 width  (list 'node (list 'bundle out-b count)))
+                        	)
+	                        ret
+        	            )
+			    (+ count 1)
+                	)
+	            )
+        	)))
+	        (it-sel '() 0)
+	    )
+	))
+	
+	(inp-width (param "width"))
+	(inp-count (param "inputCount"))
+)
+(nodes
+	("t" (param "indexWidth") 0 1)
+	("c" (param "indexWidth") 0 1)
+	("outputReq" 1 0 1)
+	("bufOutReq" (param "inputCount") 0 1)
+	("outb0" (param "width") 0 1)
+	("latchedIndex" (param "indexWidth") 0 1)
+	("latchEnable" 1 0 1)
+	("select" 1 0 (param "inputCount"))
+	("muxOut" (param "width") 0 1)
+	("elseAck" 1 0 1)
+	("eoutr" 1 0 1)
+	("eouta" 1 0 1)
+	("aoutd0" 1 0 1)
+	("aoutd1" 1 0 1)
+	("aoutd2" 1 0 1)
+	("sindr" 1 0 1)
+	("sinda" 1 0 1)
+	("dsindr0" 1 0 1)
+	("dsindr1" 1 0 1)
+	("bufselect" (param "width") 0 (param "inputCount"))
+	("outb1" (param "width") 0 (param "inputCount"))
+)
+(gates
+	(cell "e-element" (req "out") (node "aoutd0") (node "eoutr") (node "eouta"))
+
+	;;; delay needed to ensure data is valid before sending (ack out)
+	(and (node "aoutd1") (node "aoutd0") (node "aoutd0"))
+	(and (node "aoutd2") (node "aoutd1") (node "aoutd0"))
+	(and (ack "out") (node "aoutd2") (node "aoutd0"))
+
+	(and (node "latchEnable") (node "sindr") (ack "index"))
+
+	(and (node "dsindr0") (node "sindr") (node "sindr"))
+	(and (node "dsindr1") (node "dsindr0") (node "dsindr0"))
+	(or (req "index") (node "sindr") (node "dsindr1"))
+
+	(and (node "sinda") (ack "index") (ack "index"))
+
+	(latch (combine (dup (param "indexWidth") (node "latchEnable"))) (data "index") (node "latchedIndex"))
+
+	(cell "e-s-element" (node "eoutr") (node "outputReq") (node "sindr") (node "sinda"))
+
+	(demux2 (combine (dup (param "indexWidth") (node "outputReq"))) (node "c") (node "t") (node "latchedIndex"))
+	(if (complete-encoding? (param "specification") (param "indexWidth"))
+		(gates
+			(decode and-or (param "specification") (node "c") (node "t") (req (each "inp")))
+			(or (node "eouta") (ack (each "inp")))
+		)
+		(gates
+			(decode and-or (param "specification") (node "c") (node "t") (req (each "inp")) (node "elseAck"))
+			(or (node "eouta") (ack (each "inp")) (node "elseAck"))
+		)
+	)
+
+	(and (combine (node (each "select"))) (node "bufOutReq") (combine (ack (each "inp"))))
+
+	(macro iterate-select
+		1
+		inp-count
+		"outputReq"
+		"bufOutReq"
+		"outb0"
+	)
+
+	(macro iterate-select
+		inp-count
+		inp-width
+		"select"
+		"bufselect"
+		"outb1"
+	)
+
+	(tri-inv
+		(combine (node (each "bufselect")))
+		(combine (data (each "inp")))
+		(combine (dup (param "inputCount") (node "muxOut")))
+	)
+	(keeper-inv (data "out") (node "muxOut"))
+)

@@ -1,0 +1,820 @@
+
+    |
+    |  Breeze intermediate handshake components
+    |
+    |    Revision 1.17  2006/04/28 11:40:00  janinl
+    |    Removed EagerFalseVariable
+    |    Added ActiveEagerFalseVariable, PassiveEagerFalseVariable, PassiveSyncEagerFalseVariable
+    |
+    |    Revision 1.16  2005/06/23 11:20:00  janinl
+    |    Added EagerFalseVariable
+    |
+    |    Revision 1.15  2005/06/22 17:30:00  janinl
+    |    Added SequenceOptimised
+    |
+    |    Revision 1.14  2003/08/24 18:24:41  bardslea
+    |    *** empty log message ***
+    |
+    |    Revision 1.13  2003/08/22 00:16:04  bardslea
+    |    Removed Print, PrintEmit, PrintValue components and replaced them with
+    |    builtin functions.
+    |
+    |    Revision 1.12  2003/08/14 00:54:46  bardslea
+    |    Implemented reference counting for balsa-c, breeze-sim
+    |
+    |    Revision 1.11  2003/08/10 00:58:43  bardslea
+    |    *** empty log message ***
+    |
+    |    Revision 1.10  2003/07/03 13:09:28  bardslea
+    |    New components Push Funcs
+    |
+    |    Revision 1.9  2003/06/08 23:54:11  bardslea
+    |    Added InitVariable
+    |
+    |    Revision 1.8  2003/06/08 23:48:00  bardslea
+    |    Added InitVariable
+    |
+    |    Revision 1.7  2003/02/03 14:48:58  bardslea
+    |    Added printing components
+    |
+    |    Revision 1.6  2002/11/06 00:36:43  bardslea
+    |    Deprecated WhileElse
+    |
+    |    Revision 1.5  2002/11/06 00:35:13  bardslea
+    |    Revised Bar component
+    |
+    |    Revision 1.4  2002/08/06 10:37:27  bardslea
+    |    Removed MidWhile
+    |
+    |
+    |    Revision 1.2  2002/05/06 19:08:01  bardslea
+    |    Added Slice and WireFork components.  Make true/false less special in
+    |    the compiler/backend
+    |
+    |    Revision 1.1  2002/03/11 15:35:24  bardslea
+    |    *** empty log message ***
+    |
+    |
+
+0. Types in breeze component parameters / ports
+
+    type cardinal is 32 bits
+    --    arbitrary parameterising natural number [0..n]
+
+    type boolean is enumeration false, true end
+
+    type UnaryOperator is enumeration    -- UnaryFunc operation type
+        Negate, Invert
+    end
+
+    type BinaryOperator is enumeration    -- BinaryFunc operation type
+        Add, Subtract, ReverseSubtract, Equals, NotEquals,
+        LessThan, GreaterThan, LessOrEquals,
+        GreaterOrEquals, And, Or
+    end
+
+1. Channel synchronisation / {de,}multiplexing
+
+    $BrzCall
+
+        $BrzCall ( parameter inputCount : cardinal;
+            array inputCount of passive sync inp;
+            active sync out )
+
+        Behaviour: #[ [inp[0] : out
+                [] inp[1] : out ... [] ...
+                [] inp[inputCount-1] : out] ]
+
+               ---o,----.
+        inp    ---o| >- |*---    out
+               ---o`----'
+
+    $BrzCallMux
+
+        $BrzCallMux ( parameter width : cardinal;
+            parameter inputCount : cardinal;
+            array inputCount of passive input inp : width bits;
+            active output out : width bits )
+
+        Behaviour: #[ [inp[0] : (out ! inp[0])
+                [] inp[1] : (out!inp[1]) ... [] ...
+                [] inp[inputCount-1] : (out ! inp[inputCount-1])] ]
+
+               -->o,-------.
+        inp    -->o| >- -> |*-->    out
+               -->o`-------'
+
+    $BrzCallDemux
+
+        $BrzCallDemux ( parameter width : cardinal;
+            parameter outputCount : cardinal;
+            array outputCount of passive output out : width bits;
+            active input inp : width bits )
+
+        Behaviour: #[ [out[0] : (out[0] ! inp)
+                [] out[1] : (out[1] ! inp) ... [] ...
+                [] out[outputCount-1] : (out[outputCount-1] ! inp)] ]
+
+               <--o,-------.
+        out    <--o| >- <- |*<--    inp
+               <--o`-------'
+
+
+    $BrzSynch
+
+        $BrzSynch ( parameter inputCount : cardinal;
+            array inputCount of passive sync inp;
+            active sync out )
+
+        Behaviour: #[ (inp[0]^ : inp[1]^ ... : ... inp[inputCount-1]^) : out^ ;
+            (inp[0]v : inp[1]v ... : ... inp[inputCount-1]v) : outv ]
+
+               ---o,----.
+        inp    ---o|.(s)|*---    out
+               ---o`----'
+
+    $BrzSynchPush
+
+        $BrzSynchPush ( parameter width : cardinal;
+            parameter outputCount : cardinal;
+            passive input inp : width bits;
+            array outputCount of passive output pout : width bits;
+            active output aout : width bits )
+
+        Behaviour: #[ (inp^ : pout[0]^ : pout[1]^ ... : ...
+            pout[outputCount-1]^) : aout^ ;
+            (inpv : pout[0]v : pout[1]v ... : ...
+            pout[outputCount-1]v) : aoutv ]
+
+                <--o,--------.o<--     inp
+        pout    <--o|.(spush) |*-->     aout
+                <--o`--------'
+
+    $BrzSynchPull
+
+        $BrzSynchPull ( parameter width : cardinal;
+            parameter outputCount : cardinal;
+            array outputCount of passive output pout : width bits;
+            active input inp : width bits )
+
+        Behaviour: #[ (pout[0]^ : pout[1]^ ... : ... pout[outputCount-1]^ : inp^) ;
+            (pout[0]v : pout[1]v ... : ... pout[outputCount-1]v : inpv) ]
+
+                <--o,--------.
+        pout    <--o|.(spull)|*<--     inp
+                <--o`--------'
+
+    $BrzPassivator
+
+        $BrzPassivator ( parameter count : cardinal;
+            array count of passive sync inp )
+
+        Behaviour: #[ (inp[0]^ : inp[1]^ ... : ... inp[count-1]^) ;
+            (inp[0]v : inp[1]v ... : ... inp[count-1]v) ]
+
+                ---o,---.
+        inp     ---o| . |
+                ---o`---'
+
+    $BrzPassivatorPush
+
+
+        $BrzPassivatorPush ( parameter width : cardinal;
+            parameter outputCount : cardinal;
+            array outputCount of passive output out : width bits ;
+            passive input inp : width bits )
+
+        Behaviour: #[ (inp^ : out[0]^ : out[1]^ ... : ... out[outputCount-1]^) ;
+            (inpv : out[0]v : out[1]v ... : ... out[outputCount-1]v) ]
+
+                <--o,---.
+        out     <--o| . |o<--     inp
+                <--o`---'
+
+    $BrzFork
+
+        $BrzFork ( parameter outputCount : cardinal;
+            passive sync inp;
+            array outputCount of active sync out )
+
+        Behaviour:  #[ inp^ : (out[0]^ :
+            out[1]^ : out[outputCount-1]&) ;
+            v : (out[0]v :
+            out[1]v : out[outputCount-1]) ]
+
+                       ,---.*---
+            inp    ---o| ^ |*---     out
+                       `---'*---
+
+    $BrzWireFork
+
+        $BrzWireFork ( parameter outputCount : cardinal;
+            passive sync inp;
+            array outputCount of active sync out )
+
+        Behaviour:  inp_r^ : (out[0]_r^ :
+            out[1]_r^ : out[outputCount-1]_r^)
+
+                       ,---.*---
+            inp    ---o|W^ |*---     out
+                       `---'*---
+
+    $BrzForkPush
+
+        $BrzForkPush ( parameter width : cardinal;
+            parameter outputCount : cardinal;
+            passive input inp : width bits;
+            array outputCount of active output out : width bits )
+
+        Behaviour:  #[ inp^ : (out[0]^ :
+            out[1]^ : out[outputCount-1]) ;
+            inpv : (out[0]v :
+            out[1]v : out[outputCount-1]) ]
+
+                   ,---.*-->
+        inp    -->o| ^ |*-->     out
+                   `---'*-->
+
+2. Channel terminators
+
+    $BrzContinue
+
+        $BrzContinue ( passive sync inp )
+
+        Behaviour: #[ inp ]
+
+            ,---.
+            |run|o---    inp
+            `---'
+
+    $BrzContinuePush
+
+        $BrzContinuePush ( parameter width : cardinal;
+            passive input inp : width bits )
+
+        Behaviour: #[ inp ]
+
+            ,---.
+            |run|o<--    inp
+            `---'
+
+    $BrzHalt
+
+        $BrzHalt ( passive sync inp )
+
+        Behaviour: <halt>
+
+            ,---.
+            |stp|o---    inp
+            `---'
+
+    $BrzHaltPush
+
+        $BrzHaltPush ( parameter width : cardinal;
+            passive input inp : width bits )
+
+        Behaviour: <halt>
+
+            ,---.
+            |stp|o<--    inp
+            `---'
+
+3. Datapath components
+
+    $BrzConstant
+
+        $BrzConstant ( parameter width : cardinal;
+            parameter value : width bits;
+            passive output out : width bits )
+
+        Behaviour:  #[ out ! value ]
+
+            ,---.
+            | V |o-->    out
+            `---'
+
+    $BrzUnaryFunc
+
+        $BrzUnaryFunc ( parameter outputWidth : cardinal;
+            parameter inputWidth : cardinal;
+            parameter op : UnaryOperator;
+            parameter inputIsSigned : boolean;
+            passive output out : outputWidth bits;
+            active input inp : inputWidth bits )
+
+        Behaviour:  #[ out ! op( inp ) ]
+
+                   ,---.
+        inp    -->*| op|o-->    out
+                   `---'
+
+    $BrzBinaryFunc
+
+        $BrzBinaryFunc ( parameter outputWidth : cardinal;
+            parameter inputAWidth : cardinal;
+            parameter inputBWidth : cardinal;
+            parameter op : BinaryOperator;
+            parameter outputIsSigned : boolean;
+            parameter inputAIsSigned : boolean;
+            parameter inputBIsSigned : boolean;
+            passive output out : outputWidth bits;
+            active input inpA : inputAWidth bits;
+            active input inpB : inputBWidth bits )
+
+        Behaviour:  #[ out ! op( inpA, inpB ) ]
+
+                    ,---.
+        inpA    -->*| op|o-->    out
+        inpB    -->*`---'
+
+    $BrzBinaryFuncConstR
+
+        $BrzBinaryFuncConstR ( parameter outputWidth : cardinal;
+            parameter inputAWidth : cardinal;
+            parameter inputBWidth : cardinal;
+            parameter op : BinaryOperator;
+            parameter outputIsSigned : boolean;
+            parameter inputAIsSigned : boolean;
+            parameter inputBIsSigned : boolean;
+            parameter inputBValue : inputBWidth bits;
+            passive output out : outputWidth bits;
+            active input inpA : inputAWidth bits )
+
+        Behaviour:  #[ out ! op( inpA, const ) ]
+
+                    ,---.
+        inpA    -->*|opk|o-->    out
+                    `---'
+
+    $BrzUnaryFuncPush
+
+        $BrzUnaryFuncPush ( parameter outputWidth : cardinal;
+            parameter inputWidth : cardinal;
+            parameter op : UnaryOperator;
+            parameter inputIsSigned : boolean;
+            active output out : outputWidth bits;
+            passive input inp : inputWidth bits )
+
+        Behaviour:  #[ inp ? out ! op( inp ) ]
+
+                   ,---.
+        inp    -->o| op|*-->    out
+                   `---'
+
+    $BrzBinaryFuncPush
+
+        $BrzBinaryFuncPush ( parameter outputWidth : cardinal;
+            parameter inputAWidth : cardinal;
+            parameter inputBWidth : cardinal;
+            parameter op : BinaryOperator;
+            parameter outputIsSigned : boolean;
+            parameter inputAIsSigned : boolean;
+            parameter inputBIsSigned : boolean;
+            actrve output out : outputWidth bits;
+            passive input inpA : inputAWidth bits;
+            passive input inpB : inputBWidth bits )
+
+        Behaviour:  #[ inpA ? inpB ? out ! op( inpA, inpB ) ]
+
+                    ,---.
+        inpA    -->o| op|*-->    out
+        inpB    -->o`---'
+
+    $BrzBinaryFuncConstRPush
+
+        $BrzBinaryFuncConstRPush ( parameter outputWidth : cardinal;
+            parameter inputAWidth : cardinal;
+            parameter inputBWidth : cardinal;
+            parameter op : BinaryOperator;
+            parameter outputIsSigned : boolean;
+            parameter inputAIsSigned : boolean;
+            parameter inputBIsSigned : boolean;
+            parameter inputBValue : inputBWidth bits;
+            active output out : outputWidth bits;
+            passive input inpA : inputAWidth bits )
+
+        Behaviour:  #[ inp ? out ! op( inpA, const ) ]
+
+                    ,---.
+        inpA    -->o|opk|*-->    out
+                    `---'
+
+    $BrzSlice
+
+        $BrzSlice ( parameter outputWidth : cardinal;
+            parameter inputWidth : cardinal;
+            parameter lowIndex : cardinal;
+            passive output out : outputWidth bits;
+            active input inp : inputWidth bits )
+
+        Behaviour:  #[ out ! inp[lowIndex:lowIndex+outputWidth-1] ]
+
+                   ,---------------.
+        inp    -->*| 8< [low:high] |o-->    out
+                   `---------------'
+
+    $BrzAdapt
+
+        $BrzAdapt ( parameter outputWidth : cardinal;
+            parameter inputWidth : cardinal;
+            parameter outputIsSigned : boolean;
+            parameter inputIsSigned : boolean;
+            passive output out : outputWidth bits;
+            active input inp : inputWidth bits )
+
+        Behaviour:  #[ out ! crop/zero_pad/sgn_ext (inp) ]
+
+                   ,---.
+        inp    -->*| A |o-->    out
+                   `---'
+
+    $BrzNullAdapt
+
+        $BrzNullAdapt ( parameter inputWidth : cardinal;
+            active sync out;
+            passive input inp : inputWidth bits )
+
+        Behaviour:  #[ inp : out ]
+
+                   ,---.
+        inp    -->o| NA|*---    out
+                   `---'
+
+    $BrzSplit
+
+        $BrzSplit ( parameter inputWidth : cardinal;
+            parameter LSOutputWidth : cardinal;
+            parameter MSOutputWidth : cardinal;
+            passive input inp : inputWidth bits;
+            active output LSOut : LSOutputWidth bits;
+            active output MSOut : MSOutputWidth bits )
+
+        Behaviour:  #[ inp : (LSOut!LSof(inp) || MSOut!MSof(inp)) ]
+
+        inputWidth == LSOutputWidth + MSOutputWidth
+
+                       ,----.*-->   LSOut
+        inp        -->o|>><<|*-->   MSOut
+                       '----'
+
+    $BrzCombine
+
+        $BrzCombine ( parameter outputWidth : cardinal;
+            parameter LSInputWidth : cardinal;
+            parameter MSInputWidth : cardinal;
+            passive output out : outputWidth bits;
+            active input LSInp : LSInputWidth bits;
+            active input MSInp : MSInputWidth bits )
+
+        Behaviour:  #[ out : LSInp : MSInp ]
+
+        outputWidth == LSInputWidth + MSInputWidth
+
+        LSInp     -->*,----.
+        MSInp     -->*|<<>>|o-->   out
+                      '----'
+
+    $BrzSplitEqual
+
+        $BrzSplitEqual ( parameter inputWidth : cardinal;
+            parameter outputWidth : cardinal;
+            parameter outputCount : cardinal;
+            passive input inp : inputWidth bits;
+            array outputCount of active output out : outputWidth bits )
+
+        Behaviour:  #[ inp : out[0]!LSof(inp) || ... || out[outputCount-1]!MSof(inp) ]
+
+        inputWidth == outputWidth * outputCount
+
+                       ,----.*-->   
+        inp        -->o|>><<|*-->   out
+                       '----'*-->
+
+    $BrzCombineEqual
+
+        $BrzCombineEqual ( parameter outputWidth : cardinal;
+            parameter inputWidth : cardinal;
+            parameter inputCount : cardinal;
+            passive output out : outputWidth bits;
+            array inputCount of active input inp : inputWidth bits )
+
+        Behaviour:  #[ out : inp[inputCount-1..0] ]
+
+        outputWidth == inputWidth * inputCount
+
+                  -->*,----.
+          inp     -->*|<<>>|o-->   out
+                  -->*'----'
+
+    $BrzCaseFetch
+
+        $BrzCaseFetch ( parameter width : cardinal;
+            parameter indexWidth : cardinal;
+            parameter inputCount : cardinal;
+            parameter specification : String;
+            passive output out : width bits;
+            active input index : indexWidth bits;
+            array inputCount of active input inp : width bits )
+
+        Behaviour: #[ out : index : out!inp[index] ]
+
+                       ,---.*<--     index
+        out        <--o| @T|*<--     inp
+                       '---'*<--
+
+    $BrzVariable
+
+        $BrzVariable ( parameter width : cardinal;
+            parameter readPortCount : cardinal;
+            parameter name : String;
+            passive input write : width bits;
+            array readPortCount of output read : width bits )
+
+        Behaviour:  #[ pref#[ write ] ; pref#[ [read[0] [] read[1] ... [] ...
+            read[readPortCount-1] ] ] ]
+
+                     ,---.o-->
+        write    -->o| V |o-->    read
+                     `---'o-->
+
+    $BrzInitVariable
+
+        $BrzInitVariable ( parameter width : cardinal;
+            parameter readPortCount : cardinal;
+            parameter initValue : width bits;
+            parameter name : String;
+            passive input write : width bits;
+            passive sync init;
+            array readPortCount of output read : width bits )
+
+        Behaviour:  #[ init -> V := initValue | pref#[ write ] ; pref#[ [read[0] [] read[1] ... [] ...
+            read[readPortCount-1] ] ] ]
+
+                     ,---.o-->
+        write    -->o| V |o-->    read
+         init    ---o`---'o-->
+
+4. Control flow components
+
+    $BrzConcur
+
+        $BrzConcur ( parameter outputCount : cardinal;
+            passive sync activate;
+            array outputCount of active sync activateOut )
+
+        Behaviour:  #[ activate : (activateOut[0] || activateOut[1]
+            ... || ... activateOut[outputCount-1]) ]
+
+                        ,---.*---
+        activate    ---o| |||*---     activateOut
+                        '---'*---
+
+    $BrzSequence
+
+        $BrzSequence ( parameter outputCount : cardinal;
+            passive sync activate;
+            array outputCount of active sync activateOut )
+
+        Behaviour:  #[ activate : (activateOut[0] ; activateOut[1]
+            ... ; ... activateOut[outputCount-1]) ]
+
+                        ,---.*---
+        activate    ---o| ; |*---     activateOut
+                        '---'*---
+
+    $BrzSequenceOptimised
+
+        $BrzSequenceOptimised ( parameter outputCount : cardinal;
+            parameter specString : String;
+            passive sync activate;
+            array outputCount of active sync activateOut )
+
+        Behaviour:  Same as $BrzSequence but RTZ phases overlap
+		    according to the specString specifications
+
+                        ,---.*---
+        activate    ---o| ; |*---     activateOut
+                        '---'*---
+
+    $BrzLoop
+
+        $BrzLoop ( passive sync activate;
+            active sync activateOut )
+
+        Behaviour:  activate : #[ activateOut ]
+
+                        ,---.
+        activate    ---o| * |*---     activateOut
+                        `---'
+
+    $BrzWhile
+
+        $BrzWhile ( passive sync activate;
+            active input guard : 1 bits;
+            active sync activateOut )
+
+        Behaviour:  #[ activate :
+            #[ guard ; [ guard=1 -> activateOut [] guard=0 -> break ] ] ]
+
+                        ,---.*<--    guard
+        activate    ---o| do|*---    activateOut
+                        `---'
+
+    $BrzBar
+
+        $BrzBar ( parameter guardCount : cardinal;
+            passive output guard : 1 bits;
+            passive sync activate;
+            array guardCount of active input guardInput : 1 bits;
+            array guardCount of active sync activateOut )
+
+        Behaviour:  #[ guard : ((guardInput[0] || guardInput[1]
+            ... || ... guardInput[guardCount-1]) ;
+            [ activate : [true_guard (guardInput[0..guardCount-1]) != -1 ->
+            	activateOut[true_guard (guardInput[0..guardCount-1])] ] ]
+
+            true_guard guards =
+            	let
+            		find_guard n = if n >= #guards then -1 else
+						guards[n] then n else find_guard (n + 1)
+            	in
+            		find_guard 0
+
+                        ,---.*<--    guardInput[0]
+        guard       <--o| []|*---    activateOut[0]
+        activate    ---o|   |*<--    guardInput[n]
+                        `---'*---    activateOut[n]
+
+    $BrzFalseVariable
+
+        $BrzFalseVariable ( parameter width : cardinal;
+            parameter readPortCount : cardinal;
+            passive input write :  width bits;
+            active sync activateOut;
+            array readPortCount of passive output read )
+
+        Behaviour:  #[ pref#[ write ] ; activateOut : pref#[ [read[0] [] read[1] ... [] ...
+            read[readPortCount-1] ] ] ]
+
+                     ,---.o-->
+        write    -->o| FV|o-->    read
+                     `---'*---    activateOut
+
+    $BrzActiveEagerFalseVariable
+
+        $BrzActiveEagerFalseVariable ( parameter width : cardinal;
+            parameter readPortCount : cardinal;
+            parameter specification : String;
+            passive sync activate;
+            active input write :  width bits;
+            active sync activateOut;
+            array readPortCount of passive output read )
+
+        Behaviour:  #[ activate: (activateOut ; pref#[ write ] : pref#[ [read[0] [] read[1] ... [] ...
+            read[readPortCount-1] ] ] ) ]
+
+                     ,----.*---    activateOut
+        activate ---o|aeFV|
+        write    -->*|    |o-->    read
+                     `----'o-->
+
+    $BrzPassiveEagerFalseVariable
+
+        $BrzPassiveEagerFalseVariable ( parameter width : cardinal;
+            parameter readPortCount : cardinal;
+            parameter specification : String;
+            passive sync activate;
+            passive input write :  width bits;
+            active sync activateOut;
+            array readPortCount of passive output read )
+
+        Behaviour:  #[ activate: (activateOut ; pref#[ write ] : pref#[ [read[0] [] read[1] ... [] ...
+            read[readPortCount-1] ] ] ) ]
+
+                     ,----.*---    activateOut
+        activate ---o|peFV|
+        write    -->o|    |o-->    read
+                     `----'o-->
+
+    $BrzPassiveSyncEagerFalseVariable
+
+        $BrzPassiveSyncEagerFalseVariable ( passive sync activate;
+            passive sync write;
+            active sync activateOut )
+
+        Behaviour:  #[ activate: (activateOut ; write ) ]
+
+                     ,----.
+        activate ---o|peFV|
+        write    ---o|    |*---    activateOut
+                     `----'
+
+    $BrzDecisionWait
+
+        $BrzDecisionWait ( parameter portCount : cardinal;
+            passive sync activate;
+            array portCount of passive sync inp;
+            array portCount of active sync out )
+
+        Behaviour: #[ activate : [inp[0] -> out[0] [] inp[1] -> out[1] ... [] ...
+            inp[portCount-1] -> out[portCount-1]] ]
+
+        activate    ---o,---.*---
+        inp         ---o| DW|*---     out
+                    ---o`---'*---
+
+    $BrzArbiter
+
+        $BrzArbiter ( sync inpA, inpB, outA, outB )
+
+        Behaviour: #[ [inpA ; outA [] inpB ; outB ] ]
+
+        inpA    ---o,---.*---   outA
+                    |(> |
+        inpB    ---o`---'*---   outB
+
+5. Control - Datapath component
+
+    $BrzFetch
+
+        $BrzFetch ( parameter width : cardinal;
+            passive sync activate;
+            active input inp : width bits;
+            active output out : width bits )
+
+        Behaviour:  #[ activate : (inp ; out) ]
+
+        activate   ---o,---.
+        inp        -->*| T |*-->     out
+                       '---'
+
+    $BrzCase
+
+        $BrzCase ( parameter inputWidth : cardinal;
+            parameter outputCount : cardinal;
+            parameter specification : String;
+            passive input inp : inputWidth bits;
+            array outputCount of active sync activateOut )
+
+        Behaviour: #[ inp : [spec(0,inp)->activateOut[0] | ...
+            | spec(outputCount-1,inp)->activateOut[outputCount-1]] ]
+
+                       ,---.*---
+        inp        -->o| @ |*---     activateOut
+                       '---'*---
+
+    $BrzEncode
+
+        $BrzEncode ( parameter outputWidth : cardinal;
+            parameter inputCount : cardinal;
+            parameter specification : String;
+            array inputCount of passive sync inp;
+            active output out : outputWidth bits )
+        
+        Behaviour: #[ [inp[0] : out!spec(0) | inp[1] : out!spec(1) | ... | inp[n] : out!spec(2)] ]
+
+                   ---o,---.
+        inp        ---o| @ |*-->     out
+                   ---o'---'
+
+    $BrzCallDemuxPush
+
+        $BrzCallDemuxPush ( parameter width : cardinal;
+            parameter outputCount : cardinal;
+            passive input inp : width bits;
+            array outputCount of active output out : width bits )
+
+        Behaviour:  #[ inp : out[i] ] where 0 <= i < outputCount
+
+                   ,---------.*-->
+        inp    -->o| -< -> ! |*-->     out
+                   `---------'*-->
+
+    $BrzCallActive        CallActive
+
+        $BrzCallActive ( parameter outputCount : cardinal;
+            passive sync inp;
+            array outputCount of active sync out )
+
+        Behaviour:  #[ inp : out[i] ] where 0 <= i < outputCount
+
+                   ,------.*---
+        inp    ---o| -< ! |*---     out
+                   `------'*---
+
+6. Simulation only components
+
+    $BrzBuiltinVariable
+
+        $BrzBuiltinVariable ( parameter readPortCount : cardinal;
+            parameter name : String;
+            passive input write : 64 bits;
+            array readPortCount of output read : 64 bits )
+
+        Behaviour:  Implemented for builtin types in simulation, otherwise
+			like Variable
+
+                     ,---.o-->
+        write    -->o| V |o-->    read
+                     `---'o-->
+

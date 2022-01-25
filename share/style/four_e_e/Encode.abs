@@ -1,0 +1,23 @@
+(nodes
+	("c" (param "inputCount") 0 1)
+	("t" (param "inputCount") 0 1)
+	("rout" (param "inputCount") 0 1)
+	("routd0" 1 0 1)
+	("routd1" 1 0 1)
+)
+(gates
+	(nor (node "c") (combine (req (each "inp"))) (combine (ack (each "inp"))))
+	(inv (node "t") (node "c"))
+	(encode and-or (param "specification") (node "c") (node "t") (data "out"))
+	
+	(cell "e-element"
+		(combine (req (each "inp")))
+		(combine (ack (each "inp")))
+		(node "rout")
+		(combine (dup (param "inputCount") (ack "out")))
+	)
+	(or (req "out") (smash (node "rout")))
+	;;; delay needed to ensure data is valid before sending (req out)
+	;;(and (node "routd1") (node "routd0") (node "routd0"))
+	;;(and (req "out") (node "routd1") (node "routd0"))
+)

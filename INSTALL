@@ -1,0 +1,117 @@
+
+ |_  _ |  _ _   [ The Balsa Synthesis System ]
+ |_)(_\|_/ (_\  Version 4.0 
+
+    (C) 1995-2010 School of Computer Science,
+    The University of Manchester,
+    Manchester
+    M13 9PL, UK
+    email: balsa@cs.man.ac.uk
+
+
+The Balsa toolkit is made of the following components:
+ * Balsa Core (required): compiler, GUI, command-line simulation
+ * Visualisation System (optional): Handshake circuit rendering, graphical simulation tool
+ * Synthesis Backend (optional)
+ * User Manual (optional)
+
+It is advised to install all the packages.
+
+====================================================================================
+==  To install Balsa 4.0 from source:                                             ==
+====================================================================================
+Get:
+
+  -------------------------
+ -- Balsa Core (required) --
+  -------------------------
+The Balsa package:
+ftp://ftp.cs.man.ac.uk/pub/amulet/balsa/4.0/balsa-4.0.tar.gz
+
+Requirements:
+GCC >= 3.2 
+GLIB >= 1.2.0
+GTK >= 2.0
+GNU libgmp multiprecision arithmetic library >= 4.1
+GNU guile Scheme interpreter >= 1.3
+
+  -----------------------------------
+ -- Visualisation System (optional) --
+  -----------------------------------
+Dot (from Graphviz):
+ftp://ftp.cs.man.ac.uk/pub/amulet/balsa/other-software/graphviz-2.26.3.tar.gz
+
+  --------------------------------
+ -- Synthesis Backend (optional) --
+  --------------------------------
+Espresso:
+ftp://ftp.cs.man.ac.uk/pub/amulet/balsa/other-software/espresso-ab-1.0.tar.gz
+
+Example technology package:
+ftp://ftp.cs.man.ac.uk/pub/amulet/balsa/4.0/balsa-tech-example-4.0.tar.gz
+
+Verilog simulators wrapper:
+ Please read INSTALL_VerilogSimulators
+
+For technology packages to support real cell libraries, please contact us (balsa@cs.man.ac.uk).
+
+  --------------------------
+ -- User Manual (optional) --
+  --------------------------
+The Balsa User Manual:
+ftp://ftp.cs.man.ac.uk/pub/amulet/balsa/3.5/BalsaManual3.5.pdf
+
+
+******************************  INSTALLATION  ******************************
+
+1) cd to a convenient build directory and get all the packages listed above
+
+2) Choose a handy installation directory, eg. /usr/local/balsa, and add that
+    directory to your shell paths:
+	PATH=/usr/local/balsa/bin:${PATH}
+	LD_LIBRARY_PATH=/usr/local/balsa/lib:${LD_LIBRARY_PATH}
+   For MacOSX, use:
+	PATH=/usr/local/balsa/bin:${PATH}
+	export LDFLAGS="${LDFLAGS} -L/usr/local/balsa/lib"
+	export CFLAGS="-O2 -g -Wall -I/usr/local/balsa/include"
+
+3) Install the Balsa package:
+	tar xzf balsa-4.0.tar.gz
+	cd balsa-4.0
+	./configure --prefix=/usr/local/balsa
+	make install
+	cd ..
+
+4) Install the other optional packages:
+    tar xzf espresso-ab-1.0.tar.gz
+	cd espresso-ab-1.0
+	./configure --prefix=/usr/local/balsa
+	make install
+	cd ..
+
+4b) Install dot if you want the visualisation system
+		* Either from the graphviz package (better)
+	tar xzf graphviz-2.26.3.tar.gz
+	cd graphviz-2.26.3
+	./configure --prefix=/usr/local/balsa
+	make install
+	cd ..
+
+5) Check that the executables espresso and dot are visible in the path
+	which espresso
+	which dot
+
+6) Check that the executable balsa-config is visible
+	which balsa-config
+
+7) Install the example technology package
+	tar xzf balsa-tech-example-4.0.tar.gz
+	cd balsa-tech-example-4.0
+	./configure   # Note, no prefix!
+	# Configure should find the Balsa installation
+	make install
+	cd ..
+
+8) If you need Verilog simulation, please continue with the
+instructions in INSTALL_VerilogSimulators in the package balsa-sim-verilog from
+    ftp://ftp.cs.man.ac.uk/pub/amulet/balsa/4.0/balsa-sim-verilog-4.0.tar.gz

@@ -1,0 +1,34 @@
+(defines
+	(plural (> (param "width") 1)) ;; more than one
+	(width-even (quotient (param "width") 2))
+	(width-odd (quotient (+ (param "width") 1) 2))
+)
+(nodes)
+(gates
+	(c-element
+		(combine (ack0 (each "out")))
+		(combine (dup-each width-odd (req (each "out"))))
+		(combine (dup (param "outputCount") (ack0 "inp")))
+	)
+	(c-element
+		(combine (ack1 (each "out")))
+		(combine (dup-each width-odd (req (each "out"))))
+		(combine (dup (param "outputCount") (ack1 "inp")))
+	)
+	(if plural
+		(gates
+			(c-element
+				(combine (ack2 (each "out")))
+				(combine (dup-each width-even (req (each "out"))))
+				(combine (dup (param "outputCount") (ack2 "inp")))
+			)
+			(c-element
+				(combine (ack3 (each "out")))
+				(combine (dup-each width-even (req (each "out"))))
+				(combine (dup (param "outputCount") (ack3 "inp")))
+			)
+		)
+	)
+	(or (req "inp") (req (each "out")))
+)
+(connections)

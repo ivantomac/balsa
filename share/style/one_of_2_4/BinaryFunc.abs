@@ -1,0 +1,1723 @@
+(defines
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;					Cells					;;
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	(dual-rail-and
+		(case logic-type
+			(("ncl") "dual-rail-and2-ncl")
+			(else "dual-rail-and2")
+		)
+	)
+	(dual-rail-or
+		(case logic-type
+			(("ncl") "dual-rail-or2-ncl")
+			(else "dual-rail-or2")
+		)
+	)
+	(dual-rail-xor
+		(case logic-type
+			(("ncl") "dual-rail-xor2-ncl")
+			(else "dual-rail-xor2")
+		)
+	)
+	(dual-rail-half-adder
+		(case logic-type
+			(("ncl") "dual-rail-half-adder-ncl")
+			(else "dual-rail-half-adder-bal")
+		)
+	)
+	(dual-rail-full-adder
+		(case logic-type
+			(("ncl") "dual-rail-ncl-adder")
+			(else "dual-rail-dims-adder")
+		)
+	)
+	(dual-rail-full-adder-primed
+		(case logic-type
+			(("ncl") "dual-rail-full-adder-primed-ncl")
+			(else "dual-rail-full-adder-primed")
+		)
+	)
+	(one-of-four-full-adder
+		(case logic-type
+			(("ncl") "one-of-four-ncl-full-adder")
+			(else "one-of-four-dims-full-adder")
+		)
+	)
+	(one-of-four-full-adder-overflow
+		(case logic-type
+			(("ncl") "one-of-four-ncl-full-adder-overflow")
+			(else "one-of-four-dims-full-adder-overflow")
+			
+		)
+	)
+	(one-of-four-carry-adder
+		(case logic-type
+			(("ncl") "one-of-four-ncl-carry-adder")
+			(else "one-of-four-dims-carry-adder")
+		)
+	)
+	(one-of-four-carry-adder-overflow
+		(case logic-type
+			(("ncl") "one-of-four-ncl-carry-adder-overflow")
+			(else "one-of-four-dims-carry-adder-overflow")
+		)
+	)
+	(one-of-four-dual-rail-carry-adder
+		(case logic-type
+			(("ncl") "one-of-four-dual-rail-ncl-carry-adder")
+			(else "one-of-four-dual-rail-dims-carry-adder")
+		)
+	)
+	(one-of-four-dual-rail-carry-adder-overflow
+		(case logic-type
+			(("ncl") "one-of-four-dual-rail-ncl-carry-adder-overflow")
+			(else "one-of-four-dual-rail-dims-carry-adder-overflow")
+		)
+	)
+	(one-of-four-primed-carry-adder
+		(case logic-type
+			(("ncl") "one-of-four-ncl-primed-carry-adder")
+			(else "one-of-four-dims-primed-carry-adder")
+		)
+	)
+	(one-of-four-primed-carry-adder-overflow
+		(case logic-type
+			(("ncl") "one-of-four-ncl-primed-carry-adder-overflow")
+			(else "one-of-four-dims-primed-carry-adder-overflow")
+		)
+	)
+	(one-of-four-dual-rail-primed-carry-adder
+		(case logic-type
+			(("ncl") "one-of-four-dual-rail-ncl-primed-carry-adder")
+			(else "one-of-four-dual-rail-dims-primed-carry-adder")
+		)
+	)
+	(one-of-four-dual-rail-primed-carry-adder-overflow
+		(case logic-type
+			(("ncl") "one-of-four-dual-rail-ncl-primed-carry-adder-overflow")
+			(else "one-of-four-dual-rail-dims-primed-carry-adder-overflow")
+		)
+	)
+	(one-of-four-and
+		(case logic-type
+			(("ncl") "one-of-four-ncl-and2")
+			(else "one-of-four-dims-and2")
+		)
+	)
+	(one-of-four-or
+		(case logic-type
+			(("ncl") "one-of-four-ncl-or2")
+			(else "one-of-four-dims-or2")
+		)
+	)
+	(one-of-four-xor
+		(case logic-type
+			(("ncl") "one-of-four-ncl-xor2")
+			(else "one-of-four-dims-xor2")
+		)
+	)
+	(one-of-four-greater-than
+		(case logic-type
+			(("ncl") "one-of-four-ncl-greater-than")
+			(else "one-of-four-dims-greater-than")
+		)
+	)
+	(one-of-four-less-than
+		(case logic-type
+			(("ncl") "one-of-four-ncl-less-than")
+			(else "one-of-four-dims-less-than")
+		)
+	)
+	(one-of-four-dual-rail-greater-than
+		(case logic-type
+			(("ncl") "one-of-four-dual-rail-ncl-greater-than")
+			(else "one-of-four-dual-rail-dims-greater-than")
+		)
+	)
+	(one-of-four-dual-rail-less-than
+		(case logic-type
+			(("ncl") "one-of-four-dual-rail-ncl-less-than")
+			(else "one-of-four-dual-rail-dims-less-than")
+		)
+	)
+	(dual-rail-greater-than
+		(case logic-type
+			(("ncl") "dual-rail-ncl-greater-than")
+			(else "dual-rail-dims-greater-than")
+		)
+	)
+	(dual-rail-less-than
+		(case logic-type
+			(("ncl") "dual-rail-ncl-less-than")
+			(else "dual-rail-dims-less-than")
+		)
+	)
+	(one-of-four-comp
+		(case logic-type
+			(("ncl") "one-of-four-ncl-comp")
+			(else "one-of-four-dims-comp")
+		)
+	)
+	(one-of-four-dual-rail-comp
+		(case logic-type
+			(("ncl") "one-of-four-dual-rail-ncl-comp")
+			(else "one-of-four-dual-rail-dims-comp")
+		)
+	)
+	(one-of-four-dual-rail-signed-comp
+		(case logic-type
+			(("ncl") "one-of-four-dual-rail-ncl-signed-comp")
+			(else "one-of-four-dual-rail-dims-signed-comp")
+		)
+	)
+	(one-of-four-inequal
+		(case logic-type
+			(("ncl") "one-of-four-ncl-inequal")
+			(else "one-of-four-dims-inequal")
+		)
+	)
+	(one-of-four-dual-rail-inequal
+		(case logic-type
+			(("ncl") "one-of-four-dual-rail-ncl-inequal")
+			(else "one-of-four-dual-rail-dims-inequal")
+		)
+	)
+	(one-of-three-comp
+		(case logic-type
+			(("ncl") "one-of-three-ncl-comp")
+			(else "one-of-three-dims-comp")
+		)
+	)
+	(one-of-three-dual-rail-comp
+		(case logic-type
+			(("ncl") "one-of-three-dual-rail-ncl-comp")
+			(else "one-of-three-dual-rail-dims-comp")
+		)
+	)
+	(dual-rail-comp
+		(case logic-type
+			(("ncl") "dual-rail-ncl-comp")
+			(else "dual-rail-dims-comp")
+		)
+	)
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;					Operation types					;;
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	(logical-op (case (param "op") (("And" "Or" "Xor") #t) (else #f)))
+	(arith-op (case (param "op") (("Add" "Subtract") #t) (else #f)))
+	(subtractive-op (= (param "op") "Subtract"))
+	(equality-op (case (param "op") (("Equals" "NotEquals") #t) (else #f)))
+	(inequality-op
+		(case (param "op")
+			  (("LessThan" "GreaterThan" "LessOrEquals" "GreaterOrEquals") #t)
+			  (else #f)
+		)
+	)
+	(lt-op 
+		(case (param "op")
+			  (("LessThan" "GreaterOrEquals") #t)
+				(else #f)
+		)
+	)
+	(gt-op 
+		(case (param "op")
+			  (("GreaterThan" "LessOrEquals") #t)
+				(else #f)
+		)
+	)
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;					Signedness						;;
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	(output-width (param "outputWidth"))
+	(output-width-even (quotient output-width 2))
+	(output-width-odd (quotient (+ output-width 1) 2))
+	
+	(max-input-width (max (param "inputAWidth") (param "inputBWidth")))
+	
+	(max-width
+		(if (or equality-op inequality-op) max-input-width
+			(min output-width max-input-width)
+		)
+	)
+	(a-width (min max-width (param "inputAWidth")))
+	(a-width-even (quotient a-width 2))
+	(a-width-odd (quotient (+ a-width 1) 2))
+	(a-signed (= "true" (param "inputAIsSigned")))
+	
+	(b-width (min max-width (param "inputBWidth")))
+	(b-width-even (quotient b-width 2))
+	(b-width-odd (quotient (+ b-width 1) 2))
+	(b-signed (= "true" (param "inputBIsSigned")))
+	
+	
+	(a-is-widest (>= (param "inputAWidth") (param "inputBWidth")))
+	(equal-width (= (param "inputAWidth") (param "inputBWidth")))
+	
+	(w-width (if a-is-widest a-width b-width))
+	(w-width-odd (if a-is-widest a-width-odd b-width-odd))
+	(w-width-even (if a-is-widest a-width-even b-width-even))
+	
+	(n-width (if a-is-widest b-width a-width))
+	(n-width-odd (if a-is-widest b-width-odd a-width-odd))
+	(n-width-even (if a-is-widest b-width-even a-width-even))
+	
+	(n-signed (if a-is-widest b-signed a-signed))
+	(w-signed (if a-is-widest a-signed  b-signed))
+	
+	; doing signed x unsigned need to extend range of the unsigned input
+	; giving an extra bit to the output if the unsigned number is
+    ; larger or equal in length to the signed number
+	(signed-unsigned-op
+		(and (not logical-op)
+			(or (not arith-op) (> output-width w-width)) 
+			(/= w-signed n-signed)
+			(or (not w-signed) ; unsigned is largest or equal
+				(and w-signed (= w-width n-width)) ; unsigned is equal
+			)
+		)
+	)
+	(signed-op (or n-signed w-signed))
+	(lt-inequality-op
+		(if (or (and lt-op a-is-widest) (and gt-op (not a-is-widest))) #t #f)
+	)
+	(gt-inequality-op
+		(if (or (and gt-op a-is-widest) (and lt-op (not a-is-widest))) #t #f)
+	)
+	(oof-ineq-lsb-cell
+		(if gt-inequality-op
+			one-of-four-greater-than
+			one-of-four-less-than
+		)
+	)
+	(oof-dr-ineq-lsb-cell
+		(if gt-inequality-op
+			one-of-four-dual-rail-greater-than
+			one-of-four-dual-rail-less-than
+		)
+	)
+	(oof-logical-cell
+		(cond
+			((= (param "op") "And") one-of-four-and)
+			((= (param "op") "Or") one-of-four-or)
+			((= (param "op") "Xor") one-of-four-xor)
+		))
+	(dr-logical-cell
+		(cond 
+			((= (param "op") "And") dual-rail-and)
+			((= (param "op") "Or") dual-rail-or)
+			((= (param "op") "Xor") dual-rail-xor)
+		))
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;; 		  Widths of wide and narrow inputs			;;
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	
+
+	(full-add-width
+		(+ 
+			(if signed-unsigned-op 
+				1
+				0
+			)
+			w-width
+		)
+	)
+	(full-add-width-odd 
+		(+ 
+			(if (and signed-unsigned-op (= w-width-even w-width-odd))
+				1
+				0
+			)
+			w-width-odd
+		)
+	)
+	(full-add-width-even 
+		(+ 
+			(if (and signed-unsigned-op (/= w-width-even w-width-odd))
+				1
+				0
+			)
+			w-width-even
+		)
+	)
+	
+	(n-extend-width (- full-add-width n-width))
+	(n-extend-width-odd (- full-add-width-even n-width-even)) ;; Treat last bit as special case
+	(n-extend-width-even (- full-add-width-even n-width-odd))
+	
+	
+	(out-extend-width (- output-width full-add-width))
+	(out-extend-width-odd (- output-width-even full-add-width-even)) ;; ditto
+	(out-extend-width-even (- output-width-even full-add-width-odd))
+	
+	
+	(a-plural (> a-width-even 0))
+	(a-odd (/= a-width-even a-width-odd))
+	
+	(b-plural (> b-width-even 0))
+	(b-odd (/= b-width-even b-width-odd))
+	
+	(n-plural (> n-width-even 0))
+	(n-odd (/= n-width-even n-width-odd))
+	
+	(w-plural (> w-width-even 0))
+	(w-odd (/= w-width-even w-width-odd))
+	
+	(fa-plural (> full-add-width-even 0))
+	(fa-odd (/= full-add-width-even full-add-width-odd))
+	(next-plural (> n-extend-width-even 0))
+	(next (> n-extend-width 0))
+	(next-odd (/= n-extend-width-even n-extend-width-odd))
+	
+	(oext-plural (> out-extend-width-even 0)) 	
+	(oext (> out-extend-width 0))
+	(oext-odd (/= out-extend-width-even out-extend-width-odd))
+	
+	(dr-carry-overflow (and signed-op oext (not fa-odd) (= n-extend-width-odd 1)))
+	(overflow (and signed-op oext (not fa-odd)))
+	
+	(inequality-n-extend-width-even (if w-odd n-extend-width-even (- n-extend-width-even 1)))
+	(inequality-fa-extend-width-even (if fa-odd n-extend-width-even (- n-extend-width-even 1)))
+	
+	(sign-extend (lambda (inp-name inp-code inp-width out-name out-code out-width extend-name sign ext0-name ext0-code ext1-name ext1-code invert) 
+		(let	;; Remember Ext0 and Ext1 must slices to use for those values if not inverted, as normal-op extend with zeros ext0 must be level 1 value i.e. req
+			(
+				(inv (eval invert))
+				(i-n0 (cond 
+						((= (eval inp-code) 0) `(node (bundle ,inp-name ,(if inv 3 0))))
+						((= (eval inp-code) 1) `(,(if inv 'req3 'req0) ,inp-name))
+						((= (eval inp-code) 2) `(,(if inv 'ack3 'ack0) ,inp-name))
+				))
+				(i-n1 (cond 
+						((= (eval inp-code) 0) `(node (bundle ,inp-name ,(if inv 2 1))))
+						((= (eval inp-code) 1) `(,(if inv 'req2 'req1) ,inp-name))
+						((= (eval inp-code) 2) `(,(if inv 'ack2 'ack1) ,inp-name))
+				))
+				(i-n2 (cond 
+						((= (eval inp-code) 0) `(node (bundle ,inp-name ,(if inv 1 2))))
+						((= (eval inp-code) 1) `(,(if inv 'req1 'req2) ,inp-name))
+						((= (eval inp-code) 2) `(,(if inv 'ack1 'ack2) ,inp-name))
+				))
+				(i-n3 (cond 
+						((= (eval inp-code) 0) `(node (bundle ,inp-name ,(if inv 0 3))))
+						((= (eval inp-code) 1) `(,(if inv 'req0 'req3) ,inp-name))
+						((= (eval inp-code) 2) `(,(if inv 'ack0 'ack3) ,inp-name))
+				))
+				(o-n0 (cond 
+						((= (eval out-code) 0) `(node (bundle ,out-name 0)))
+						((= (eval out-code) 1) `(req0 ,out-name))
+						((= (eval out-code) 2) `(ack0 ,out-name))
+				))
+				(o-n1 (cond 
+						((= (eval out-code) 0) `(node (bundle ,out-name 1)))
+						((= (eval out-code) 1) `(req1 ,out-name))
+						((= (eval out-code) 2) `(ack1 ,out-name))
+				))
+				(o-n2 (cond 
+						((= (eval out-code) 0) `(node (bundle ,out-name 2)))
+						((= (eval out-code) 1) `(req2 ,out-name))
+						((= (eval out-code) 2) `(ack2 ,out-name))
+				))
+				(o-n3 (cond 
+						((= (eval out-code) 0) `(node (bundle ,out-name 3)))
+						((= (eval out-code) 1) `(req3 ,out-name))
+						((= (eval out-code) 2) `(ack3 ,out-name))
+				))
+				(e0-n (cond 
+						((= (eval ext0-code) 0) `(node (bundle ,ext0-name 0)))
+						((= (eval ext0-code) 1) `(req ,ext0-name))
+						((= (eval ext0-code) 2) `(ack ,ext0-name))
+						((= (eval ext0-code) 3) `(node ,ext0-name))
+				))
+				(e1-n (cond 
+						((= (eval ext1-code) 0) `(node (bundle ,ext1-name 1)))
+						((= (eval ext1-code) 1) `(req ,ext1-name))
+						((= (eval ext1-code) 2) `(ack ,ext1-name))
+						((= (eval ext1-code) 3) `(node ,ext1-name))
+				))
+				(e-x0 `(node (bundle ,extend-name 0)))
+				(e-x1 `(node (bundle ,extend-name 1)))
+				(i-w-o (quotient (+ (eval inp-width) 1) 2))
+				(i-w-e (quotient (eval inp-width) 2))
+				(o-w-o (quotient (+ (eval out-width) 1) 2))
+				(o-w-e (quotient (eval out-width) 2))
+				(e-w-o (- o-w-e i-w-e))
+				(e-w-e (- o-w-e i-w-o))
+				(inp-odd (/= i-w-o i-w-e))
+				(inp-plural (> i-w-e 0))
+				(out-odd (/= o-w-o o-w-e))
+				(out-plural (> o-w-e 0))
+				(ext-odd (/= e-w-o e-w-e))
+				(ext-plural (> e-w-e 0))
+				(sgn (eval sign))
+				(no-ext (or (= (eval inp-width) (eval out-width)) (> (eval inp-width) (eval out-width))))
+				(truncate (> (eval inp-width) (eval out-width)))
+				(gts-lst (if no-ext `() `(
+					,@(if sgn ;; Signed 
+							(if inp-odd 
+								`(
+									(connect (slice ,i-w-e 1 ,i-n0) ,e-x0)
+									(connect (slice ,i-w-e 1 ,i-n1) ,e-x1)
+								)
+								`(
+									(or ,e-x0 (slice (- ,i-w-e 1) 1 ,i-n0) (slice (- ,i-w-e 1) 1 ,i-n1)) 
+									(or ,e-x1 (slice (- ,i-w-e 1) 1 ,i-n2) (slice (- ,i-w-e 1) 1 ,i-n3))
+								)
+							)
+							`(
+								(connect ,e0-n ,(if inv e-x1 e-x0))
+								(connect ,e1-n ,(if inv e-x0 e-x1)) ;; Extend with zeros (One if Invert)
+							)
+						)
+					,@(if inp-plural
+						`(
+							(connect (slice 0 ,i-w-e ,i-n0) (slice 0 ,i-w-e ,o-n0))
+							(connect (slice 0 ,i-w-e ,i-n1) (slice 0 ,i-w-e ,o-n1))
+							(connect (slice 0 ,i-w-e ,i-n2) (slice 0 ,i-w-e ,o-n2))
+							(connect (slice 0 ,i-w-e ,i-n3) (slice 0 ,i-w-e ,o-n3))
+						 )
+						 `()
+						)
+					,@(if inp-odd ;; Create first code group
+							(if sgn
+								`(
+									(connect (slice ,i-w-e 1 ,(if inv i-n3 i-n0)) (slice ,i-w-e 1 ,o-n0)) ;; Remember if inv i3 = i0
+									(gnd (slice ,i-w-e 1 ,o-n1))
+									(gnd (slice ,i-w-e 1 ,o-n2))
+									(connect (slice ,i-w-e 1 ,(if inv i-n2 i-n1)) (slice ,i-w-e 1 ,o-n3))
+								)
+								`( ;; Can use fact that if inp-odd and extending must have code group
+									(c-element (slice ,i-w-e 1 ,o-n0) 
+										,e-x0 (slice ,i-w-e 1 ,(if inv i-n3 i-n0)))
+									(c-element (slice ,i-w-e 1 ,o-n1) 
+										,e-x0 (slice ,i-w-e 1 ,(if inv i-n2 i-n1)))
+									(c-element (slice ,i-w-e 1 ,o-n2) 
+											,e-x1 (slice ,i-w-e 1 ,(if inv i-n3 i-n0)))
+									(c-element (slice ,i-w-e 1 ,o-n3) 
+											,e-x1 (slice ,i-w-e 1 ,(if inv i-n2 i-n1)))
+								)
+							)
+							`()
+						)
+					,@(if ext-plural
+							`(
+								(connect ,e-x0 (smash (slice ,i-w-o ,e-w-e ,o-n0)))
+								(gnd (slice ,i-w-o ,e-w-e ,o-n1))
+								(gnd (slice ,i-w-o ,e-w-e ,o-n2))
+								(connect ,e-x1 (smash (slice ,i-w-o ,e-w-e ,o-n3)))
+							)
+							`()
+						)
+					,@(if out-odd
+						`(
+							(connect ,e-x0 (slice ,o-w-e 1 ,o-n0))
+							(connect ,e-x1 (slice ,o-w-e 1 ,o-n1))			 
+						)
+						`()
+					)
+				)))
+			)
+			(if no-ext
+				`(gates
+					,@(if out-plural
+							`(
+								(connect (slice 0 ,o-w-e ,i-n0) (slice 0 ,o-w-e ,o-n0))
+								(connect (slice 0 ,o-w-e ,i-n1) (slice 0 ,o-w-e ,o-n1))
+								(connect (slice 0 ,o-w-e ,i-n2) (slice 0 ,o-w-e ,o-n2))
+								(connect (slice 0 ,o-w-e ,i-n3) (slice 0 ,o-w-e ,o-n3))
+						 	)
+							`()
+						)
+						,@(if out-odd
+							(if truncate
+								`(
+									(or (slice ,o-w-e 1 ,o-n0) (slice ,o-w-e 1 ,i-n0) (slice ,o-w-e 1 ,i-n2))
+									(or (slice ,o-w-e 1 ,o-n1) (slice ,o-w-e 1 ,i-n1) (slice ,o-w-e 1 ,i-n3))
+								)
+								`(
+									(connect (slice ,o-w-e 1 ,(if inv i-n2 i-n0)) (slice ,o-w-e 1 ,o-n0)) ;; If invert o-n0 = n1; so need to connect n
+									(connect (slice ,o-w-e 1 ,(if inv i-n3 i-n1)) (slice ,o-w-e 1 ,o-n1))
+								)
+							)
+							`()
+						)
+				)
+				(cons 'gates gts-lst)
+			)
+		)
+	))
+	;define tree-building macros (for comparators)
+	(binary-tree-macro (lambda (cell width input-index o-node inp0 inp1 int0 int1)
+		(let
+			((cell-name (eval cell))
+			 (input-count (eval width))
+			)
+			(if (= 1 input-count)
+				`(gates
+					(connect (slice ,input-index 1 ,inp1)
+						(slice ,o-node 1 ,int1)
+					)
+					(connect (slice ,input-index 1 ,inp0)
+						(slice ,o-node 1 ,int0)
+					)
+				)
+				(if (= 2 input-count)
+					`(cell ,cell-name
+						 (slice ,input-index 1 ,inp0)
+						 (slice ,input-index 1 ,inp1)
+						 (slice (+ 1 ,input-index) 1 ,inp0)
+						 (slice (+ 1 ,input-index) 1 ,inp1)
+						 (slice ,o-node 1 ,int0)
+						 (slice ,o-node 1 ,int1)
+					)
+					(if (= 3 input-count)
+						(let
+							((half-conns (quotient input-count 2))
+							 (right-count (- input-count half-conns))
+							 (right-index (+ input-index half-conns))
+							 (right-node (+ o-node half-conns))
+							)
+							`(gates
+								(cell ,cell-name
+									(slice ,input-index 1 ,inp0)
+									(slice ,input-index 1 ,inp1)
+									(slice ,right-node 1 ,int0)
+									(slice ,right-node 1 ,int1)
+									(slice ,o-node 1 ,int0)
+									(slice ,o-node 1 ,int1)
+								)
+								(macro binary-tree-macro ,cell-name ,right-count ,right-index ,right-node ,inp0 ,inp1 ,int0 ,int1)
+							)
+						)
+						(let
+							((half-conns (quotient input-count 2))
+							 (left-node (+ o-node 1))
+							 (right-count (- input-count half-conns))
+							 (right-index (+ input-index half-conns))
+							 (right-node (+ o-node half-conns))
+							)
+							`(gates
+								(cell ,cell-name
+									(slice ,left-node 1 ,int0)
+									(slice ,left-node 1 ,int1)
+									(slice ,right-node 1 ,int0)
+									(slice ,right-node 1 ,int1)
+									(slice ,o-node 1 ,int0)
+									(slice ,o-node 1 ,int1)
+								)
+								(macro binary-tree-macro ,cell-name ,half-conns ,input-index ,left-node ,inp0 ,inp1 ,int0 ,int1)
+								(macro binary-tree-macro ,cell-name ,right-count ,right-index ,right-node ,inp0 ,inp1 ,int0 ,int1)
+							)
+						)
+					)
+				)
+			)
+		)
+	))
+	
+	(mixed-binary-tree-macro (lambda (cellA cellB width input-index o-node inp-i0 inp-i1 inp-i2 int-i0 int-i1 int-i2)
+		(let
+			((cellA-name (eval cellA))
+			 (cellB-name (eval cellB))
+			 (input-count (eval width))
+			)
+			(if (= 1 input-count)
+				`(gates
+					(connect (slice ,input-index 1 ,inp-i0)
+						(slice ,o-node 1 ,int-i0)
+					)
+					(connect (slice ,input-index 1 ,inp-i1)
+						(slice ,o-node 1 ,int-i1)
+					)
+				)
+				(if (= 2 input-count)
+					(if (= 0 input-index)
+						`(cell ,cellA-name
+							(slice 0 1 ,inp-i0)
+							(slice 0 1 ,inp-i1)
+							(slice 1 1 ,inp-i0)
+							(slice 1 1 ,inp-i1)
+							(slice 0 1 ,inp-i2)
+							(slice ,o-node 1 ,int-i0)
+							(slice ,o-node 1 ,int-i1)
+						)
+						`(cell ,cellB-name
+							(slice (+ 1 ,input-index) 1 ,inp-i0)
+							(slice (+ 1 ,input-index) 1 ,inp-i1)
+							(slice ,input-index 1 ,inp-i2)
+							(slice ,input-index 1 ,inp-i0)
+							(slice ,input-index 1 ,inp-i1)
+							(slice (- ,input-index 1) 1 ,inp-i2)
+							(slice ,o-node 1 ,int-i0)
+							(slice ,o-node 1 ,int-i1)
+							(slice (- ,full-add-width-odd ,o-node 2) 1 ,int-i2)
+						)
+					)
+					(if (= 3 input-count)
+						(let
+							((half-conns (quotient input-count 2))
+							 (right-count (- input-count half-conns))
+							 (right-index (+ input-index half-conns))
+							 (right-node (+ o-node half-conns))
+							)
+							`(gates
+								(if (= 0 ,input-index)
+									(cell ,cellA-name
+										(slice 0 1 ,inp-i0)
+										(slice 0 1 ,inp-i1)
+										(slice ,right-node 1 ,int-i0)
+										(slice ,right-node 1 ,int-i1)
+										(slice (- ,full-add-width-odd ,right-node 2) 1 ,int-i2)
+										(slice ,o-node 1 ,int-i0)
+										(slice ,o-node 1 ,int-i1)
+									)
+									(cell ,cellB-name
+										(slice ,right-node 1 ,int-i0)
+										(slice ,right-node 1 ,int-i1)
+										(slice (- ,full-add-width-odd ,right-node 2) 1 ,int-i2)
+										(slice ,input-index 1 ,inp-i0)
+										(slice ,input-index 1 ,inp-i1)
+										(slice (- ,input-index 1) 1 ,inp-i2)
+										(slice ,o-node 1 ,int-i0)
+										(slice ,o-node 1 ,int-i1)
+										(slice (- ,full-add-width-odd ,o-node 2) 1 ,int-i2)
+									)
+								)
+								(macro mixed-binary-tree-macro ,cellA-name ,cellB-name ,right-count ,right-index ,right-node ,inp-i0 ,inp-i1 ,inp-i2 ,int-i0 ,int-i1 ,int-i2)
+							)
+						)
+						(let
+							((half-conns (quotient input-count 2))
+							 (left-node (+ o-node 1))
+							 (right-count (- input-count half-conns))
+							 (right-index (+ input-index half-conns))
+							 (right-node (+ o-node half-conns))
+							)
+							`(gates
+								(if (= 0 ,input-index)
+									(cell ,cellA-name
+										(slice ,left-node 1 ,int-i0)
+										(slice ,left-node 1 ,int-i1)
+										(slice ,right-node 1 ,int-i0)
+										(slice ,right-node 1 ,int-i1)
+										(slice (- ,full-add-width-odd ,right-node 2) 1 ,int-i2)
+										(slice ,o-node 1 ,int-i0)
+										(slice ,o-node 1 ,int-i1)
+									)
+									(cell ,cellB-name
+										(slice ,right-node 1 ,int-i0)
+										(slice ,right-node 1 ,int-i1)
+										(slice (- ,full-add-width-odd ,right-node 2) 1 ,int-i2)
+										(slice ,left-node 1 ,int-i0)
+										(slice ,left-node 1 ,int-i1)
+										(slice (- ,full-add-width-odd ,left-node 2) 1 ,int-i2)
+										(slice ,o-node 1 ,int-i0)
+										(slice ,o-node 1 ,int-i1)
+										(slice (- ,full-add-width-odd ,o-node 2) 1 ,int-i2)
+									)
+								)
+								(macro mixed-binary-tree-macro ,cellA-name ,cellB-name ,half-conns ,input-index ,left-node ,inp-i0 ,inp-i1 ,inp-i2 ,int-i0 ,int-i1 ,int-i2)
+								(macro mixed-binary-tree-macro ,cellA-name ,cellB-name ,right-count ,right-index ,right-node ,inp-i0 ,inp-i1 ,inp-i2 ,int-i0 ,int-i1 ,int-i2)
+							)
+						)
+					)
+				)
+			)
+		)
+	))
+	
+	(dual-rail-orN (lambda (width inp0 inp1 out0 out1)
+		`(gates
+			(macro binary-tree-macro dual-rail-or ,width 0 0 ,inp0 ,inp1 (node "internalI0") (node "internalI1"))
+			(connect (slice 0 1 (node "internalI0")) (slice 0 1 ,out0))
+			(connect (slice 0 1 (node "internalI1")) (slice 0 1 ,out1))
+		)
+	))
+	
+	(ineq-comp-tree (lambda (width inp-i0 inp-i1 inp-i2 out0 out1)
+		`(gates
+			(macro mixed-binary-tree-macro one-of-three-dual-rail-comp one-of-three-comp ,width 0 0 ,inp-i0 ,inp-i1 ,inp-i2 (node "internalI0") (node "internalI1") (node "internalI2"))
+			(connect (slice 0 1 (node "internalI0")) (slice 0 1 ,out0))
+			(connect (slice 0 1 (node "internalI1")) (slice 0 1 ,out1))
+		)
+	))
+)
+(nodes
+	("ground" 1 0 1)
+	("nar" full-add-width-odd 0 4) ;; Narrow Input
+	("wid" full-add-width-odd 0 4) ;; Wide Input
+	("res" full-add-width-odd 0 4)
+	("res2" (+ full-add-width-odd 1) 0 4) ;; Another node for sign extending unsigned results, wasteful maybe but makes code a lot simpler
+	("carry" (+ full-add-width-odd 1) 0 4)
+	("s" 1 0 2) ;; sign extend
+	("v" 1 0 2) ;; overflow
+	("extendN" 1 0 2) ;; For sign extending narrow input
+	("extendW" 1 0 2) ;;  For sign extending wide input
+	("extendR" 1 0 2) ;;  For sign extending result
+	("extendR2" 1 0 2) ;;  For sign extending result
+	("oddLower" 1 0 2) ;; Odd smaller inputs, need to create d-r in wider input
+	("extendH" 1 0 2) ;; for or etc, where (A + 0) = A
+	("shiftL" 1 0 2) ;; for creating one-of-four groups in logic ops
+	("shiftH" 1 0 2)
+	("internalI1" (if (= full-add-width-odd 1) 1 (- full-add-width-odd 1)) 0 1)
+	("internalI0" (if (= full-add-width-odd 1) 1 (- full-add-width-odd 1)) 0 1)
+	("internalI2" (if (= full-add-width-odd 1) 1 (- full-add-width-odd 1)) 0 1)
+)
+(gates
+	(connect (req "out") (req "inpA") (req "inpB"))
+	(gnd (node "ground"))
+	(if a-is-widest
+		(gates
+			(if logical-op
+				(gates
+					(macro sign-extend "inpA" 2 (param "inputAWidth") "wid" 0 w-width "extendW" w-signed "out" 1 "ground" 3 #f)
+					(macro sign-extend "inpB" 2 (param "inputBWidth") "nar" 0 n-width "extendN" n-signed "out" 1 "ground" 3 #f)
+				)
+				(gates
+					(if signed-unsigned-op
+						(macro sign-extend "inpA" 2 (param "inputAWidth") "wid" 0 (+ w-width 1) "extendW" w-signed "out" 1 "ground" 3 #f)
+						(macro sign-extend "inpA" 2 (param "inputAWidth") "wid" 0 w-width "extendW" w-signed "out" 1 "ground" 3 #f)
+					)
+					(if n-signed
+						(macro sign-extend "inpB" 2 (param "inputBWidth") "nar" 0 full-add-width "extendN" n-signed "out" 1 "ground" 3 subtractive-op)
+						(macro sign-extend "inpB" 2 (param "inputBWidth") "nar" 0 n-width "extendN" n-signed "out" 1 "ground" 3 subtractive-op)
+					)
+				)
+			)
+		)
+		(gates
+			(if logical-op
+				(gates
+					(macro sign-extend "inpA" 2 (param "inputAWidth") "nar" 0 n-width "extendN" n-signed "out" 1 "ground" 3 #f)
+					(macro sign-extend "inpB" 2 (param "inputBWidth") "wid" 0 w-width "extendW" w-signed "out" 1 "ground" 3 #f)
+				)
+				(gates
+					(if signed-unsigned-op
+						(macro sign-extend "inpB" 2 (param "inputBWidth") "wid" 0 (+ w-width 1) "extendW" w-signed "out" 1 "ground" 3 subtractive-op)
+						(macro sign-extend "inpB" 2 (param "inputBWidth") "wid" 0 w-width "extendW" w-signed "out" 1 "ground" 3 subtractive-op)
+					)
+					(if n-signed
+						(macro sign-extend "inpA" 2 (param "inputAWidth") "nar" 0 full-add-width "extendN" n-signed "out" 1 "ground" 3 #f)
+						(macro sign-extend "inpA" 2 (param "inputAWidth") "nar" 0 n-width "extendN" n-signed "out" 1 "ground" 3 #f)
+						
+					)
+				)
+			)
+		)
+	)
+	(cond
+		(logical-op
+			(gates
+				(if n-plural
+					(cell oof-logical-cell 
+						(slice 0 n-width-even (node (bundle "nar" 0)))
+						(slice 0 n-width-even (node (bundle "nar" 1)))
+						(slice 0 n-width-even (node (bundle "nar" 2)))
+						(slice 0 n-width-even (node (bundle "nar" 3)))
+						(slice 0 n-width-even (node (bundle "wid" 0)))
+						(slice 0 n-width-even (node (bundle "wid" 1)))
+						(slice 0 n-width-even (node (bundle "wid" 2)))
+						(slice 0 n-width-even (node (bundle "wid" 3)))
+						(slice 0 n-width-even (node (bundle "res" 0)))
+						(slice 0 n-width-even (node (bundle "res" 1)))
+						(slice 0 n-width-even (node (bundle "res" 2)))
+						(slice 0 n-width-even (node (bundle "res" 3)))
+					)
+				)
+				(if n-odd
+					(if next
+						(gates
+							(or (node (bundle "oddLower" 0))
+								(slice n-width-even 1 (node(bundle "wid" 0)))
+								(slice n-width-even 1 (node(bundle "wid" 2)))
+							)
+							(or (node (bundle "oddLower" 1))
+								(slice n-width-even 1 (node(bundle "wid" 1)))
+								(slice n-width-even 1 (node(bundle "wid" 3)))
+							)
+						)
+						(gates
+							(connect 
+								(slice n-width-even 1 (node(bundle "wid" 0)))
+								(node (bundle "oddLower" 0))
+							)
+							(connect  
+								(slice n-width-even 1 (node(bundle "wid" 1)))
+								(node (bundle "oddLower" 1))
+							)
+						)
+					)
+				)
+				(case (param "op")
+					(("And") 
+						(gates
+							(if n-odd
+								(cell dual-rail-and ;; Calculate last bit
+									(slice n-width-even 1 (node (bundle "nar" 0)))
+									(slice n-width-even 1 (node (bundle "nar" 1)))
+									(node (bundle "oddLower" 0))
+									(node (bundle "oddLower" 1))
+									(slice n-width-even 1 (node (bundle "res" 0)))
+									(slice n-width-even 1 (node (bundle "res" 1)))
+								)
+							)
+							(macro sign-extend "res" 0 n-width "out" 2 output-width "extendR" #f "out" 1 "ground" 3 #f)
+						)
+					)
+					(("Or" "Xor")
+						(gates
+							(if next ;; If inputs aren't equal
+								(gates
+									(if n-odd ;; Must create new code group before extending
+										(gates
+											(cell dr-logical-cell
+												(slice n-width-even 1 (node (bundle "nar" 0)))
+												(slice n-width-even 1 (node (bundle "nar" 1)))
+												(node (bundle "oddLower" 0))
+												(node (bundle "oddLower" 1))
+												(node (bundle "shiftL" 0))
+												(node (bundle "shiftL" 1))
+											)
+											(or (node (bundle "shiftH" 0))
+												(slice n-width-even 1 (node (bundle "wid" 0)))
+												(slice n-width-even 1 (node (bundle "wid" 1)))
+											)
+											(or (node (bundle "shiftH" 1))
+												(slice n-width-even 1 (node (bundle "wid" 2)))
+												(slice n-width-even 1 (node (bundle "wid" 3)))
+											)
+											(c-element (slice n-width-even 1 (node (bundle "res" 0)))
+												(node (bundle "shiftL" 0))
+												(node (bundle "shiftH" 0))
+											)
+											(c-element (slice n-width-even 1 (node (bundle "res" 1)))
+												(node (bundle "shiftL" 1))
+												(node (bundle "shiftH" 0))
+											)
+											(c-element (slice n-width-even 1 (node (bundle "res" 2)))
+												(node (bundle "shiftL" 0))
+												(node (bundle "shiftH" 1))
+											)
+											(c-element (slice n-width-even 1 (node (bundle "res" 3)))
+												(node (bundle "shiftL" 1))
+												(node (bundle "shiftH" 1))
+											)
+											(if (> n-extend-width-odd 1) ;; Means that have a 1-of-4 code group (extendwidth > 3)
+												(gates
+													(connect (slice n-width-odd n-extend-width-even (node (bundle "wid" 0))) (slice n-width-odd n-extend-width-even (node (bundle "res" 0))))
+													(connect (slice n-width-odd n-extend-width-even (node (bundle "wid" 1))) (slice n-width-odd n-extend-width-even (node (bundle "res" 1))))
+													(connect (slice n-width-odd n-extend-width-even (node (bundle "wid" 2))) (slice n-width-odd n-extend-width-even (node (bundle "res" 2))))
+													(connect (slice n-width-odd n-extend-width-even (node (bundle "wid" 3))) (slice n-width-odd n-extend-width-even (node (bundle "res" 3))))
+												)
+											)
+										)
+										(gates
+											(if next-plural
+												(gates
+													(connect (slice n-width-even n-extend-width-even (node (bundle "wid" 0))) (slice n-width-even n-extend-width-even (node (bundle "res" 0))))
+													(connect (slice n-width-even n-extend-width-even (node (bundle "wid" 1))) (slice n-width-even n-extend-width-even (node (bundle "res" 1))))
+													(connect (slice n-width-even n-extend-width-even (node (bundle "wid" 2))) (slice n-width-even n-extend-width-even (node (bundle "res" 2))))
+													(connect (slice n-width-even n-extend-width-even (node (bundle "wid" 3))) (slice n-width-even n-extend-width-even (node (bundle "res" 3))))
+												)
+											)
+										)
+									)
+									(if w-odd ;;
+										(gates
+											(connect (slice w-width-even 1 (node (bundle "wid" 0))) (slice w-width-even 1 (node (bundle "res" 0))))
+											(connect (slice w-width-even 1 (node (bundle "wid" 1))) (slice w-width-even 1 (node (bundle "res" 1))))
+										)
+									)
+								)
+								(if n-odd
+									(cell dr-logical-cell ;; Calculate last bit
+										(slice n-width-even 1 (node (bundle "nar" 0)))
+										(slice n-width-even 1 (node (bundle "nar" 1)))
+										(slice n-width-even 1 (node (bundle "wid" 0)))
+										(slice n-width-even 1 (node (bundle "wid" 1)))
+										(slice n-width-even 1 (node (bundle "res" 0)))
+										(slice n-width-even 1 (node (bundle "res" 1)))
+									)
+								)
+							)
+							(macro sign-extend "res" 0 w-width "out" 2 output-width "extendR" #f "out" 1 "ground" 3 #f)
+						)
+					)
+				)
+			)
+		)
+		(arith-op
+			(gates ;; If narrow input unsigned, extend with half-adders.
+				(if (and next (not n-signed))
+					(gates
+						(if n-plural
+							(cell one-of-four-full-adder
+								(slice 0 n-width-even (node (bundle "wid" 0)))
+								(slice 0 n-width-even (node (bundle "wid" 1)))
+								(slice 0 n-width-even (node (bundle "wid" 2)))
+								(slice 0 n-width-even (node (bundle "wid" 3)))
+								(slice 0 n-width-even (node (bundle "nar" 0)))
+								(slice 0 n-width-even (node (bundle "nar" 1)))
+								(slice 0 n-width-even (node (bundle "nar" 2)))
+								(slice 0 n-width-even (node (bundle "nar" 3)))
+								(slice 0 n-width-even (node (bundle "carry" 0)))
+								(slice 0 n-width-even (node (bundle "carry" 1)))
+								(slice 1 n-width-even (node (bundle "carry" 0)))
+								(slice 1 n-width-even (node (bundle "carry" 1)))
+								(slice 0 n-width-even (node (bundle "res" 0)))
+								(slice 0 n-width-even (node (bundle "res" 1)))
+								(slice 0 n-width-even (node (bundle "res" 2)))
+								(slice 0 n-width-even (node (bundle "res" 3)))
+							)
+						)
+						(if (or (not subtractive-op) (not a-is-widest)) ;; zero extend narrow input
+							(gates
+								(if n-odd
+									(if dr-carry-overflow
+										(cell one-of-four-dual-rail-carry-adder-overflow ;; Special case as need to add carry plus single narrow bit and two wide bits w/ overflow
+											(slice n-width-even 1 (node (bundle "wid" 0)))
+											(slice n-width-even 1 (node (bundle "wid" 1)))
+											(slice n-width-even 1 (node (bundle "wid" 2)))
+											(slice n-width-even 1 (node (bundle "wid" 3)))
+											(slice n-width-even 1 (node (bundle "nar" 0)))
+											(slice n-width-even 1 (node (bundle "nar" 1)))
+											(slice n-width-even 1 (node (bundle "carry" 0)))
+											(slice n-width-even 1 (node (bundle "carry" 1)))
+											(slice n-width-odd 1 (node (bundle "carry" 0)))
+											(slice n-width-odd 1 (node (bundle "carry" 1)))
+											(slice n-width-even 1 (node (bundle "res" 0)))
+											(slice n-width-even 1 (node (bundle "res" 1)))
+											(slice n-width-even 1 (node (bundle "res" 2)))
+											(slice n-width-even 1 (node (bundle "res" 3)))
+											(node (bundle "s" 0))
+											(node (bundle "s" 1))
+										) 
+										(cell one-of-four-dual-rail-carry-adder ;; Special case as need to add carry plus single narrow bit and two wide bits
+											(slice n-width-even 1 (node (bundle "wid" 0)))
+											(slice n-width-even 1 (node (bundle "wid" 1)))
+											(slice n-width-even 1 (node (bundle "wid" 2)))
+											(slice n-width-even 1 (node (bundle "wid" 3)))
+											(slice n-width-even 1 (node (bundle "nar" 0)))
+											(slice n-width-even 1 (node (bundle "nar" 1)))
+											(slice n-width-even 1 (node (bundle "carry" 0)))
+											(slice n-width-even 1 (node (bundle "carry" 1)))
+											(slice n-width-odd 1 (node (bundle "carry" 0)))
+											(slice n-width-odd 1 (node (bundle "carry" 1)))
+											(slice n-width-even 1 (node (bundle "res" 0)))
+											(slice n-width-even 1 (node (bundle "res" 1)))
+											(slice n-width-even 1 (node (bundle "res" 2)))
+											(slice n-width-even 1 (node (bundle "res" 3)))
+										)
+									)
+								)
+								(if (> n-extend-width-odd 1) ;; Means that have a 1-of-4 code group (extendwidth > 3)
+									(if overflow
+										(gates
+											(if (> n-extend-width-odd 2) ;;Have interim 1-of-4 group
+												(cell one-of-four-carry-adder
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "wid" 0)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "wid" 1))) 
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "wid" 2)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "wid" 3)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "carry" 0)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "carry" 1)))
+													(slice (+ n-width-odd 1) (- n-extend-width-even 1) (node (bundle "carry" 0)))
+													(slice (+ n-width-odd 1) (- n-extend-width-even 1) (node (bundle "carry" 1)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "res" 0)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "res" 1))) 
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "res" 2)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "res" 3)))	
+												)
+											)
+											(cell one-of-four-carry-adder-overflow
+												(slice (- full-add-width-odd 1) 1 (node (bundle "wid" 0)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "wid" 1))) 
+												(slice (- full-add-width-odd 1) 1 (node (bundle "wid" 2)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "wid" 3)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "carry" 0)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "carry" 1)))
+												(slice full-add-width-odd 1 (node (bundle "carry" 0)))
+												(slice full-add-width-odd 1 (node (bundle "carry" 1)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "res" 0)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "res" 1))) 
+												(slice (- full-add-width-odd 1) 1 (node (bundle "res" 2)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "res" 3)))
+												(node (bundle "s" 0))
+												(node (bundle "s" 1))
+											)
+										)	
+										(cell one-of-four-carry-adder
+											(slice n-width-odd n-extend-width-even (node (bundle "wid" 0)))
+											(slice n-width-odd n-extend-width-even (node (bundle "wid" 1))) 
+											(slice n-width-odd n-extend-width-even (node (bundle "wid" 2)))
+											(slice n-width-odd n-extend-width-even (node (bundle "wid" 3)))
+											(slice n-width-odd n-extend-width-even (node (bundle "carry" 0)))
+											(slice n-width-odd n-extend-width-even (node (bundle "carry" 1)))
+											(slice (+ n-width-odd 1) n-extend-width-even (node (bundle "carry" 0)))
+											(slice (+ n-width-odd 1) n-extend-width-even (node (bundle "carry" 1)))
+											(slice n-width-odd n-extend-width-even (node (bundle "res" 0)))
+											(slice n-width-odd n-extend-width-even (node (bundle "res" 1))) 
+											(slice n-width-odd n-extend-width-even (node (bundle "res" 2)))
+											(slice n-width-odd n-extend-width-even (node (bundle "res" 3)))	
+										)
+									)
+								)	
+								(if fa-odd
+									(cell dual-rail-half-adder
+										(slice full-add-width-even 1 (node (bundle "wid" 0)))
+										(slice full-add-width-even 1 (node (bundle "wid" 1)))
+										(slice full-add-width-even 1 (node (bundle "carry" 0)))
+										(slice full-add-width-even 1 (node (bundle "carry" 1)))
+										(slice full-add-width-odd  1 (node (bundle "carry" 0)))
+										(slice full-add-width-odd  1 (node (bundle "carry" 1)))
+										(slice full-add-width-even 1 (node (bundle "res" 0)))
+										(slice full-add-width-even 1 (node (bundle "res" 1))) 	
+									)
+								)
+							)	
+							(gates ;;Subtract and B is narrow
+								(if n-odd
+									(if dr-carry-overflow ;; Special case as need to add carry plus single narrow bit and two wide bits w/ overflow
+										(cell one-of-four-dual-rail-primed-carry-adder-overflow
+											(slice n-width-even 1 (node (bundle "wid" 0)))
+											(slice n-width-even 1 (node (bundle "wid" 1)))
+											(slice n-width-even 1 (node (bundle "wid" 2)))
+											(slice n-width-even 1 (node (bundle "wid" 3)))
+											(slice n-width-even 1 (node (bundle "nar" 0)))
+											(slice n-width-even 1 (node (bundle "nar" 1)))
+											(slice n-width-even 1 (node (bundle "carry" 0)))
+											(slice n-width-even 1 (node (bundle "carry" 1)))
+											(slice n-width-odd 1 (node (bundle "carry" 0)))
+											(slice n-width-odd 1 (node (bundle "carry" 1)))
+											(slice n-width-even 1 (node (bundle "res" 0)))
+											(slice n-width-even 1 (node (bundle "res" 1)))
+											(slice n-width-even 1 (node (bundle "res" 2)))
+											(slice n-width-even 1 (node (bundle "res" 3)))
+											(node (bundle "s" 0))
+											(node (bundle "s" 1))
+										)  ;; Special case as need to add carry plus single narrow bit and two wide bits
+										(cell one-of-four-dual-rail-primed-carry-adder
+											(slice n-width-even 1 (node (bundle "wid" 0)))
+											(slice n-width-even 1 (node (bundle "wid" 1)))
+											(slice n-width-even 1 (node (bundle "wid" 2)))
+											(slice n-width-even 1 (node (bundle "wid" 3)))
+											(slice n-width-even 1 (node (bundle "nar" 0)))
+											(slice n-width-even 1 (node (bundle "nar" 1)))
+											(slice n-width-even 1 (node (bundle "carry" 0)))
+											(slice n-width-even 1 (node (bundle "carry" 1)))
+											(slice n-width-odd 1 (node (bundle "carry" 0)))
+											(slice n-width-odd 1 (node (bundle "carry" 1)))
+											(slice n-width-even 1 (node (bundle "res" 0)))
+											(slice n-width-even 1 (node (bundle "res" 1)))
+											(slice n-width-even 1 (node (bundle "res" 2)))
+											(slice n-width-even 1 (node (bundle "res" 3)))								
+										)
+									)
+								)
+								(if (> n-extend-width-odd 1) ;; Means that have a 1-of-4 code group (extendwidth > 3)
+									(if overflow
+										(gates
+											(if (> n-extend-width-odd 2) ;;Have interim 1-of-4 group
+												(cell one-of-four-primed-carry-adder
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "wid" 0)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "wid" 1))) 
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "wid" 2)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "wid" 3)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "carry" 0)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "carry" 1)))
+													(slice (+ n-width-odd 1) (- n-extend-width-even 1) (node (bundle "carry" 0)))
+													(slice (+ n-width-odd 1) (- n-extend-width-even 1) (node (bundle "carry" 1)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "res" 0)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "res" 1))) 
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "res" 2)))
+													(slice n-width-odd (- n-extend-width-even 1) (node (bundle "res" 3)))	
+												)
+											)
+											(cell one-of-four-primed-carry-adder-overflow
+												(slice (- full-add-width-odd 1) 1 (node (bundle "wid" 0)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "wid" 1))) 
+												(slice (- full-add-width-odd 1) 1 (node (bundle "wid" 2)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "wid" 3)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "carry" 0)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "carry" 1)))
+												(slice full-add-width-odd 1 (node (bundle "carry" 0)))
+												(slice full-add-width-odd 1 (node (bundle "carry" 1)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "res" 0)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "res" 1))) 
+												(slice (- full-add-width-odd 1) 1 (node (bundle "res" 2)))
+												(slice (- full-add-width-odd 1) 1 (node (bundle "res" 3)))
+												(node (bundle "s" 0))
+												(node (bundle "s" 1))	
+											)
+										)
+										(cell one-of-four-primed-carry-adder
+											(slice n-width-odd n-extend-width-even (node (bundle "wid" 0)))
+											(slice n-width-odd n-extend-width-even (node (bundle "wid" 1))) 
+											(slice n-width-odd n-extend-width-even (node (bundle "wid" 2)))
+											(slice n-width-odd n-extend-width-even (node (bundle "wid" 3)))
+											(slice n-width-odd 1 (node (bundle "carry" 0)))
+											(slice n-width-odd 1 (node (bundle "carry" 1)))
+											(slice (+ n-width-odd 1) 1 (node (bundle "carry" 0)))
+											(slice (+ n-width-odd 1) 1 (node (bundle "carry" 1)))
+											(slice n-width-odd n-extend-width-even (node (bundle "res" 0)))
+											(slice n-width-odd n-extend-width-even (node (bundle "res" 1))) 
+											(slice n-width-odd n-extend-width-even (node (bundle "res" 2)))
+											(slice n-width-odd n-extend-width-even (node (bundle "res" 3)))
+										)
+									)
+								)
+								(if fa-odd
+									(cell dual-rail-full-adder-primed
+										(slice full-add-width-even 1 (node (bundle "wid" 0)))
+										(slice full-add-width-even 1 (node (bundle "wid" 1)))
+										(slice full-add-width-even 1 (node (bundle "carry" 0)))
+										(slice full-add-width-even 1 (node (bundle "carry" 1)))
+										(slice full-add-width-odd  1 (node (bundle "carry" 0)))
+										(slice full-add-width-odd  1 (node (bundle "carry" 1)))
+										(slice full-add-width-even 1 (node (bundle "res" 0)))
+										(slice full-add-width-even 1 (node (bundle "res" 1))) 	
+									)
+								)
+							)
+						)
+					)
+					(gates
+						(if fa-plural
+							(if overflow
+								(gates
+									(if (> full-add-width-even 1)
+										(cell one-of-four-full-adder
+											(slice 0 (- full-add-width-even 1) (node (bundle "nar" 0)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "nar" 1)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "nar" 2)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "nar" 3)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "wid" 0)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "wid" 1)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "wid" 2)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "wid" 3)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "carry" 0)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "carry" 1)))
+											(slice 1 (- full-add-width-even 1) (node (bundle "carry" 0)))
+											(slice 1 (- full-add-width-even 1) (node (bundle "carry" 1)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "res" 0)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "res" 1)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "res" 2)))
+											(slice 0 (- full-add-width-even 1) (node (bundle "res" 3)))
+										)
+									)
+									(cell one-of-four-full-adder-overflow
+										(slice (- full-add-width-even 1) 1 (node (bundle "nar" 0)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "nar" 1)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "nar" 2)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "nar" 3)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "wid" 0)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "wid" 1)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "wid" 2)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "wid" 3)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "carry" 0)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "carry" 1)))
+										(slice full-add-width-even 1 (node (bundle "carry" 0)))
+										(slice full-add-width-even 1 (node (bundle "carry" 1)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "res" 0)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "res" 1)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "res" 2)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "res" 3)))
+										(node (bundle "s" 0))
+										(node (bundle "s" 1))
+									)
+								)	
+								(cell one-of-four-full-adder
+									(slice 0 full-add-width-even (node (bundle "nar" 0)))
+									(slice 0 full-add-width-even (node (bundle "nar" 1)))
+									(slice 0 full-add-width-even (node (bundle "nar" 2)))
+									(slice 0 full-add-width-even (node (bundle "nar" 3)))
+									(slice 0 full-add-width-even (node (bundle "wid" 0)))
+									(slice 0 full-add-width-even (node (bundle "wid" 1)))
+									(slice 0 full-add-width-even (node (bundle "wid" 2)))
+									(slice 0 full-add-width-even (node (bundle "wid" 3)))
+									(slice 0 full-add-width-even (node (bundle "carry" 0)))
+									(slice 0 full-add-width-even (node (bundle "carry" 1)))
+									(slice 1 full-add-width-even (node (bundle "carry" 0)))
+									(slice 1 full-add-width-even (node (bundle "carry" 1)))
+									(slice 0 full-add-width-even (node (bundle "res" 0)))
+									(slice 0 full-add-width-even (node (bundle "res" 1)))
+									(slice 0 full-add-width-even (node (bundle "res" 2)))
+									(slice 0 full-add-width-even (node (bundle "res" 3)))
+								)
+							)
+						)
+						(if fa-odd
+							(cell dual-rail-full-adder
+								(slice full-add-width-even 1 (node (bundle "nar" 0)))
+								(slice full-add-width-even 1 (node (bundle "nar" 1)))
+								(slice full-add-width-even 1 (node (bundle "wid" 0)))
+								(slice full-add-width-even 1 (node (bundle "wid" 1)))
+								(slice full-add-width-even 1 (node (bundle "carry" 0)))
+								(slice full-add-width-even 1 (node (bundle "carry" 1)))
+								(slice full-add-width-odd  1 (node (bundle "carry" 0)))
+								(slice full-add-width-odd  1 (node (bundle "carry" 1)))
+								(slice full-add-width-even 1 (node (bundle "res" 0)))
+								(slice full-add-width-even 1 (node (bundle "res" 1)))
+							)
+						)
+					)
+				)
+				(if subtractive-op ;; Connect Carry
+					(gates
+						(connect (req "out") (slice 0 1 (node (bundle "carry" 1))))
+						(connect (node "ground") (slice 0 1 (node (bundle "carry" 0))))
+					)
+					(gates
+						(connect (req "out") (slice 0 1 (node (bundle "carry" 0))))
+						(connect (node "ground") (slice 0 1 (node (bundle "carry" 1))))
+					)
+				)
+				(if oext
+					(if signed-op
+						(gates
+							(if fa-odd
+								(gates
+									(cell dual-rail-xor
+										(slice full-add-width-even 1 (node (bundle "carry" 0)))
+										(slice full-add-width-even 1 (node (bundle "carry" 1)))
+										(slice full-add-width-odd 1 (node (bundle "carry" 0)))
+										(slice full-add-width-odd 1 (node (bundle "carry" 1)))
+										(node (bundle "v" 0))
+										(node (bundle "v" 1))
+									)
+									(cell dual-rail-xor
+										(slice full-add-width-even 1 (node (bundle "res" 0)))
+										(slice full-add-width-even 1 (node (bundle "res" 1)))
+										(node (bundle "v" 0))
+										(node (bundle "v" 1))
+										(node (bundle "s" 0))
+										(node (bundle "s" 1))
+									)
+								)
+							)
+							(gates
+								(macro sign-extend "res" 0 full-add-width "out" 2 output-width "extendR" #f "s" 0 "s" 0 #f) ;; sign false as extension already calculated
+							)
+						)
+						(if subtractive-op
+							(gates
+								(connect (slice full-add-width-odd 1 (node (bundle "carry" 0))) (node (bundle "extendH" 1)))
+								(connect (slice full-add-width-odd 1 (node (bundle "carry" 1))) (node (bundle "extendH" 0)))
+								(macro sign-extend "res" 0 full-add-width "out" 2 output-width "extendR" #f "extendH" 0 "extendH" 0 #f)
+							)
+							(gates
+								(connect (slice full-add-width-odd 1 (node (bundle "carry" 0))) (node (bundle "extendH" 0)))
+								(connect (slice full-add-width-odd 1 (node (bundle "carry" 1))) (node (bundle "extendH" 1)))
+								(macro sign-extend "res" 0 full-add-width "res2" 0 (+ full-add-width 1) "extendR2" #f "extendH" 0 "extendH" 0 #f)
+								(macro sign-extend "res2" 0 (+ full-add-width 1) "out" 2 output-width "extendR" signed-op "out" 1 "ground" 3 #f)
+							)
+						)
+					)
+					(macro sign-extend "res" 0 full-add-width "out" 2 output-width "extendR" #f "out" 1 "ground" 3 #f)
+				)
+			)
+		)
+		(inequality-op
+			(if (and next (not n-signed)) ;; If unsigned extend with zeros
+				(gates
+					(if n-plural
+						(gates
+							(cell oof-ineq-lsb-cell
+								(slice 0 1 (node (bundle "wid" 0)))
+								(slice 0 1 (node (bundle "wid" 1)))
+								(slice 0 1 (node (bundle "wid" 2)))
+								(slice 0 1 (node (bundle "wid" 3)))
+								(slice 0 1 (node (bundle "nar" 0)))
+								(slice 0 1 (node (bundle "nar" 1)))
+								(slice 0 1 (node (bundle "nar" 2)))
+								(slice 0 1 (node (bundle "nar" 3)))
+								(slice 0 1 (node (bundle "res" 0)))
+								(slice 0 1 (node (bundle "res" 1)))
+							)
+							(if (> n-width-even 1) 
+								(cell one-of-four-comp ;; Extend with correct operators 
+									(slice 1 (-  n-width-even 1) (node (bundle "wid" 0)))
+									(slice 1 (-  n-width-even 1) (node (bundle "wid" 1)))
+									(slice 1 (-  n-width-even 1) (node (bundle "wid" 2)))
+									(slice 1 (-  n-width-even 1) (node (bundle "wid" 3)))
+									(slice 1 (-  n-width-even 1) (node (bundle "nar" 0)))
+									(slice 1 (-  n-width-even 1) (node (bundle "nar" 1)))
+									(slice 1 (-  n-width-even 1) (node (bundle "nar" 2)))
+									(slice 1 (-  n-width-even 1) (node (bundle "nar" 3)))
+									(slice (if gt-inequality-op 1 0) (-  n-width-even 1) (node (bundle "res" (if gt-inequality-op 2 0))))
+									(slice 1 (-  n-width-even 1) (node (bundle "res" 1)))
+									(slice (if gt-inequality-op 0 1) (-  n-width-even 1) (node (bundle "res" (if gt-inequality-op 0 2))))
+								)
+							)
+						)
+					)
+					(if n-odd
+						(gates ;;one-of-four -> dual-rail comparator. 
+							(if n-plural
+								(if (and (= n-extend-width 1) w-signed) ;; Invert top bit
+										(cell one-of-four-dual-rail-signed-comp
+											(slice n-width-even 1 (node (bundle "wid" 0)))
+											(slice n-width-even 1 (node (bundle "wid" 1)))
+											(slice n-width-even 1 (node (bundle "wid" 2)))
+											(slice n-width-even 1 (node (bundle "wid" 3)))
+											(slice n-width-even 1 (node (bundle "nar" 0)))
+											(slice n-width-even 1 (node (bundle "nar" 1)))
+											(slice (- n-width-even (if gt-inequality-op 1 0))  1 (node (bundle "res" (if gt-inequality-op 2 0))))
+											(slice n-width-even 1 (node (bundle "res" 1)))
+											(slice (- n-width-even (if gt-inequality-op 0 1)) 1 (node (bundle "res" (if gt-inequality-op 0 2))))
+										)
+										(cell one-of-four-dual-rail-comp
+											(slice n-width-even 1 (node (bundle "wid" 0)))
+											(slice n-width-even 1 (node (bundle "wid" 1)))
+											(slice n-width-even 1 (node (bundle "wid" 2)))
+											(slice n-width-even 1 (node (bundle "wid" 3)))
+											(slice n-width-even 1 (node (bundle "nar" 0)))
+											(slice n-width-even 1 (node (bundle "nar" 1)))
+											(slice (- n-width-even (if gt-inequality-op 1 0))  1 (node (bundle "res" (if gt-inequality-op 2 0))))
+											(slice n-width-even 1 (node (bundle "res" 1)))
+											(slice (- n-width-even (if gt-inequality-op 0 1)) 1 (node (bundle "res" (if gt-inequality-op 0 2))))
+										)
+								)
+								(gates
+									(if (or (n-extend-width > 1) (not w-signed))
+										(cell oof-dr-ineq-lsb-cell
+											(slice n-width-even 1 (node (bundle "wid" 0)))
+											(slice n-width-even 1 (node (bundle "wid" 1)))
+											(slice n-width-even 1 (node (bundle "wid" 2)))
+											(slice n-width-even 1 (node (bundle "wid" 3)))
+											(slice n-width-even 1 (node (bundle "nar" 0)))
+											(slice n-width-even 1 (node (bundle "nar" 1)))
+											(slice n-width-even 1 (node (bundle "res" 0)))
+											(slice n-width-even 1 (node (bundle "res" 1)))
+										)
+										(cell  oof-dr-ineq-lsb-cell
+											(slice n-width-even 1 (node (bundle "wid" 2))) ;; Reverse top (sign) bit
+											(slice n-width-even 1 (node (bundle "wid" 3)))
+											(slice n-width-even 1 (node (bundle "wid" 0)))
+											(slice n-width-even 1 (node (bundle "wid" 1)))
+											(slice n-width-even 1 (node (bundle "nar" 0)))
+											(slice n-width-even 1 (node (bundle "nar" 1)))
+											(slice n-width-even 1 (node (bundle "res" 0)))
+											(slice n-width-even 1 (node (bundle "res" 1)))
+										)
+									)
+								)
+							)
+						)
+					)
+					(if (> n-extend-width-odd 1) ;; Have to connect a 1-of-4 group
+						(gates
+							(gnd (slice (- n-width-odd (if gt-inequality-op 0 1)) inequality-n-extend-width-even (node (bundle "res" (if gt-inequality-op 0 2))))) ;;Neither
+							(connect (slice n-width-odd inequality-n-extend-width-even (node (bundle "wid" 0)))
+								(slice n-width-odd inequality-n-extend-width-even (node (bundle "res" 1))) 
+							)
+							(or (slice (- n-width-odd (if gt-inequality-op 1 0)) inequality-n-extend-width-even (node (bundle "res" (if gt-inequality-op 2 0))))
+								(slice n-width-odd inequality-n-extend-width-even (node (bundle "wid" 0)))
+								(slice n-width-odd inequality-n-extend-width-even (node (bundle "wid" 1)))
+								(slice n-width-odd inequality-n-extend-width-even (node (bundle "wid" 2)))
+							)
+						)
+					)
+					(if fa-odd ;;
+						(gates
+							(if (or (and gt-inequality-op (not w-signed)) (and lt-inequality-op w-signed))
+								(gates
+									(connect (slice full-add-width-even 1 (node (bundle "wid" 1))) 
+										(slice (- full-add-width-even 1) 1 (slice (node (bundle "res" 2))))
+									)
+									(connect (slice full-add-width-even 1 (node (bundle "wid" 0))) 
+										(slice full-add-width-even 1 (node (bundle "res" 1)))
+									)
+									(gnd (slice full-add-width-even 1 (node (bundle "res" 0))))
+								)
+								(gates
+									(connect (slice full-add-width-even 1 (node (bundle "wid" 1))) 
+										(slice full-add-width-even 1 (slice (node (bundle "res" 0))))
+									)
+									(connect (slice full-add-width-even 1 (node (bundle "wid" 0))) 
+										(slice full-add-width-even 1 (node (bundle "res" 1)))
+									)
+									(gnd (slice (- full-add-width-even 1) 1 (node (bundle "res" 2))))
+								)
+							)
+						)
+						(if (> n-extend-width-even 0)
+							(if (or (and gt-inequality-op (not w-signed)) (and lt-inequality-op w-signed))
+								(gates
+									(connect (slice (- full-add-width-even 1) 1 (node (bundle "wid" 0)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "res" 1))) 
+									)
+									(connect (slice (- full-add-width-even 1) 1 (node (bundle "wid" 1)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "res" 0))) 
+									)
+									(or (slice (- full-add-width-even 2) 1 (node (bundle "res" 2)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "wid" 2)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "wid" 3)))
+									)
+								)
+								(gates
+									(connect (slice (- full-add-width-even 1) 1 (node (bundle "wid" 0)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "res" 1))) 
+									)
+									(connect (slice (- full-add-width-even 1) 1 (node (bundle "wid" 1)))
+										(slice (- full-add-width-even 2) 1 (node (bundle "res" 2))) 
+									)
+									(or (slice (- full-add-width-even 1) 1 (node (bundle "res" 0)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "wid" 2)))
+										(slice (- full-add-width-even 1) 1 (node (bundle "wid" 3)))
+									)
+								)
+							)
+						)
+					)
+				)
+				(gates ;;;;;;;;;;;;;;;;;;
+					(if fa-plural
+						(gates
+							(if (and (not fa-odd) (= full-add-width-even 1))
+								(cell oof-ineq-lsb-cell
+									(slice 0 1 (node (bundle "wid" (if signed-op 2 0))))
+									(slice 0 1 (node (bundle "wid" (if signed-op 3 1))))
+									(slice 0 1 (node (bundle "wid" (if signed-op 0 2))))
+									(slice 0 1 (node (bundle "wid" (if signed-op 1 3))))
+									(slice 0 1 (node (bundle "nar" (if signed-op 2 0)))) ;; invert top bit
+									(slice 0 1 (node (bundle "nar" (if signed-op 3 1))))
+									(slice 0 1 (node (bundle "nar" (if signed-op 0 2))))
+									(slice 0 1 (node (bundle "nar" (if signed-op 1 3))))
+									(slice 0 1 (node (bundle "res" 0)))
+									(slice 0 1 (node (bundle "res" 1)))
+								)
+								(cell oof-ineq-lsb-cell
+									(slice 0 1 (node (bundle "wid" 0)))
+									(slice 0 1 (node (bundle "wid" 1)))
+									(slice 0 1 (node (bundle "wid" 2)))
+									(slice 0 1 (node (bundle "wid" 3)))
+									(slice 0 1 (node (bundle "nar" 0)))
+									(slice 0 1 (node (bundle "nar" 1)))
+									(slice 0 1 (node (bundle "nar" 2)))
+									(slice 0 1 (node (bundle "nar" 3)))
+									(slice 0 1 (node (bundle "res" 0)))
+									(slice 0 1 (node (bundle "res" 1)))
+								)
+							)
+							(if (> full-add-width-even 1) 
+								(cell one-of-four-comp ;; Extend with correct operators 
+										(slice 1 (- full-add-width-even (if fa-odd 1 2)) (node (bundle "wid" 0)))
+										(slice 1 (- full-add-width-even (if fa-odd 1 2)) (node (bundle "wid" 1)))
+										(slice 1 (- full-add-width-even (if fa-odd 1 2)) (node (bundle "wid" 2)))
+										(slice 1 (- full-add-width-even (if fa-odd 1 2)) (node (bundle "wid" 3)))
+										(slice 1 (- full-add-width-even (if fa-odd 1 2))  (node (bundle "nar" 0)))
+										(slice 1 (- full-add-width-even (if fa-odd 1 2)) (node (bundle "nar" 1)))
+										(slice 1 (- full-add-width-even (if fa-odd 1 2)) (node (bundle "nar" 2)))
+										(slice 1 (- full-add-width-even (if fa-odd 1 2)) (node (bundle "nar" 3)))
+										(slice (if gt-inequality-op 0 1) (- full-add-width-even (if fa-odd 1 2)) (node (bundle "res" (if gt-inequality-op 2 0))))
+										(slice 1 (- full-add-width-even (if fa-odd 1 2)) (node (bundle "res" 1)))
+										(slice (if gt-inequality-op 1 0) (- full-add-width-even (if fa-odd 1 2)) (node (bundle "res" (if gt-inequality-op 0 2))))
+								)
+							)
+						)
+					)
+					(if fa-odd
+						(if fa-plural
+							(if gt-inequality-op
+								(cell dual-rail-comp
+									(slice full-add-width-even 1 (node (bundle "wid" (if signed-op 1 0))))
+									(slice full-add-width-even 1 (node (bundle "wid" (if signed-op 0 1))))
+									(slice full-add-width-even 1 (node (bundle "nar" (if signed-op 1 0))))
+									(slice full-add-width-even 1 (node (bundle "nar" (if signed-op 0 1))))
+									(slice (- full-add-width-even 1) 1 (node (bundle "res" 2)))
+									(slice full-add-width-even 1 (node (bundle "res" 1)))
+									(slice full-add-width-even 1 (node (bundle "res" 0)))
+								)
+								(cell dual-rail-comp
+									(slice full-add-width-even 1 (node (bundle "wid" (if signed-op 1 0))))
+									(slice full-add-width-even 1 (node (bundle "wid" (if signed-op 0 1))))
+									(slice full-add-width-even 1 (node (bundle "nar" (if signed-op 1 0))))
+									(slice full-add-width-even 1 (node (bundle "nar" (if signed-op 0 1))))
+									(slice full-add-width-even 1 (node (bundle "res" 0)))
+									(slice full-add-width-even 1 (node (bundle "res" 1)))
+									(slice (- full-add-width-even 1) 1 (node (bundle "res" 2)))
+								)
+							)
+							(gates
+								(if lt-inequality-op
+									(cell dual-rail-less-than
+										(slice full-add-width-even 1 (node (bundle "wid" (if signed-op 1 0))))
+										(slice full-add-width-even 1 (node (bundle "wid" (if signed-op 0 1))))
+										(slice full-add-width-even 1 (node (bundle "nar" (if signed-op 1 0))))
+										(slice full-add-width-even 1 (node (bundle "nar" (if signed-op 0 1))))
+										(slice full-add-width-even 1 (node (bundle "res" 0)))
+										(slice full-add-width-even 1 (node (bundle "res" 1)))
+									)
+									(cell dual-rail-greater-than
+										(slice full-add-width-even 1 (node (bundle "wid" (if signed-op 1 0))))
+										(slice full-add-width-even 1 (node (bundle "wid" (if signed-op 0 1))))
+										(slice full-add-width-even 1 (node (bundle "nar" (if signed-op 1 0))))
+										(slice full-add-width-even 1 (node (bundle "nar" (if signed-op 0 1))))
+										(slice full-add-width-even 1 (node (bundle "res" 0)))
+										(slice full-add-width-even 1 (node (bundle "res" 1)))
+									)
+								)
+							)
+						)
+						(if (> full-add-width-odd 1)
+							(gates
+							(cell one-of-four-comp
+									(slice (- full-add-width-even 1) 1 (node (bundle "wid" (if signed-op 2 0))))
+									(slice (- full-add-width-even 1) 1 (node (bundle "wid" (if signed-op 3 1))))
+									(slice (- full-add-width-even 1) 1 (node (bundle "wid" (if signed-op 0 2))))
+									(slice (- full-add-width-even 1) 1 (node (bundle "wid" (if signed-op 1 3))))
+									(slice (- full-add-width-even 1) 1 (node (bundle "nar" (if signed-op 2 0))))
+									(slice (- full-add-width-even 1) 1 (node (bundle "nar" (if signed-op 3 1))))
+									(slice (- full-add-width-even 1) 1 (node (bundle "nar" (if signed-op 0 2))))
+									(slice (- full-add-width-even 1) 1 (node (bundle "nar" (if signed-op 1 3))))
+									(slice (- full-add-width-even (if gt-inequality-op 2 1)) 1 (node (bundle "res" (if gt-inequality-op 2 0))))
+									(slice (- full-add-width-even 1) 1 (node (bundle "res" 1)))
+									(slice (- full-add-width-even (if gt-inequality-op 1 2)) 1 (node (bundle "res" (if gt-inequality-op 0 2))))
+								)
+							)
+						)
+					)
+				)
+			)
+			(case (param "op")
+				(("LessThan" "GreaterThan")
+					(macro ineq-comp-tree
+						full-add-width-odd
+						(node (bundle "res" 0))
+						(node (bundle "res" 1))
+						(node (bundle "res" 2))
+						(ack0 "out")
+						(ack1 "out")
+					)
+				)
+				(("GreaterOrEquals" "LessOrEquals")
+					(macro ineq-comp-tree  ;; invert out
+						full-add-width-odd
+						(node (bundle "res" 0))
+						(node (bundle "res" 1))
+						(node (bundle "res" 2))
+						(ack1 "out")
+						(ack0 "out")
+					)
+				)
+			)
+		)
+		(equality-op
+			(if (and next (not n-signed)) ;; If unsigned extend with zeros
+				(gates
+					(if n-plural
+						(cell one-of-four-inequal
+							(slice 0 n-width-even (node (bundle "nar" 0)))
+							(slice 0 n-width-even (node (bundle "nar" 1)))
+							(slice 0 n-width-even (node (bundle "nar" 2)))
+							(slice 0 n-width-even (node (bundle "nar" 3)))
+							(slice 0 n-width-even (node (bundle "wid" 0)))
+							(slice 0 n-width-even (node (bundle "wid" 1)))
+							(slice 0 n-width-even (node (bundle "wid" 2)))
+							(slice 0 n-width-even (node (bundle "wid" 3)))
+							(slice 0 n-width-even (node (bundle "res" 0)))
+							(slice 0 n-width-even (node (bundle "res" 1)))
+						)
+					)
+					(if n-odd
+						(gates ;; one-of-four -> dual-rail comparator.
+							(cell one-of-four-dual-rail-inequal
+								(slice n-width-even 1 (node (bundle "wid" 0)))
+								(slice n-width-even 1 (node (bundle "wid" 1)))
+								(slice n-width-even 1 (node (bundle "wid" 2)))
+								(slice n-width-even 1 (node (bundle "wid" 3)))
+								(slice n-width-even 1 (node (bundle "nar" 0)))
+								(slice n-width-even 1 (node (bundle "nar" 1)))
+								(slice n-width-even 1 (node (bundle "res" 0)))
+								(slice n-width-even 1 (node (bundle "res" 1)))
+							)
+							(if (> n-extend-width-odd 1) ;; Have to connect a 1-of-4 group
+								(gates
+									(connect
+										(slice n-width-odd n-extend-width-even (node (bundle "wid" 0)))
+										(slice n-width-odd n-extend-width-even (node (bundle "res" 0)))
+									)
+									(or
+										(slice n-width-odd n-extend-width-even (node (bundle "res" 1)))
+										(slice n-width-odd n-extend-width-even (node (bundle "wid" 1)))
+										(slice n-width-odd n-extend-width-even (node (bundle "wid" 2)))
+										(slice n-width-odd n-extend-width-even (node (bundle "wid" 3)))
+									)
+								)
+							)
+						)
+						(gates
+							(if next-plural
+								(gates
+									(connect
+										(slice n-width-even n-extend-width-even (node (bundle "wid" 0)))
+										(slice n-width-even n-extend-width-even (node (bundle "res" 0)))
+									)
+									(or
+										(slice n-width-even n-extend-width-even (node (bundle "res" 1)))
+										(slice n-width-even n-extend-width-even (node (bundle "wid" 2)))
+										(slice n-width-even n-extend-width-even (node (bundle "wid" 3)))
+									)
+								)
+							)
+						)
+					)
+					(if w-odd ;;
+						(gates
+							(connect (slice w-width-even 1 (node (bundle "wid" 0))) (slice w-width-even 1 (node (bundle "res" 0))))
+							(connect (slice w-width-even 1 (node (bundle "wid" 1))) (slice w-width-even 1 (node (bundle "res" 1))))
+						)
+					)
+				)
+				(gates ;;;;;;;;;;;;;;;;;;
+					(if n-plural
+						(cell one-of-four-inequal
+							(slice 0 n-width-even (node (bundle "nar" 0)))
+							(slice 0 n-width-even (node (bundle "nar" 1)))
+							(slice 0 n-width-even (node (bundle "nar" 2)))
+							(slice 0 n-width-even (node (bundle "nar" 3)))
+							(slice 0 n-width-even (node (bundle "wid" 0)))
+							(slice 0 n-width-even (node (bundle "wid" 1)))
+							(slice 0 n-width-even (node (bundle "wid" 2)))
+							(slice 0 n-width-even (node (bundle "wid" 3)))
+							(slice 0 n-width-even (node (bundle "res" 0)))
+							(slice 0 n-width-even (node (bundle "res" 1)))
+						)
+					)
+					(if fa-odd
+						(cell dual-rail-xor
+							(slice n-width-even 1 (node (bundle "nar" 0)))
+							(slice n-width-even 1 (node (bundle "nar" 1)))
+							(slice n-width-even 1 (node (bundle "wid" 0)))
+							(slice n-width-even 1 (node (bundle "wid" 1)))
+							(slice n-width-even 1 (node (bundle "res" 0)))
+							(slice n-width-even 1 (node (bundle "res" 1)))
+						)
+					)
+				)
+			)
+			(case (param "op")
+				(("Equals") ;; Out inverted
+					(macro dual-rail-orN
+						full-add-width-odd
+						(node (bundle "res" 0))
+						(node (bundle "res" 1))
+						(ack1 "out")
+						(ack0 "out")
+					)
+				)
+				(("NotEquals")
+					(macro dual-rail-orN
+						full-add-width-odd
+						(node (bundle "res" 0))
+						(node (bundle "res" 1))
+						(ack0 "out")
+						(ack1 "out")
+					)
+				)
+			)
+		)
+	)
+)
+(connections)

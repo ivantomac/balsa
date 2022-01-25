@@ -1,0 +1,23 @@
+(defines
+	(value (param "value"))
+	(not-value (- (expt 2 (param "width")) 1 (param "value")))
+)
+(nodes
+	("reqOut" 1 0 1)
+)
+(gates
+	(if (/= 0 value)
+		(gates ; choosing the set bits
+			(connect (req "out") (smash (filter value (ack1 "out"))))
+			; tie off the other (not set indicating) ack
+			(gnd (smash (filter value (ack0 "out"))))
+		)
+	)
+	(if (/= 0 not-value)
+		(gates ; choosing the not set bits
+			(connect (req "out") (smash (filter not-value (ack0 "out"))))
+			; tie off the other (set indicating) ack
+			(gnd (smash (filter not-value (ack1 "out"))))
+		)
+	)
+)

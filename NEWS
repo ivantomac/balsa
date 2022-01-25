@@ -1,0 +1,491 @@
+
+<For other changes, refer to the Balsa manual>
+
+2008-04-01 (bardsley): balsa-netlist
+
+	Deprecated options -d, -p, -f.  balsa-netlist now never inserts Verilog `prototypes' and always replaces
+		feedthroughs.
+	Added -X option to pass technology option in preference to BALSATECH.  Need to add that option to other tools
+
+2007-06-18 (bardsley): Many small changes
+
+Technology handling:
+	Moved primitive part descriptions into share/style/<name-of-style>
+		from share/tech/common.
+	Added support for building external style packages as well as tech
+		packages.
+	Started work on moving Xilinx technology implementation choices
+		into base package as style options.
+	Removing suggest-buffers (obsoleted by Luis's drive insertion work)
+	Deprecated (connections) blocks in abs descriptions
+
+balsa-md/balsa-make-makefile:
+    Removed balsa-md.  Dependencies for Balsa files can be determined using
+    balsa-c --depends.  Users are encouraged to make use to balsa-mgr and
+    balsa-make-makefile
+
+SequenceOptimised:
+	Renamed to Sequence.  Original (non-spec. string) Sequence component
+	    removed from all technologies.
+	Fixed balsa-c bugs relating to SequenceOptimised spec. strings.
+	Reinstated TreeOptimisation on Seqeunce(Optimised) in balsa-c.
+
+Other components:
+	Removed Mask (superceded by Slice) and InitVariable (never fully implemented).
+
+balsa-mgr:
+	Migrated to GTK-2 (not yet tested)
+	Removed a lot of code from balsa-mgr and some redundant/never implemented
+		features.
+
+breeze-sim-ctrl:
+	Migrated to GTK-2 (needs more work)
+
+breeze-sim/libbalsasim:
+	Added BalsaSimulationStop function.
+	Added StringToPrintable function.  Turns unprintable characters in a string into
+		<XX> strings
+
+balsa-make-impl-test:
+	Modified support for global-ports to allow clock signals.
+	Needs more work to migrate code to style packages.
+
+balsa-c:
+	Made some fixes to dependencies in src/balsa-c/Makefile.am.  Not
+		quite right yet but better.
+
+LARD:
+	Removed any remaining references to LARD from balsa-mgr, scheme files
+	and Balsa Project file handling.
+
+extras/balsa-wave:
+	Changed references to GTKWave to balsa-wave.
+	Fixed autoconf problem with finding pixmaps.
+
+Backend/scheme:
+	Removed old drive insertion support
+
+2003-09-12: Builtin type and functions
+
+	Introduced a way of representing simulation-time object
+	values and user defined C functions for both breeze-sim and
+	netlist simulation.  eg:
+
+	type File is builtin
+
+	function NewFile (filename : String; mode : FileMode) is builtin : File
+
+	Builtin functions can also take parameters.
+	This has involved lots of changes to balsa-c, the replacement of
+	balsa-md with balsa-make-makefile, the introduction of the scripts
+	balsa-make-test and balsa-make-impl-test and balsa-sim-impl, and
+	a new package (balsa-sim-verilog) to handle Verilog simulation.
+	See the Balsa manual chapter on Builtins for further details.
+
+2003-06-09: Added initial values to variables
+
+	Variables can now have attached initial values, Example:
+
+	variable x = 10 : 8 bits
+
+	The initial value must be compile time constant, must have no
+	don't care bits and may not be a string or have any other
+	non-synthesisable type.
+
+	Initial values allow the compiler to easily determine where
+	the new InitVariable component can be used. InitVariable is
+	provided to allow the asynchronous reset input on latches to
+	be used by Balsa by providing a reset channel on variable
+	components which will cause a constant given as a component
+	parameter to be loaded into that variable.  Activating the
+	initialising input on InitVariable components is currently
+	done in sequence with command body activation but may in future 
+	use the initial low phase of the command activation to hold the
+	variable in reset.
+
+	Future changes may include allowing don't cares to initialised
+	only part of a Balsa variable.  This may not extend to non-atomic
+	Breeze variable component initialisation but may be of use for,
+	for example, array selected element initialisation.  It may also
+	be possible in future to determine where an assignment statement
+	in a command constitutes an equivalent action to a variable
+	initialisation by some form of limited value tracking analysis
+	by balsa-c.
+
+2003-02-14: Added variable read and write ports
+
+	Ports to procedures can now be connected to variables to
+	allow communications on the procedure's ports to perform
+	reads and writes to the variable. Example:
+
+	procedure write_zero (output o : 8 bits) is
+	begin o <- 0 end
+
+	variable v : 8 bits
+	write_zero (-> v)
+
+	Write-to-variable ports have the form:
+	'->' <lvalue>
+	Read-from-variable (really read from expr) ports have the form:
+	'<-' <expr>
+
+	Note that variable read/writes are used as an
+	abbreviated form for passing expressions to a non-permanent
+	procedure, example:
+
+	c1 <- some_expr ||
+	c2 <- some_expr2 ||
+	c3 -> some_var ||
+	some_proc (c1, c2, c3)
+
+	can be replaced by:
+
+	some_proc (<- some_expr, <- some_expr2, -> some_var)
+
+	The only obvious semantic contribution of this new form of port
+	connection is the ability to read an indeterminate number of times
+	from a variable (or expression) and still form a non-permanent
+	composition with the mechanism for providing the variable's contents.
+	For example:
+
+	c <- expr || proc (c)
+
+	If proc is non-permanent, then this composition is non-permanent.
+	Unfortunately, if `proc' attempts to read `c' more than once, deadlock
+	occurs.  If this is changed to:
+
+	loop c <- expr end || proc (c)
+
+	then `proc' can proceed to completion but due to the use of an infinite
+	loop, the composition as a whole must be permanent.  In many cases this
+	can be resolved (with some bounded iteration-count looping) but in the
+	case where `proc's use of `c' is complicated or externally difficult to
+	determine, then this form:
+
+	proc (<- expr)
+
+	may be preferred.  Note that in implementation, due to the pull nature
+	of expression channels in Balsa, the new form is also more efficient.
+
+	This all suggests a new design style where procedures are always
+	declared to be non-permanent with permanence-enforcing loops being
+	placed around their instantiations where the user can also choose
+	whether to pass values between procedures by channel or variable.
+
+2003-02-08: `multicast' channels
+
+	Added a `multicast' keyword to prefix channel/sync
+	declarations to suppress the warning about multicast
+	use of channels when using the `-c warn-multicast' option
+	with balsa-c.
+
+2002-11-11: Added implicants and don't cares more widely
+
+	Implicants (e.g. 0b1010x0x001) and don't care values (?)
+	are added as normal expression types.  In practice, however,
+	few operators can act on them.  Working operators include:
+
+	as, array and record construction, #
+
+	The implications of this change are that implicants can now
+	be bound to constants and passed as arguments to parameterised
+	procedures as well as freeing up case matches to include
+	expressions including implicants such as record matching:
+
+	case a in
+		{10, 20, 0b10100} then ...
+	end
+
+	The `?' (don't care value) can be used in expression situations
+	where an expected type is known.  `?' yields an implicant matching
+	all values of the expected type (e.g. ? under type expectation
+	`8 bits' is equivalent to `0xXX').
+
+	Note that implicants and don't cares can never be created for
+	signed types (signed enumerations and signed numerics) and that
+	the normal `0b'/`0x' implicant notation yields an implicant of
+	unsigned numeric type.
+
+2002-11-06: Changed loop constructs
+
+	Changed keywords for loop constructs.  `repeat' is replaced by `loop'
+	and the `while' loop has become a `loop while' loop. The complete set
+	is:
+
+	loop <command> end
+	loop while <guards> end
+	loop while <guards> also <command> end
+	loop <command> while <expr> end
+	loop <command> while <guards> end
+	loop <command> while <guards> also <command> end
+
+	guards := <expr> then <command> [ | <expr> then <command> ]*
+
+2002-11-05: Lazy if, definate evaluation order
+
+	`if' commands/ports/decls now correctly fail to evaluate
+	subsequent guards if an early guard is manifestly true.  Also,
+	guard choice where more than one guard is true (in `if' and `while'
+	in hardware) is now fixed to execute the earliest command in the
+	guard list.
+
+2002-11-05: Deprecated SBreeze
+
+	The distinction between Breeze and SBreeze is removed and the SBreeze
+	format is modified to include a prefix form of Balsa.
+
+2002-09-18: `case' `for'
+
+	Added to ability to parameterise case expansions.  Added to case
+	guard definition:
+
+	<case_guard_> ::= ...
+	|	`for' <ident> `in' <case_matches> `then' <command>
+
+	Allowing things like:
+
+	procedure demux (
+		parameter z : cardinal;
+		input i : 8 bits;
+		input s : log z bits;
+		array z of output o : 8 bits
+	) is
+	begin
+		loop
+			i, s -> then
+				case s of
+					for j in 1..z-1 then
+						o[j] <- i
+				|   0 then
+					print "Handling port 0 specially" ||
+					o[0] <- i
+				end
+			end
+		end
+	end
+
+	The body case statement being equivalent to (for z=3):
+
+	case s of
+		1 then o[1] <- i
+	|	2 then o[2] <- i
+	|	3 then o[3] <- i
+	|	0 then
+		print "Handling port 0 specially" ||
+		o[0] <- i
+	end
+
+	Note that only one `for' iteration variable is allowed per guard and
+	that the case matches now must be disjoint from one another.  Case matches
+	are also reduced to single value matches: in the above example, the case
+	is expanded for j = 1, j = 2 ... j = z-1
+
+2002-09-10: Conditional ports and declarations
+
+	It is now possible to omit ports, local and global declarations by wrapping
+	them in an `if' command like syntax:
+
+	<port> ::= ...
+	|	`if' <port_guard> [ `|' <port_guard> ]* `end'
+	|	`if' <port_guard> [ `|' <port_guard> ]* `else' <formal_ports> `end'
+
+	<port_guard> ::= <expr> `then' <formal_ports>
+
+	and similarly for declarations.  The guard expressions must in all cases
+	be constant at compile time/parameterised procedure expansion time.
+	Both port and declaration conditional inclusion are intended for use with
+	parameterised procedures. e.g.:
+
+	procedure myProc (
+		parameter hasDebug : bit;
+		
+		input somePort : bit;
+		output someOtherPort : bit;
+
+		if hasDebug then
+			output debugPort : someType;
+			output anotherDebugPort : someOtherType
+		end
+	) is
+		if hasDebug then
+			someDebugSpecificDeclarations
+		end
+	begin
+		...
+	end
+
+2002-08-06: New loop constructs
+
+	Finally added a do...while loop type construct to the
+	language and exploited the structure of the While/Bar
+	component composition to add some exciting new alternatives:
+
+	repeat
+		<command>
+	while
+		<guard>
+	end
+
+	Executes the command, then performs the guard check and loops
+	if it is true.  This can be extended to multiple guards with
+	their own commands to implement middle-test loops:
+
+	repeat
+		<command0>
+	while
+		<guard1> then <command1>
+	[ | <guard2> then <command2> ]*
+	end
+	
+	Executes command 0 unconditionally, then does the guard
+	checks and conditionally executes one of the guarded commands.  Looping
+	occurs if any guard is true.
+
+	A third loop type is added for symmetry to implement the above
+	`command command' functionality for test-at-beginning loops:
+
+	while
+		<guard1> then <command1>
+	[ | <guard2> then <command2> ]*
+	also	
+		<commandn>
+	end
+
+	Operates like a normal while loop but always executes the final command
+	at the end of each loop iteration if one of the guards way true.  This
+	can repace constructs like:
+
+	local
+		shared commandn is begin <commandn> end
+	begin
+		while
+			<guard1> then <command1> ; commandn ()
+		|	<guard2> then <command2> ; commandn ()
+		end
+	end
+
+	but is more succinct and can also be more cheaply implemented
+	A final `also' clause can also be combined with `repeat...while'
+	loops to similar effect:
+
+	repeat
+		<command0>
+	while
+		<guard1> then <command1>
+	[ | <guard2> then <command2> ]*
+	also
+		<commandn>
+	end
+
+2002-01-29: Simulation time printing
+
+	The print command can now be used to print out values during
+	simulation rather than just at compile time:
+
+	print runtime, "Hello world", a, 10, {1,2}
+
+	Any Balsa type can be printed and an element of the enumeration
+	BalsaError can be used as the first argument to select when the
+	print takes effect (the existing fatal, error, warning and report
+	values have the same effect. runtime causes simulation-time
+	printing).
+
+	Simulation-time printing is now the default but can be overrided
+	(for print commands w/o the BalsaError element) with the -P
+	command line option to balsa-c.
+
+2001-05-10: Added bit-array-cast operator:
+	
+	A value of any type (apart from the string type), T, can be cast into
+	type `array sizeof T of bit' with the prefix `#' operator:
+
+	variable a : 8 bits
+	variable b : array 8 of bit
+	...
+	b := # a
+
+	`#' binds tighter than any other operator (particularly '[') so:
+
+	b := # a[7..0]
+
+	is equivalent to:
+
+	b := (# a)[7..0]
+
+	Signed constants are converted into the smallest number of bits
+	to store their (signed) value:
+
+	constant minus5 = # -5  (-- -5 == (0b1011 as 4 signed bits) --)
+
+	produces the .breeze descrption:
+
+	constant minus5 = (11 as array (0 as 2 bits)..(3 as 2 bits) of 1 bits)
+
+2001-05-03: Added `active input enclosure' commands:
+
+	Conventional active input:
+		channel -> variable
+
+	New channel to channel input (activates tfr from channel1
+	to channel2, channel1 : channel2):
+		channel1 -> channel2 
+
+	Active input enclosure (channel : command):
+		channel -> then command end
+
+	Also added power operator: integer ^ non-negative-integer
+
+	Example ------- cut here --------
+	import [balsa.types.basic]
+
+	procedure active_connect (
+		input i : byte;
+		output o : byte
+	) is
+	begin
+		i -> o
+	end
+
+	procedure forward (
+		input i : byte;
+		output o : byte
+	) is
+	begin
+		loop
+			i -> then
+				if (i as array 8 of bit)[0] then
+					o <- i
+				end
+			end
+		end
+	end
+
+	constant thirtyTwo = 2^5
+	------- cut here --------
+
+2001: Changes syntax for parameterised procedure calls
+
+	New procedure call notation:
+
+	<proc_name> `(' `)'
+	<proc_name> `(' <parameters> , <ports> `)'
+	<proc_name> `(' <ports> `)'
+
+	<ports> ::= <port> ( `,' <ports> )*
+	<parameters> ::= <parameter> ( `,' <parameter> )*
+
+	<parameter> ::= <expr>
+				|	`type' <type>	-- disambiguate type name from variable/channel name
+				|	<type>
+
+	NB. Block connected ports no longer work in arrayed ports:
+
+	ie:
+
+	Rep (4, [ do something ])
+
+	is OK but:
+
+	Rep (4, {[do something], [do something else]})
+
+	wont.

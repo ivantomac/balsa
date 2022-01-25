@@ -1,0 +1,11 @@
+(nodes
+	("guardReq" 1 0 1)
+	("guardAck" 1 0 1)
+	("nReq" 1 0 1)
+)
+(gates
+	(nor (node "guardReq") (node "nReq") (ack "activateOut"))
+	(inv (node "nReq") (req "activate"))
+	(s-element (node "guardReq") (req "activateOut") (req "guard") (node "guardAck"))
+	(demux2 (ack "guard") (ack "activate") (node "guardAck") (data "guard"))
+)

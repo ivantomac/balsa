@@ -1,0 +1,30 @@
+(nodes
+	("poutReq" 1 0 1)
+	("poutReqB" 1 0 1)
+	("outComplete" (param "width") 0 1)
+	("outData" (param "width") 0 2)
+)
+(gates
+	(connect (node "poutReq") (node "poutReqB"))
+	(c-element (node "poutReq") (req (each "out")))
+	(c-element
+		(node (bundle "outData" 0))
+		(req0 "inp")
+		(combine (dup (param "width") (node "poutReqB")))
+	)
+	(c-element
+		(node (bundle "outData" 1))
+		(req1 "inp")
+		(combine (dup (param "width") (node "poutReqB")))
+	)
+	; do completion detection on data before ack'ing input
+	; data are stored in c-elements until all outputs have ack'ed
+	(or
+		(node "outComplete")
+		(node (bundle "outData" 0))
+		(node (bundle "outData" 1))
+	)
+	(c-element (ack "inp") (smash (node "outComplete")))
+	(connect (node (bundle "outData" 0)) (ack0 (each "out")))
+	(connect (node (bundle "outData" 1)) (ack1 (each "out")))
+)

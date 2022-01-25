@@ -1,0 +1,65 @@
+(defines
+	(CASEstyle (style-option "CASE" "ovlp"))
+)
+(nodes
+	("t" (param "inputWidth") 0 1)
+	("c" (param "inputWidth") 0 1)
+	("elseAck" 1 0 1)
+	("einpr" (case CASEstyle (("conv") 0) (else 1)) 0 1)
+	("einpa" (case CASEstyle (("conv") 0) (else 1)) 0 1)
+	("einprDelay0" 1 0 1)
+	("einprDelay1" 1 0 1)
+	("neinprDelay" 1 0 1)
+	("inpr" 1 0 1)
+	("latchEnable" 1 0 1)
+	("outReq" 1 0 1)
+	("inpd" (param "inputWidth") 0 1)
+)
+(gates
+	(case CASEstyle
+		(("conv")
+			(and (node "einprDelay0") (req "inp") (req "inp"))
+			(inv (node "neinprDelay") (node "inpr"))
+			(and (node "latchEnable") (req "inp") (node "neinprDelay"))
+
+			(latch (combine (dup (param "inputWidth") (node "latchEnable"))) (data "inp") (node "inpd"))
+
+			(and (node "einprDelay1") (node "einprDelay0") (req "inp"))
+			(c-element (node "inpr") (node "latchEnable") (node "einprDelay1"))
+			(demux2 (combine (dup (param "inputWidth") (node "inpr"))) (node "c") (node "t") (node "inpd"))
+			(if (complete-encoding? (param "specification") (param "inputWidth"))
+				(gates
+					(decode and-or (param "specification") (node "c") (node "t") (req (each "activateOut")))
+					(or (ack "inp") (ack (each "activateOut")))
+				)
+				(gates
+					(decode and-or (param "specification") (node "c") (node "t")
+						(req (each "activateOut")) (node "elseAck"))
+					(or (ack "inp") (ack (each "activateOut")) (node "elseAck"))
+				)
+			)
+		)
+		(else
+			(cell "t-element"
+				(req "inp")
+				(ack "inp")
+				(node "einpr")
+				(node "einpa")
+			)
+
+			(demux2 (combine (dup (param "inputWidth") (node "einpr"))) (node "c") (node "t") (data "inp"))
+			(if (complete-encoding? (param "specification") (param "inputWidth"))
+				(gates
+					(decode and-or (param "specification") (node "c") (node "t") (req (each "activateOut")))
+					(or (node "einpa") (ack (each "activateOut")))
+				)
+				(gates
+					(decode and-or (param "specification") (node "c") (node "t")
+						(req (each "activateOut")) (node "elseAck"))
+					(or (node "einpa") (ack (each "activateOut")) (node "elseAck"))
+				)
+			)
+		)
+	)
+)
+(connections)

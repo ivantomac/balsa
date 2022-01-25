@@ -1,0 +1,56 @@
+(defines
+	(plural (> (param "width") 1)) ;; more than one
+	(width-even (quotient (param "width") 2))
+	(width-odd (quotient (+ (param "width") 1) 2))
+	(int->oof (lambda (value width rail)
+		(let
+			((i->o-tail (lambda (value width result pow)
+				(cond
+					((= width 0) result)
+					((= width 1) 
+						(if (= rail (modulo value 2))
+							(+ result (expt 2 pow))
+							result	
+						)
+					)
+					(else
+						(i->o-tail (quotient value 4) (- width 2) 
+							(if (= rail (+ (modulo value 2) (*(modulo (quotient value 2) 2) 2)))
+								(+ result (expt 2 pow))
+								result
+							)
+							(+ pow 1)
+						)
+					)
+				)
+			)))
+			(i->o-tail value width 0 0)
+		)
+	))
+	(val0 (int->oof (param "value") (param "width") 0))
+	(not-val0 (- (expt 2 width-odd) 1 val0))
+	(val1 (int->oof (param "value") (param "width") 1))
+	(not-val1 (- (expt 2 width-odd) 1 val1))
+	(val2 (int->oof (param "value") (param "width") 2))
+	(not-val2 (- (expt 2 width-even) 1 val2))
+	(val3 (int->oof (param "value") (param "width") 3))
+	(not-val3 (- (expt 2 width-even) 1 val3))
+)
+(nodes
+)
+(gates
+	(if (/= 0 val0) (connect (req "out") (smash (filter val0 (ack0 "out")))))
+	(if (/= 0 not-val0) (gnd  (smash (filter not-val0 (ack0 "out")))))
+	(if (/= 0 val1) (connect (req "out") (smash (filter val1 (ack1 "out")))))
+	(if (/= 0 not-val1) (gnd (smash (filter not-val1 (ack1 "out")))))
+	(if plural
+		(gates
+			(if (/= 0 val2) (connect (req "out") (smash (filter val2 (ack2 "out")))))
+			(if (/= 0 not-val2) (gnd (smash (filter not-val2 (ack2 "out")))))
+			(if (/= 0 val3) (connect (req "out") (smash (filter val3 (ack3 "out")))))
+			(if (/= 0 not-val3) (gnd (smash (filter not-val3 (ack3 "out")))))
+		)
+	)
+)
+(connections
+)

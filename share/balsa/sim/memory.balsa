@@ -1,0 +1,73 @@
+(--
+	The Balsa Asynchronous Hardware Synthesis System
+	Copyright (C) 1995-2003 Department of Computer Science
+	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+	`memory.balsa'
+	Simulated memory component
+
+	$Id: memory.balsa,v 1.3 2003/09/01 15:23:27 bardslea Exp $
+--)
+
+import [balsa.types.basic]
+
+type BalsaMemory is builtin
+
+-- BalsaMemoryParams : parameters bundle, can add others
+type BalsaMemoryParams is record
+	addressWidth, dataWidth : cardinal
+end
+
+-- BalsaMemoryNew : make a new memory object, this is separate from the procedure
+--	BalsaMemory so we can, for example have a dump-memory routine external to that
+--	procedure.  You could can BalsaMemory with: BalsaMemory (16, 32, <- BalsaMemoryNew (), ...)
+function BalsaMemoryNew is builtin : BalsaMemory
+
+-- BalsaMemory{Read,Write} : simple access functions
+function BalsaMemoryRead (parameter params : BalsaMemoryParams;
+	memory : BalsaMemory; address : params.addressWidth bits) is builtin : params.dataWidth bits
+function BalsaMemoryWrite (parameter params : BalsaMemoryParams;
+	memory : BalsaMemory; address : params.addressWidth bits; data : params.dataWidth bits) is builtin : BalsaMemory
+
+-- BalsaMemory : a single read port memory component, reads a BalsaMemory
+--	object as it is initialised and then waits for an incoming address and
+--	rNw indication
+procedure BalsaMemory (
+	parameter params : BalsaMemoryParams;
+	input memory : BalsaMemory;
+	input address : params.addressWidth bits;
+	input rNw : bit;
+	input write : params.dataWidth bits;
+	output read : params.dataWidth bits
+) is
+	variable memory_v : BalsaMemory
+begin
+	memory -> memory_v;
+	loop
+		address, rNw -> then
+			if rNw then -- read
+				read <- BalsaMemoryRead (params, memory_v, address)
+			else -- write
+				write -> then 
+					sink BalsaMemoryWrite (params, memory_v, address, write)
+				end
+			end
+		end
+	end
+end
+
+procedure B1632 is BalsaMemory ({16, 32})

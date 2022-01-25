@@ -1,0 +1,12 @@
+(nodes
+	("r" 1 0 1)
+)
+(gates
+	(c-element (ack (bundle "inp" 0)) (req (each "inp")))
+)
+(connections
+	(if (>= (param "count") 2)
+		(connect (ack (bundle "inp" 0))
+			(ack (bundles "inp" 1 (- (param "count") 1))))
+	)
+)

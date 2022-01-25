@@ -1,0 +1,155 @@
+(--
+	The Balsa Asynchronous Hardware Synthesis System
+	Copyright (C) 1995-2003 Department of Computer Science
+	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+	`portio.balsa'
+	Simple port I/O printing/parsing
+
+	$Id: portio.balsa,v 1.9 2004/04/06 16:48:23 janinl Exp $
+--)
+
+import [balsa.sim.sim]
+import [balsa.sim.string]
+import [balsa.sim.fileio]
+
+-- BalsaPrintSyncPortActivity : " " "
+procedure BalsaPrintSyncPortActivity (parameter portName : String; sync s) is
+begin
+	loop
+		sync s;
+		print BalsaSimulationTime (), ": sync '", portName
+	end
+end
+
+-- BalsaWriteLogLine : write a log line for some channel activity
+procedure BalsaWriteLogLine (parameter portName, activity : String;
+	input message : String) is
+begin
+	message -> then
+		print BalsaSimulationTime (), ": chan '", portName, "' ", activity, " ", message
+	end
+end
+
+-- BalsaOutputPortToLog : print activity on the output port of some
+--	component is the default format
+procedure BalsaOutputPortToLog (parameter X : type;
+	parameter portName : String; input i : X) is
+begin
+	loop
+		i -> then
+			BalsaWriteLogLine (portName, "reading", <- ToString (X, i))
+		end
+	end
+end
+
+-- BalsaOutputPortToLogWithFormat : print activity on the output port of some
+--	component is the specified format
+procedure BalsaOutputPortToLogWithFormat (parameter X : type;
+	parameter portName : String; parameter radix : 6 bits;
+	parameter underscoreSpacing : 8 bits; parameter showLeadingZeroes : bit;
+	input i : X) is
+begin
+	loop
+		i -> then
+			BalsaWriteLogLine (portName, "reading", <- NumberToString (X, i, radix, underscoreSpacing, showLeadingZeroes))
+		end
+	end
+end
+
+-- BalsaOutputPortToFile : print activity on the output port of some
+--	component is the default format
+procedure BalsaOutputPortToFile (parameter X : type;
+	parameter portName : String; input file : File; input i : X)
+is
+	variable line : String
+begin
+	file -> then
+		loop
+			i -> then
+				line := ToString (X, i);
+				sink FileWrite (file, line);
+				sink FileWrite (file, "\n")
+				;BalsaWriteLogLine (portName, "reading", <- line)
+			end
+		end
+	end
+end
+
+-- BalsaOutputPortToFileWithFormat : print activity on the output port of some
+--	component is the default format
+procedure BalsaOutputPortToFileWithFormat (parameter X : type;
+	parameter portName : String; parameter radix : 6 bits;
+	parameter underscoreSpacing : 8 bits; parameter showLeadingZeroes : bit;
+	input file : File; input i : X)
+is
+	variable line : String
+begin
+	file -> then
+		loop
+			i -> then
+				line := NumberToString (X, i, radix, underscoreSpacing, showLeadingZeroes);
+				sink FileWrite (file, line);
+				sink FileWrite (file, "\n")
+				;BalsaWriteLogLine (portName, "reading", <- line)
+			end
+		end
+	end
+end
+
+-- BalsaPrintInputPortFromValue : supply the given value to the port o each time an input
+--	happens on that port
+procedure BalsaInputPortFromValue (parameter X : type;
+	parameter portName : String; input value : X; output o : X) is
+begin
+	value -> then
+		loop
+			o <- value
+			;BalsaWriteLogLine (portName, "writing", <- ToString (X, value))
+		end
+	end
+end
+
+-- BalsaInputPortFromFile : source values for port o from the given file
+procedure BalsaInputPortFromFile (parameter X : type;
+	parameter portName : String; input file : File; output o : X)
+is
+	variable line : String
+	variable value : X
+begin
+	file -> then
+		loop while not FileEOF (file) then
+			line := FileReadLine (file);
+			o <- FromString (X, line, ForwardValuePrintMessage (portName, line))
+		end
+	end
+end
+
+-- BalsaInputPortFromFile : source values for port o from the given file
+procedure BalsaInputPortFromFile_ForeverIO (parameter X : type;
+	parameter portName : String; input file : File; output o : X)
+is
+	variable line : String
+	variable value : X
+begin
+	file -> then
+		loop
+			line := FileReadLine_withRetry (file);
+			o <- FromString (X, line, ForwardValuePrintMessage (portName, line))
+		end
+	end
+end

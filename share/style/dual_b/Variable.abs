@@ -1,0 +1,32 @@
+(defines
+	(read-port-count (param "readPortCount"))
+	(width (param "width"))
+	(storage-cell
+		(case variable-type
+			(("switchable") "dual-rail-switchable-latch")
+			(("spacer") "dual-rail-spacer-latch")
+			(("ncl") "dual-rail-ncl-latch")
+			(else	"dual-rail-latch")
+		)
+	)
+)
+(nodes
+	("store" (param "width") 0 2)
+	("ldata" (param "width") 0 2)
+	("wack" (param "width") 0 1)
+	("readReq" 1 0 (param "readPortCount"))
+)
+(gates
+	; storage section
+	(cell storage-cell
+		(req0 "write") (req1 "write")
+		(node "wack")
+		(node (bundle "ldata" 0)) (node (bundle "ldata" 1))
+	)
+	; completion detection on writes
+	(c-element (ack "write") (smash (node "wack")))
+	; read ports
+	(connect (combine (node (each "ldata"))) (combine (node (each "store"))))
+	(connect (combine (req (each "read"))) (combine (node (each "readReq"))))
+	(macro dual-rail-connect-read-ports (param "width") (param "readPortCount") (param "specification") "store" "readReq") 
+)

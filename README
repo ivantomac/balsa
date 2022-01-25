@@ -1,0 +1,50 @@
+
+ |_  _ |  _ _   [ The Balsa Asynchronous Framework ]
+ |_)(_\|_/ (_\  Version 4.0
+
+    (C) 1995-2010 School of Computer Science,
+    The University of Manchester,
+    Manchester
+    M13 9PL, UK
+    email: balsa@cs.man.ac.uk
+
+
+More up-to-date info in the INSTALL file.
+
+
+Running Balsa
+
+    A few environment variables must be set first:
+
+    PATH=${PATH}:${BALSAHOME}/bin
+
+    Three additional environment variables are significant to
+    Balsa. These are:
+
+    BALSAHOME is used by the scheme interpreter to find scheme files
+    and by the `make install' operation as a installation root.
+    BALSAPATH is a list of directories to search for breeze and sbreeze
+    files whilst using Balsa.
+
+    All of BALSAHOME and BALSAPATH should be unset by default.
+    Their main use is to temporarily override the installation directory
+    position.
+
+    Balsa source files can be compiled to breeze with the command:
+    
+    balsa-c <src-file>.balsa
+
+Balsa Directory Structure
+
+          ./bin - binary files and executable scripts
+           /doc - documentation
+           /src - Source code
+               /balsa-c - balsa-c source (C/Karlsruhe)
+           /share - Shared code
+               /scheme - Scheme backend code (Scheme)
+               /tech - Target technology specific data
+                   /common - defns. common to all technologies/skeleton files
+               The tech descriptions below are not provided in this distribution
+                   /armlr7 - ARM Ltd./Amulet LR7 cell library defns.
+                   /ams035 - Austria Mikrosystems 0.35um cell library defns.
+               /misc - miscellaneous files

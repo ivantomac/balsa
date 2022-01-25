@@ -1,0 +1,10 @@
+(nodes
+	("nReq" 1 0 1)
+)
+(gates
+	(nor (req "activateOut") (node "nReq") (ack "activateOut"))
+	(inv (node "nReq") (req "activate"))
+)
+(connections
+	(gnd (ack "activate"))
+)

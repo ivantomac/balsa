@@ -1,0 +1,117 @@
+/*
+	The Balsa Asynchronous Hardware Synthesis System
+	Copyright (C) 1995-2003 Department of Computer Science
+	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+	`Breeze.scan'
+	Scanner for `Breeze'
+	
+	$Id: Breeze.scan,v 1.12 2003/02/08 19:39:44 bardslea Exp $
+*/
+
+SCANNER BreezeScan
+
+EXPORT
+{
+#include "arith.h"
+#include "flags.h"
+#include "Positions.h"
+#include "Errors.h"
+#include "implicants.h"
+#include "misc.h"
+#include "output.h"
+#include <Idents.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+	INSERT tScanAttribute
+}
+
+GLOBAL
+{ 
+	INSERT ErrorAttribute
+
+	/* This is used as a scratch space for reading a lexeme */
+	static char lexeme [1024];
+}
+
+LOCAL
+{ BreezeScan_Attribute.Position.File = CurrentFile; }
+
+DEFAULT
+{ char badChar[2]; badChar[0] = *BreezeScan_TokenPtr; badChar[1] = '\0';
+	LOG_ERROR (IllegalCharacter, MakeIdent1 (badChar), BreezeScan_Attribute.Position); }
+
+DEFINE
+digit = {0-9} .
+decdigit = {_ 0-9} .
+
+/*
+nonzero = {1-9} .
+bindigit = {_ 0-1} .
+binxdigit = {_ 0-1 x X} .
+octdigit = {_ 0-7} .
+hexdigit = {_ 0-9 A-F a-f} .
+hexxdigit = {_ 0-9 A-F a-f x X} .
+*/
+
+letter = {a-z A-Z _} .
+breeze_identchar = - {\n \"} .
+
+RULES
+
+digit decdigit * : {
+	BreezeScan_GetWord (lexeme);
+	BreezeScan_Attribute.breeze_literal.value = ReadBasedMP_INTFromString (lexeme, 10, false);
+	return breeze_literal;
+}
+
+"-" digit decdigit * : {
+	BreezeScan_GetWord (lexeme);
+	BreezeScan_Attribute.breeze_literal.value = ReadBasedMP_INTFromString (lexeme, 10, false);
+	mpz_neg (BreezeScan_Attribute.breeze_literal.value, BreezeScan_Attribute.breeze_literal.value);
+	return breeze_literal;
+}
+
+\" breeze_identchar * \"		: {
+	BreezeScan_TokenPtr[BreezeScan_TokenLength - 1] = '\0';
+	BreezeScan_Attribute.breeze_ident.ident = MakeIdent1 (BreezeScan_TokenPtr + 1);
+	return breeze_ident;
+}
+
+\# t : {
+	BreezeScan_Attribute.boolean.value = true;
+	return boolean;
+}
+
+\# f : {
+	BreezeScan_Attribute.boolean.value = false;
+	return boolean;
+}
+
+";" ANY *					: { }
+\t							:-{ yyTab; }
+
+INSERT RULES 
+
+letter (letter | digit | \-) *	: {
+	char nextChar = BreezeScan_TokenPtr[BreezeScan_TokenLength];
+	BreezeScan_TokenPtr[BreezeScan_TokenLength] = '\0';
+	BreezeScan_Attribute.breeze_keyword.keyword = MakeIdent1 (BreezeScan_TokenPtr);
+	BreezeScan_TokenPtr[BreezeScan_TokenLength] = nextChar;
+	return breeze_keyword;
+}

@@ -1,0 +1,13 @@
+(nodes
+	("poutReq" 1 0 1)
+)
+(gates
+	(c-element (node "poutReq") (req (each "pout")))
+	(c-element (req0 "aout") (req0 "inp") (combine (dup (param "width") (node "poutReq"))))
+	(c-element (req1 "aout") (req1 "inp") (combine (dup (param "width") (node "poutReq"))))
+)
+(connections
+	(connect (ack "aout") (ack "inp"))
+	(connect (req0 "aout") (ack0 (each "pout")))
+	(connect (req1 "aout") (ack1 (each "pout")))
+)

@@ -1,0 +1,5 @@
+(nodes)
+(gates)
+(connections
+	(connect (req "inp") (ack "inp"))
+)

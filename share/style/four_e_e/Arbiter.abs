@@ -1,0 +1,12 @@
+(defines)
+(nodes
+	("moA" 1 0 1)
+	("moB" 1 0 1)
+)
+(gates
+	(mutex (req "inpA") (req "inpB") (req "outA") (req "outB"))
+)
+(connections
+	(connect (ack "outA") (ack "inpA"))
+	(connect (ack "outB") (ack "inpB"))
+)

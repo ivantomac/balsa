@@ -1,0 +1,220 @@
+c
+# if defined __STDC__ | defined __cplusplus
+# define ARGS(parameters)	parameters
+# else
+# define ARGS(parameters)	()
+# endif
+
+typedef struct { tPosition yyPos; bool value; } yyboolean;
+typedef struct { tPosition yyPos; PtrMP_INT value; } yybreeze_literal;
+typedef struct { tPosition yyPos; tIdent keyword; } yybreeze_keyword;
+typedef struct { tPosition yyPos; tIdent ident; } yybreeze_ident;
+
+typedef union {
+ tPosition Position;
+ yyboolean boolean;
+ yybreeze_literal breeze_literal;
+ yybreeze_keyword breeze_keyword;
+ yybreeze_ident breeze_ident;
+} BreezeScan_tScanAttribute;
+
+extern void BreezeScan_ErrorAttribute ARGS((int Token, BreezeScan_tScanAttribute * pAttribute));
+%%
+void BreezeScan_ErrorAttribute
+# if defined __STDC__ | defined __cplusplus
+ (int Token, BreezeScan_tScanAttribute * pAttribute)
+# else
+ (Token, pAttribute) int Token; BreezeScan_tScanAttribute * pAttribute;
+# endif
+{
+ pAttribute->Position = BreezeScan_Attribute.Position;
+ switch (Token) {
+ case /* boolean */ 1: 
+ pAttribute->boolean.value = false;
+ ;
+ break;
+ case /* breeze_literal */ 2: 
+ pAttribute->breeze_literal.value = NewMP_INT (0);
+ ;
+ break;
+ case /* breeze_keyword */ 3: 
+ pAttribute->breeze_keyword.keyword = NoIdent;
+ ;
+ break;
+ case /* breeze_ident */ 4: 
+ pAttribute->breeze_ident.ident = NoIdent;
+ ;
+ break;
+ }
+}
+%%
+1 S boolean boolean
+2 S breeze_literal breeze_literal
+3 S breeze_keyword breeze_keyword
+4 S breeze_ident breeze_ident
+5 N '(' '('
+6 N 'import' 'import'
+7 N ')' ')'
+8 N 'file' 'file'
+9 N 'constant' 'constant'
+10 N 'named-type' 'named-type'
+11 N 'alias-type' 'alias-type'
+12 N 'numeric-type' 'numeric-type'
+13 N 'array-type' 'array-type'
+14 N 'record-type' 'record-type'
+15 N 'enumeration-type' 'enumeration-type'
+16 N 'builtin-type' 'builtin-type'
+17 N 'implicant' 'implicant'
+18 N 'type' 'type'
+19 N 'balsa' 'balsa'
+20 N 'type-decl' 'type-decl'
+21 N 'at' 'at'
+22 N 'existing-type' 'existing-type'
+23 N 'literal-expr' 'literal-expr'
+24 N 'ident-expr' 'ident-expr'
+25 N 'string-expr' 'string-expr'
+26 N 'dont-care-expr' 'dont-care-expr'
+27 N 'implicant-expr' 'implicant-expr'
+28 N 'named-aggr-cons-expr' 'named-aggr-cons-expr'
+29 N 'exprs' 'exprs'
+30 N 'aggr-cons-expr' 'aggr-cons-expr'
+31 N 'enum-elem-expr' 'enum-elem-expr'
+32 N 'unary-expr' 'unary-expr'
+33 N 'sizeof-expr' 'sizeof-expr'
+34 N 'binary-expr' 'binary-expr'
+35 N 'record-elem-extract-expr' 'record-elem-extract-expr'
+36 N 'array-extract-expr' 'array-extract-expr'
+37 N 'array-slice-expr' 'array-slice-expr'
+38 N 'range1' 'range1'
+39 N 'range2' 'range2'
+40 N 'type-range' 'type-range'
+41 N 'as-expr' 'as-expr'
+42 N 'bit-array-cast-expr' 'bit-array-cast-expr'
+43 N 'let-expr' 'let-expr'
+44 N 'val-decls' 'val-decls'
+45 N 'val-decl' 'val-decl'
+46 N 'function-call-expr' 'function-call-expr'
+47 N 'function-params' 'function-params'
+48 N 'expr-func-param' 'expr-func-param'
+49 N 'type-func-param' 'type-func-param'
+50 N 'array-append-expr' 'array-append-expr'
+51 N 'new-type' 'new-type'
+52 N 'record-elems' 'record-elems'
+53 N 'record-elem' 'record-elem'
+54 N 'idents' 'idents'
+55 N 'bounded-record-type' 'bounded-record-type'
+56 N 'enum-elems' 'enum-elems'
+57 N 'enum-elem' 'enum-elem'
+58 N 'valued-enum-elem' 'valued-enum-elem'
+59 N 'bounded-enumeration-type' 'bounded-enumeration-type'
+60 N 'typed-constant-decl' 'typed-constant-decl'
+61 N 'untyped-constant-decl' 'untyped-constant-decl'
+62 N 'variable-decl' 'variable-decl'
+63 N 'init-variable-decl' 'init-variable-decl'
+64 N 'channel-decl' 'channel-decl'
+65 N 'multicast' 'multicast'
+66 N 'arrayed-channel-decl' 'arrayed-channel-decl'
+67 N 'sync-decl' 'sync-decl'
+68 N 'arrayed-sync-decl' 'arrayed-sync-decl'
+69 N 'procedure-decl' 'procedure-decl'
+70 N 'formal-ports' 'formal-ports'
+71 N 'value-port' 'value-port'
+72 N 'port' 'port'
+73 N 'default' 'default'
+74 N 'active' 'active'
+75 N 'passive' 'passive'
+76 N 'input' 'input'
+77 N 'output' 'output'
+78 N 'arrayed-port' 'arrayed-port'
+79 N 'sync-port' 'sync-port'
+80 N 'arrayed-sync-port' 'arrayed-sync-port'
+81 N 'param-port' 'param-port'
+82 N 'type-param-port' 'type-param-port'
+83 N 'if-ports' 'if-ports'
+84 N 'port-guards' 'port-guards'
+85 N 'port-guard' 'port-guard'
+86 N 'if-else-ports' 'if-else-ports'
+87 N 'block' 'block'
+88 N 'decls' 'decls'
+89 N 'continue' 'continue'
+90 N 'halt' 'halt'
+91 N 'ident-lvalue' 'ident-lvalue'
+92 N 'record-elem-lvalue' 'record-elem-lvalue'
+93 N 'array-elem-lvalue' 'array-elem-lvalue'
+94 N 'array-slice-lvalue' 'array-slice-lvalue'
+95 N 'array-append-lvalue' 'array-append-lvalue'
+96 N 'array-cons-lvalue' 'array-cons-lvalue'
+97 N 'lvalues' 'lvalues'
+98 N 'block-lvalue' 'block-lvalue'
+99 N 'channel-lvalue' 'channel-lvalue'
+100 N 'renamed-channel-lvalue' 'renamed-channel-lvalue'
+101 N 'as-lvalue' 'as-lvalue'
+102 N 'bit-array-cast-lvalue' 'bit-array-cast-lvalue'
+103 N 'input-enclose' 'input-enclose'
+104 N 'input-enclose-bang' 'input-enclose-bang'
+105 N 'sync' 'sync'
+106 N 'assign' 'assign'
+107 N 'block-command' 'block-command'
+108 N 'sequential' 'sequential'
+109 N 'parallel' 'parallel'
+110 N 'permissive-parallel' 'permissive-parallel'
+111 N 'loop' 'loop'
+112 N 'while-guards' 'while-guards'
+113 N 'guards' 'guards'
+114 N 'guard' 'guard'
+115 N 'while-guards-also' 'while-guards-also'
+116 N 'command-while-expr' 'command-while-expr'
+117 N 'command-while-guards' 'command-while-guards'
+118 N 'command-while-guards-also' 'command-while-guards-also'
+119 N 'if' 'if'
+120 N 'if-else' 'if-else'
+121 N 'case' 'case'
+122 N 'case-guards' 'case-guards'
+123 N 'case-match-guard' 'case-match-guard'
+124 N 'case-matches' 'case-matches'
+125 N 'case-range' 'case-range'
+126 N 'case-implicant' 'case-implicant'
+127 N 'for-case-guard' 'for-case-guard'
+128 N 'case-else' 'case-else'
+129 N 'for' 'for'
+130 N 'procedure-call' 'procedure-call'
+131 N 'procedure-params' 'procedure-params'
+132 N 'expr-proc-param' 'expr-proc-param'
+133 N 'type-proc-param' 'type-proc-param'
+134 N 'block-proc-param' 'block-proc-param'
+135 N 'var-read-proc-param' 'var-read-proc-param'
+136 N 'var-write-proc-param' 'var-write-proc-param'
+137 N 'labelled-command' 'labelled-command'
+138 N 'select' 'select'
+139 N 'channel-guards' 'channel-guards'
+140 N 'channel-guard' 'channel-guard'
+141 N 'select!' 'select!'
+142 N 'arbitrate' 'arbitrate'
+143 N 'print' 'print'
+144 N 'sink' 'sink'
+145 N 'procedure-alias-decl' 'procedure-alias-decl'
+146 N 'procedure-param-alias-decl' 'procedure-param-alias-decl'
+147 N 'typed-function-decl' 'typed-function-decl'
+148 N 'untyped-function-decl' 'untyped-function-decl'
+149 N 'builtin-function-decl' 'builtin-function-decl'
+150 N 'shared-decl' 'shared-decl'
+151 N 'if-decls' 'if-decls'
+152 N 'decl-guards' 'decl-guards'
+153 N 'decl-guard' 'decl-guard'
+154 N 'if-else-decls' 'if-else-decls'
+155 N 'print-decl' 'print-decl'
+156 N 'breeze-part' 'breeze-part'
+157 N 'ports' 'ports'
+158 N 'attributes' 'attributes'
+159 N 'channels' 'channels'
+160 N 'push' 'push'
+161 N 'pull' 'pull'
+162 N 'components' 'components'
+163 N 'component' 'component'
+164 N 'undeclared-component' 'undeclared-component'
+165 N 'implements' 'implements'
+166 N 'parameters' 'parameters'
+167 N 'parameter' 'parameter'
+168 N 'type-parameter' 'type-parameter'
+169 N 'call-contexts' 'call-contexts'
+170 N 'call-context' 'call-context'

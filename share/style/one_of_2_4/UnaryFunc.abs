@@ -1,0 +1,362 @@
+(defines
+	(out-even-width (quotient (param "outputWidth") 2)) 
+	(out-odd-width (quotient (+ (param "outputWidth") 1) 2))
+	(inp-even-width (quotient (param "inputWidth") 2)) 
+	(inp-odd-width (quotient (+ (param "inputWidth") 1) 2))
+	(out-diff (- (param "outputWidth") (param "inputWidth")))
+	(out-extend-even (- out-even-width inp-odd-width))
+	(out-extend-odd (- out-even-width inp-even-width))
+	(out-plural (> (param "outputWidth") 1))
+	(inp-plural (> (param "inputWidth") 1))
+	(ext-plural (> out-diff 1))
+	(odd-inp (= (modulo (param "inputWidth") 2) 1))
+	(odd-out (= (modulo (param "outputWidth") 2) 1))
+	(add-width (min out-odd-width inp-odd-width))
+	
+)
+(nodes
+	("extend0" 1 0 1)
+	("extend1" 1 0 1)
+	("carry0" (+ add-width 1) 0 1)
+	("carry1" (+ add-width 1) 0 1)
+	("eventbit0" 1 0 1)
+	("eventbit1" 1 0 1) 
+	
+)
+(gates
+	(connect (req "out") (req "inp"))
+	(case (param "op")
+		(("Invert")
+			(gates
+				(cond
+					((< out-diff 0) '' Inp must be plural
+						(gates
+							(if out-plural
+								(gates
+									(connect (slice 0 out-even-width (ack3 "inp")) (slice 0 out-even-width (ack0 "out")))
+									(connect (slice 0 out-even-width (ack2 "inp")) (slice 0 out-even-width (ack1 "out")))
+									(connect (slice 0 out-even-width (ack1 "inp")) (slice 0 out-even-width (ack2 "out")))
+									(connect (slice 0 out-even-width (ack0 "inp")) (slice 0 out-even-width (ack3 "out")))
+								)
+							)
+							(if odd-out
+								(gates
+									(or (slice out-even-width 1 (ack0 "out")) (slice out-even-width 1 (ack1 "inp")) (slice out-even-width 1 (ack3 "inp")))
+									(or (slice out-even-width 1 (ack1 "out")) (slice out-even-width 1 (ack0 "inp")) (slice out-even-width 1 (ack2 "inp")))
+								)
+							)
+						)
+					)
+					((= out-diff 0)
+						(gates
+							(if inp-plural
+								(gates
+									(connect (slice 0 out-even-width (ack0 "inp")) (slice 0 out-even-width (ack3 "out")))
+									(connect (slice 0 out-even-width (ack1 "inp")) (slice 0 out-even-width (ack2 "out")))
+									(connect (slice 0 out-even-width (ack2 "inp")) (slice 0 out-even-width (ack1 "out")))
+									(connect (slice 0 out-even-width (ack3 "inp")) (slice 0 out-even-width (ack0 "out")))	
+								)
+							)
+							(if odd-out
+								(gates
+									(connect (slice out-even-width 1 (ack0 "inp")) (slice out-even-width 1 (ack1 "out")))
+									(connect (slice out-even-width 1 (ack1 "inp")) (slice out-even-width 1 (ack0 "out")))
+								)
+							)
+						)
+					)
+					((> out-diff 0)
+						(gates
+							(if inp-plural
+								(gates
+									(connect (slice 0 inp-even-width (ack3 "inp")) (slice 0 inp-even-width (ack0 "out")))
+									(connect (slice 0 inp-even-width (ack2 "inp")) (slice 0 inp-even-width (ack1 "out")))
+									(connect (slice 0 inp-even-width (ack1 "inp")) (slice 0 inp-even-width (ack2 "out")))
+									(connect (slice 0 inp-even-width (ack0 "inp")) (slice 0 inp-even-width (ack3 "out")))
+								)
+							)
+							(if (> out-diff 1)
+								(gates
+									(if (= "true" (param "inputIsSigned"))
+										(gates ;;Sign Extend
+											(if odd-inp
+												(gates
+													(connect (slice inp-even-width 1 (ack1 "inp")) (smash (slice inp-even-width out-extend-odd (ack0 "out"))))
+													(gnd (smash (slice inp-even-width out-extend-odd (ack1 "out"))))
+													(gnd (smash (slice inp-even-width out-extend-even (ack2 "out"))))
+													(connect (slice inp-even-width 1 (ack0 "inp")) (smash (slice inp-even-width out-extend-even (ack3 "out"))))
+												)
+												(gates
+													(or (node "extend0")
+														(slice (- inp-even-width 1) 1 (ack0 "inp"))
+														(slice (- inp-even-width 1) 1 (ack1 "inp"))
+													)
+													(or (node "extend1")
+														(slice (- inp-even-width 1) 1 (ack2 "inp"))
+														(slice (- inp-even-width 1) 1 (ack3 "inp"))
+													)
+													(connect (node "extend0") (smash (slice inp-even-width out-extend-odd (ack0 "out"))))
+													(gnd (smash (slice inp-even-width out-extend-odd (ack1 "out"))))
+													(gnd (smash (slice inp-even-width out-extend-even (ack2 "out"))))
+													(connect (node "extend1") (smash (slice inp-even-width out-extend-even (ack3 "out"))))
+												)
+											)
+										)
+										(gates
+											(if odd-inp
+												(gates
+													(connect (slice inp-even-width 1 (ack1 "inp")) (slice inp-even-width 1 (ack2 "out")))
+													(connect (slice inp-even-width 1 (ack0 "inp")) (slice inp-even-width 1 (ack3 "out")))
+													(gnd (smash (slice inp-even-width out-extend-odd (ack0 "out"))))
+													(gnd (smash (slice inp-even-width out-extend-odd (ack1 "out"))))
+													(gnd (smash (slice inp-odd-width out-extend-even (ack2 "out"))))
+													(connect (req "out") (smash (slice inp-odd-width out-extend-even (ack3 "out"))))
+													(if odd-out
+														(gates
+															(connect (req "out") (slice out-odd-width 1 (ack1 "out")))
+															(gnd (slice out-odd-width 1 (ack0 "out")))
+														)
+													)
+												)
+												(gates
+													(gnd (smash (slice inp-even-width out-extend-odd (ack0 "out"))))
+													(gnd (smash (slice inp-even-width out-extend-odd (ack1 "out"))))
+													(gnd (smash (slice inp-even-width out-extend-even (ack2 "out"))))
+													(connect (req "out") (smash (slice inp-even-width out-extend-even (ack3 "out"))))
+													(if odd-out
+														(gates
+															(connect (req "out") (slice out-even-width 1 (ack1 "out")))
+														)
+													)
+												)
+											)
+										)
+									)
+								)
+								(gates
+									(if (= "true" (param "inputIsSigned"))
+										(gates
+											(if odd-inp
+												(gates
+													(gnd (smash (slice inp-even-width 1 (ack0 "out"))))
+													(connect (slice inp-even-width 1 (ack2 "inp")) (slice inp-even-width 1 (ack1 "out")))
+													(gnd (smash (slice inp-even-width 1 (ack1 "out"))))
+													(connect (slice inp-even-width 1 (ack0 "inp")) (slice inp-even-width 1 (ack3 "out")))
+												)
+												(gates
+													(or (slice inp-even-width 1 (ack1 "out")) 
+														(slice (- inp-even-width 1) 1 (ack0 "inp"))
+														(slice (- inp-even-width 1) 1 (ack1 "inp"))
+													)
+													(or (slice inp-even-width 1 (ack0 "out"))
+														(slice (- inp-even-width 1) 1 (ack2 "inp"))
+														(slice (- inp-even-width 1) 1 (ack3 "inp"))
+													)
+												)
+											)				
+										)
+										(gates
+											(if odd-inp
+												(gates
+													(gnd (smash (slice inp-even-width 1 (ack0 "out"))))
+													(gnd (smash (slice inp-even-width 1 (ack1 "out"))))
+													(connect (slice inp-even-width 1 (ack1 "inp")) (slice inp-even-width 1 (ack2 "out")))
+													(connect (slice inp-even-width 1 (ack0 "inp")) (slice inp-even-width 1 (ack3 "out")))
+												)
+												(gates
+													(connect (req "out") (slice inp-even-width 1 (ack1 "inp")))
+													(gnd (slice inp-even-width 1 (ack0 "inp")))
+												)
+											)
+										)
+									)
+								)
+							)
+						)
+					)
+				)
+			)
+		)
+		(("Negate")
+			(gates
+				(connect (req "out") (slice 0 1 (node "carry1")))
+				(gnd (slice 0 1 (node "carry0")))
+				(cond
+					((< out-diff 0)
+						(gates
+							(if out-plural
+								(gates
+									(cell "one-of-four-carry-adder"
+										(slice 0 out-even-width (ack3 "inp")) 
+										(slice 0 out-even-width (ack2"inp")) 
+										(slice 0 out-even-width (ack1"inp")) 
+										(slice 0 out-even-width (ack0 "inp"))
+										(slice 0 out-even-width (node "carry0"))
+										(slice 0 out-even-width (node "carry1"))
+										(slice 0 out-even-width (ack0 "out")) 
+										(slice 0 out-even-width (ack1"out")) 
+										(slice 0 out-even-width (ack2"out")) 
+										(slice 0 out-even-width (ack3 "out"))
+										(slice 1 out-even-width (node "carry0"))
+										(slice 1 out-even-width (node "carry1"))
+										
+									)
+									(if odd-out
+										(gates
+											(or (node "extend0") (slice (- out-even-width 1) 1 (ack1 "inp")) (slice (- out-even-width 1) 1 (ack3 "inp")))
+											(or (node "extend1") (slice (- out-even-width 1) 1 (ack0 "inp")) (slice (- out-even-width 1) 1 (ack2 "inp")))
+											(cell "dr-half-adder"
+												(node "extend0")
+												(node "extend1")
+												(slice out-even-width 1 (node "carry0"));; Already reversed
+												(slice out-even-width 1 (node "carry1"))
+												(slice out-even-width 1 (ack0 "out"))
+												(slice out-even-width 1 (ack1 "out"))
+												(slice out-odd-width 1 (node "carry0"))
+												(slice out-odd-width 1 (node "carry1"))
+											)	
+										)
+									)
+								)
+								(gates
+									(or (slice 0 1 (ack0 "out")) (slice 0 1 (ack0 "inp")) (slice 0 1 (ack2 "inp"))) ;; Straight forward connect
+									(or (slice 0 1 (ack1 "out")) (slice 0 1 (ack1 "inp")) (slice 0 1 (ack3 "inp")))
+								)
+							)
+						
+						)
+					)
+					((= out-diff 0)
+						(gates
+							(if out-plural
+								(gates
+									(cell "one-of-four-carry-adder"
+										(slice 0 out-even-width (ack3 "inp")) 
+										(slice 0 out-even-width (ack2"inp")) 
+										(slice 0 out-even-width (ack1"inp")) 
+										(slice 0 out-even-width (ack0 "inp"))
+										(slice 0 out-even-width (node "carry0"))
+										(slice 0 out-even-width (node "carry1"))
+										(slice 0 out-even-width (ack0 "out")) 
+										(slice 0 out-even-width (ack1"out")) 
+										(slice 0 out-even-width (ack2"out")) 
+										(slice 0 out-even-width (ack3 "out"))
+										(slice 1 out-even-width (node "carry0"))
+										(slice 1 out-even-width (node "carry1"))
+									)
+									(if odd-out
+										(cell "dr-half-adder"
+											(slice out-even-width 1 (ack0 "inp"))
+											(slice out-even-width 1 (ack1 "inp"))
+											(slice out-even-width 1 (node "carry1"))
+											(slice out-even-width 1 (node "carry0"))
+											(slice out-even-width 1 (ack1 "out"))
+											(slice out-even-width 1 (ack0 "out"))
+											(slice out-odd-width 1 (node "carry1"))
+											(slice out-odd-width 1 (node "carry0"))	
+										)
+									)
+								)
+								(gates
+									(connect (slice 0 1 (ack0 "inp")) (slice 0 1 (ack0 "out"))) ;; Straight forward connect
+									(connect (slice 0 1 (ack1 "inp")) (slice 0 1 (ack1 "out")))
+								)
+							)		
+						)
+					)
+					((> out-diff 0)
+						(gates
+							(if inp-plural
+								(cell "one-of-four-carry-adder"
+									(slice 0 inp-even-width (ack3 "inp")) 
+									(slice 0 inp-even-width (ack2"inp")) 
+									(slice 0 inp-even-width (ack1"inp")) 
+									(slice 0 inp-even-width (ack0 "inp"))
+									(slice 0 inp-even-width (node "carry0"))
+									(slice 0 inp-even-width (node "carry1"))
+									(slice 0 inp-even-width (ack0 "out")) 
+									(slice 0 inp-even-width (ack1"out")) 
+									(slice 0 inp-even-width (ack2"out")) 
+									(slice 0 inp-even-width (ack3 "out"))
+									(slice 1 inp-even-width (node "carry0"))
+									(slice 1 inp-even-width (node "carry1"))
+								)
+							)
+							(if odd-inp
+								(gates
+									(cell "dr-half-adder"
+										(slice inp-even-width 1 (ack0 "inp"))
+										(slice inp-even-width 1 (ack1 "inp"))
+										(slice inp-even-width 1 (node "carry1"))
+										(slice inp-even-width 1 (node "carry0"))
+										(node "eventbit0")
+										(node "eventbit1")
+										(slice inp-odd-width 1 (node "carry1"))
+										(slice inp-odd-width 1 (node "carry0"))
+									)
+									(cell "dr-xor2"
+										(node "extend1")
+										(node "extend0")
+										(slice inp-odd-width 1 (node "carry1"))
+										(slice inp-odd-width 1 (node "carry0"))
+										(slice inp-even-width 1 (ack0 "inp")) ;; XNOR
+										(slice inp-even-width 1 (ack1 "inp"))
+									)
+									(c-element (slice inp-even-width 1 (ack0 "out")) (node "extend0") (node "eventbit0")) ;; Create extended 1-of-4 group
+									(c-element (slice inp-even-width 1 (ack1 "out")) (node "extend0") (node "eventbit1"))
+									(c-element (slice inp-even-width 1 (ack2 "out")) (node "extend1") (node "eventbit0"))
+									(c-element (slice inp-even-width 1 (ack3 "out")) (node "extend1") (node "eventbit1"))
+									(if (> out-diff 1) ;; As already sign-extended 1 place
+										(gates
+											(if (> out-diff 2) ;; Have a 1-of-4 connection
+												(gates
+													(connect (node "extend0") (smash (slice inp-odd-width out-extend-even (ack0 "out"))))
+													(gnd (slice inp-odd-width out-extend-even (ack1 "out")))
+													(gnd (slice inp-odd-width out-extend-even (ack2 "out")))
+													(connect (node "extend1") (smash (slice inp-odd-width out-extend-even (ack3 "out"))))
+												)
+											)
+											(if odd-out
+												(gates
+													(connect (node "extend0") (slice out-width-even 1 (ack0 "out")))
+													(connect (node "extend1") (slice out-width-even 1 (ack1 "out")))
+												)
+											)
+										)
+									)
+								)
+								(gates
+									(or (node "eventbit0") (slice (- inp-even-width 1) 1 (ack1 "inp")) (slice (- inp-even-width 1) 1 (ack3 "inp")))
+									(or (node "eventbit1") (slice (- inp-even-width 1) 1 (ack0 "inp")) (slice (- inp-even-width 1) 1 (ack2 "inp")))
+									(cell "dr-xor2"
+										(node "extend1")
+										(node "extend0")
+										(slice inp-odd-width 1 (node "carry1"))
+										(slice inp-odd-width 1 (node "carry0"))
+										(node "eventbit0") ;; XNOR
+										(node "eventbit1")
+									)
+									(if (> out-diff 1) ;; 
+										(gates
+											(connect (node "extend0") (smash (slice inp-odd-width out-extend-even (ack0 "out"))))
+											(gnd (slice inp-odd-width out-extend-even (ack1 "out")))
+											(gnd (slice inp-odd-width out-extend-even (ack2 "out")))
+											(connect (node "extend1") (smash (slice inp-odd-width out-extend-even (ack3 "out"))))
+										)
+									)
+									(if odd-out
+										(gates
+											(connect (node "extend0") (slice out-width-even 1 (ack0 "out")))
+											(connect (node "extend1") (slice out-width-even 1 (ack1 "out")))
+										)
+									)
+								)
+							)
+						)
+					)
+				)
+			)
+		)
+	)
+)
+(connections)

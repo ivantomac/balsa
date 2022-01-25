@@ -1,0 +1,42 @@
+(defines
+	(PPstyle (style-option "PP" "conv"))
+)
+(nodes
+	("outReqComp" (case PPstyle (("broad") 0) (else 1)) 0 1)
+	("nOutReqComp" (case PPstyle (("broad") 0) (else 1)) 0 1)
+	("outAck" (case PPstyle (("broad") 0) (else 1)) 0 1)
+	("ldata" (case PPstyle (("broad") (param "width")) (else 0)) 0 1)
+)
+(gates
+	(case PPstyle
+		(("broad")
+			(c-element (ack "inp") (req "inp") (req (each "out")))
+			(if (and suggest-buffers (> (param "outputCount") 2))
+				(gates
+					(cell "suggested-buffer"
+						(combine (data (each "out")))
+						(combine (dup (param "outputCount") (data "inp")))
+					)
+					(cell "suggested-buffer"
+						(combine (ack (each "out")))
+						(combine (dup (param "outputCount") (ack "inp")))
+					)
+				)
+				(gates
+					(connect (data "inp") (data (each "out")))
+					(connect (ack "inp") (ack (each "out")))
+				)
+			)
+		)
+		(else
+			(c-element (node "outReqComp") (req (each "out")))
+			(c-element (node "outAck") (req "inp") (node "outReqComp"))
+			(inv (node "nOutReqComp") (node "outReqComp")) 
+			(and (ack "inp") (node "outAck") (node "nOutReqComp"))
+			(connect (node "outAck") (ack (each "out")))
+			(connect (data "inp") (data (each "out")))
+		)
+	)
+)
+(connections
+)

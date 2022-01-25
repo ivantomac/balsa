@@ -1,0 +1,7 @@
+(nodes)
+(gates
+)
+(connections
+	(gnd (ack "inp"))
+	(connect (req "inp") (req (each "out")))
+)

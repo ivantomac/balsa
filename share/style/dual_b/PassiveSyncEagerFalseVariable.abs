@@ -1,0 +1,20 @@
+(defines
+	(FVstyle (style-option "FV" "ovlp"))
+)
+(nodes
+	("writeAck" 1 0 1)
+)
+(gates
+	(case FVstyle
+		(("ovlp")
+			(cell "t-element" (req "trigger") (node "writeAck") (req "signal") (ack "signal"))
+		)
+		(else
+			(s-element (req "trigger") (node "writeAck") (req "signal") (ack "signal"))
+		)
+	)
+	(c-element (ack "trigger") (node "writeAck") (req "inp"))
+)
+(connections
+	(connect (ack "trigger") (ack "inp"))
+)

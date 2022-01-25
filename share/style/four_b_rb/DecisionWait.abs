@@ -1,0 +1,11 @@
+(nodes)
+(gates
+	(c-element (combine (req (each "out")))
+		(combine (req (each "inp")))
+		(combine (dup (param "portCount") (req "activate")))
+	)
+	(or (ack "activate") (ack (each "out")))
+)
+(connections
+	(connect (combine (ack (each "out"))) (combine (ack (each "inp"))))
+)

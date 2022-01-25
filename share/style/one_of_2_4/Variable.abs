@@ -1,0 +1,56 @@
+(defines
+	(read-port-specification (parse-case-spec (param "specification")))
+	(read-port-count (param "readPortCount"))
+	(width (param "width"))
+	(spec-length (length read-port-specification))
+	(width-odd (quotient (+ width 1) 2))
+	(width-even (quotient width 2))
+	(plural (> width 1)) ;; more than one
+	(odd (odd? width))
+	(oof-variable
+		(case variable-type
+			(("ncl") "one-of-four-ncl-latch")
+			(else "one-of-four-latch")
+		)
+	)
+	(dr-variable
+		(case variable-type
+			(("ncl") "dual-rail-ncl-latch")
+			(else "dual-rail-latch")
+		)
+	)
+)
+(nodes
+	("store" width-odd 0 (case width-even ((0) 2) (else 4)) (list width-odd width-odd width-even width-even))
+	("ldata" width-odd 0 (case width-even ((0) 2) (else 4)) (list width-odd width-odd width-even width-even))
+	("ackcomp" width-odd 0 1)
+	("readReq" 1 0 read-port-count)
+)
+(gates
+	(if plural
+		(cell oof-variable
+			(slice 0 width-even (req0 "write"))
+			(slice 0 width-even (req1 "write"))
+			(slice 0 width-even (req2 "write"))
+			(slice 0 width-even (req3 "write"))
+			(slice 0 width-even (node "ackcomp"))
+			(slice 0 width-even (node (bundle "ldata" 0)))
+			(slice 0 width-even (node (bundle "ldata" 1)))
+			(slice 0 width-even (node (bundle "ldata" 2)))
+			(slice 0 width-even (node (bundle "ldata" 3)))
+		)
+	)
+	(if odd
+		(cell dr-variable
+			(slice width-even 1 (req0 "write"))
+			(slice width-even 1 (req1 "write"))
+			(slice width-even 1 (node "ackcomp"))
+			(slice width-even 1 (node (bundle "ldata" 0)))
+			(slice width-even 1 (node (bundle "ldata" 1)))
+		)
+	)
+	(c-element (ack "write") (smash (node "ackcomp")))
+	(connect (combine (node (each "ldata"))) (combine (node (each "store"))))
+	(connect (combine (req (each "read"))) (combine (node (each "readReq"))))
+	(macro one-of-four-connect-read-ports width read-port-count (param "specification") "store" "readReq")
+)

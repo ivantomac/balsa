@@ -1,0 +1,1139 @@
+/*
+	The Balsa Asynchronous Hardware Synthesis System
+	Copyright (C) 1995-2003 Department of Computer Science
+	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+	`Breeze.pars'
+	Parser for `Breeze'
+	
+	$Id: Breeze.pars,v 1.59 2004/05/16 17:24:34 bardslea Exp $
+*/
+
+SCANNER BreezeScan
+PARSER Breeze
+
+GLOBAL
+{
+#include "BreezeScan.h"
+#include "Tree.h"
+#include "BreezeScanSource.h"
+#include "arith.h"
+#include "ports.h"
+#include "implicants.h"
+#include "wires.h"
+#include "callcontexts.h"
+#include <string.h>
+
+  tIdent nameIdent;
+}
+
+BEGIN
+{
+	BreezeScan_BeginScanner();
+	nameIdent = MakeIdent1 ("name");
+}
+
+PROPERTY INPUT
+
+RULE
+
+breeze_file = breeze_decls .
+
+/* *** Breeze/part nodes */
+
+breeze_decls = <
+BreezeEmptyDecls	= .
+BreezeStepDecls		= breeze_decls breeze_decl .
+> .
+
+breeze_decl = <
+BreezeImportDecl	= '(' 'import' breeze_ident ')' .
+BreezeFileDecl		= '(' 'file' breeze_literal breeze_ident ')' .
+BreezeConstantDecl	= '(' 'constant' breeze_ident breeze_literal breeze_type ')' .
+BreezeImplicantDecl	= '(' 'implicant' breeze_ident baseValue: breeze_literal dontCares: breeze_literal breeze_type ')' .
+BreezeTypeDecl 		= '(' 'type' breeze_ident breeze_type ')' .
+BalsaDecl			= '(' 'balsa' decl ')' .
+PartDecl			= '(' 'breeze-part' breeze_ident
+						'(' 'ports' part_ports ')'
+						'(' 'attributes' breeze_options ')'
+						'(' 'channels' part_channels ')'
+						'(' 'components' part_components ')'
+						part_optional_callcontexts
+					  ')' .
+> .
+
+breeze_type = <
+BreezeExistingType	= '(' 'named-type' breeze_ident ')' .
+BreezeAliasType		= '(' 'alias-type' breeze_ident ')' .
+BreezeNumericType	= '(' 'numeric-type' boolean breeze_literal ')' .
+/* Deprecate me! */
+BreezeArrayType2	= '(' 'array-type' breeze_type lowIndex: breeze_literal size: breeze_literal ')' .
+BreezeArrayType		= '(' 'array-type' baseType: breeze_type
+	lowIndex: breeze_literal size: breeze_literal indexType: breeze_type ')' .
+BreezeRecordType	= '(' 'record-type' breeze_literal breeze_record_elems ')' .
+BreezeEnumType		= '(' 'enumeration-type' boolean breeze_literal breeze_enum_elems ')' .
+BreezeBuiltinType	= '(' 'builtin-type' ')' .
+> .
+
+breeze_record_elems = <
+BreezeEmptyRecordElems	= .
+BreezeStepRecordElems	= breeze_record_elems '(' breeze_ident breeze_type ')' .
+> .
+
+breeze_enum_elems = <
+BreezeEmptyEnumElems	= .
+BreezeStepEnumElems	= breeze_enum_elems '(' breeze_ident breeze_literal ')' .
+> .
+
+part_component = <
+Component = '(' 'component' breeze_ident '(' comp_parameters ')' '(' channel_numbers ')' breeze_options ')' .
+UndeclaredComponent = '(' 'undeclared-component' componentName:breeze_ident '(' comp_parameters ')'
+	'(' channel_numbers ')'
+	'(' 'implements' componentType:breeze_ident baseComponentName:breeze_ident ')'
+	'(' 'parameters' breeze_param_decls ')'
+	'(' 'ports' part_ports ')'
+	breeze_options ')' .
+> .
+
+breeze_param_decls = <
+EmptyBreezeParamDecls	= .
+StepBreezeParamDecls	= breeze_param_decls breeze_param_decl .
+> .
+
+breeze_param_decl = <
+BreezeParameter			= '(' 'parameter' breeze_ident breeze_type ')' .
+BreezeTypeParameter		= '(' 'type-parameter' breeze_ident ')' .
+> .
+
+comp_parameter = <
+NumberParameter	= breeze_literal .
+StringParameter	= breeze_ident .
+TypeParameter	= breeze_type .
+> .
+
+part_port = <
+PartSyncPort			= '(' 'sync-port' breeze_ident port_sense breeze_options ')' .
+PartChannelPort			= '(' 'port' breeze_ident port_sense port_direction breeze_type breeze_options ')' .
+PartChannelArrayedPort	= '(' 'arrayed-port' breeze_ident port_sense port_direction portType: breeze_type
+	lowIndex: breeze_literal portCount: breeze_literal indexType: breeze_type breeze_options ')' .
+PartSyncArrayedPort		= '(' 'arrayed-sync-port' breeze_ident port_sense
+	lowIndex: breeze_literal portCount: breeze_literal breeze_type breeze_options ')' .
+> .
+
+part_channel_sense = <
+PushPartChannelSense	= 'push' .
+PullPartChannelSense	= 'pull' .
+> .
+
+channel_numbers = <
+EmptyChannelNumbers = .
+StepChannelNumbers	= channel_numbers breeze_literal .
+ChannelNumberArray	= list: channel_numbers '(' sublist: channel_numbers ')' .
+> .
+
+part_components = <
+EmptyComps	= .
+StepComps	= part_components part_component .
+> .
+
+part_optional_callcontexts = <
+EmptyOptionalCallcontexts	= .
+NotEmptyOptionalCallcontexts	= '(' 'call-contexts' part_callcontexts ')' .
+> .
+
+part_callcontexts = <
+EmptyCallcontexts	= .
+StepCallcontexts	= part_callcontexts '(' 'call-context' num: breeze_literal breeze_ident callerpos: position calleepos: position parentnum: breeze_literal lisp_tokens ')'.
+> .
+
+part_ports = <
+SinglePartPorts	= part_port .
+StepPartPorts	= part_ports part_port .
+> .
+
+part_channels = <
+EmptyPartChannels	= .
+StepPartDataChannel	= part_channels '(' part_channel_sense breeze_literal breeze_options ')' .
+StepPartSync		= part_channels '(' 'sync' breeze_options ')' .
+> .
+
+comp_parameters = <
+EmptyCompParameters	= .
+StepCompParameters	= comp_parameters comp_parameter .
+> .
+
+breeze_options = <
+EmptyOptions = .
+StepOptions = breeze_options breeze_option .
+> .
+
+breeze_option = <
+PositionOption	= position .
+TypeOption		= '(' 'type' breeze_type ')' .
+GeneralOption	= '(' breeze_keyword lisp_tokens ')' .
+> .
+
+lisp_tokens = <
+EmptyLispTokens = .
+StepLispTokens	= lisp_tokens lisp_token .
+> .
+
+lisp_token = <
+SymbolLispToken	= breeze_keyword .
+StringLispToken	= breeze_ident .
+BooleanLispToken = boolean .
+NumberLispToken = breeze_literal .
+ListLispToken 	= '(' lisp_tokens ')' .
+> .
+
+/* *** Balsa nodes */
+
+position = <
+NoPositionPosition	= '(' 'at' ')' .
+NormalPosition		= '(' 'at' line: breeze_literal column: breeze_literal filename: breeze_ident callcontext: breeze_literal ')' .
+OldShortPosition	= '(' 'at' line: breeze_literal column: breeze_literal ')' .
+> .
+
+decl = <
+TypeDecl			= '(' 'type-decl' position breeze_ident type ')' .
+TypedConstantDecl	= '(' 'typed-constant-decl' position breeze_ident expr type ')' .
+UnTypedConstantDecl	= '(' 'untyped-constant-decl' position breeze_ident expr ')' .
+VariableDecl		= '(' 'variable-decl' position idents type ')' .
+InitVariableDecl	= '(' 'init-variable-decl' position idents expr type ')' .
+ChannelDecl			= '(' 'channel-decl' position idents type channel_options ')' .
+ChannelArrayDecl	= '(' 'arrayed-channel-decl' position idents range type channel_options ')' .
+SyncDecl			= '(' 'sync-decl' position idents channel_options ')' .
+SyncArrayDecl		= '(' 'arrayed-sync-decl' position idents range channel_options ')' .
+ProcedureDecl		= '(' 'procedure-decl' position breeze_ident formal_ports block ')' .
+ProcAliasDecl		= '(' 'procedure-alias-decl' position newName: breeze_ident oldName: breeze_ident ')' .
+ProcParamAliasDecl	= '(' 'procedure-param-alias-decl' position newName: breeze_ident oldName: breeze_ident procedure_params ')' .
+TypedFunctionDecl	= '(' 'typed-function-decl' position breeze_ident formal_ports expr type ')' .
+UntypedFunctionDecl	= '(' 'untyped-function-decl' position breeze_ident formal_ports expr ')' .
+BuiltinFunctionDecl = '(' 'builtin-function-decl' position breeze_ident formal_ports type ')' .
+SharedDecl			= '(' 'shared-decl' position breeze_ident block ')' .
+IfDecls				= '(' 'if-decls' position decl_guards ')' .
+IfElseDecls			= '(' 'if-else-decls' position decl_guards decls ')' .
+PrintDecl			= '(' 'print-decl' position expr exprs ')' .
+> .
+
+channel_options = <
+EmptyChannelOptions	= .
+MulticastChannelOptions	= 'multicast' .
+> .
+
+range = <
+SingleValueRange	= '(' 'range1' position expr ')' .
+SpanningRange		= '(' 'range2' position Lower: expr Upper: expr ')' .
+TypeSpanningRange	= '(' 'type-range' position type ')' .
+> .
+
+type = <
+ExistingType		= '(' 'existing-type' position breeze_ident ')' .
+NumericType 		= '(' 'numeric-type' position boolean expr ')' .
+ArrayType			= '(' 'array-type' position range type ')' .
+NewType				= '(' 'new-type' position type ')' .
+UnsizedRecordType	= '(' 'record-type' position record_elems ')' .
+SizedRecordType		= '(' 'bounded-record-type' position record_elems type ')' .
+UnsizedEnumType		= '(' 'enumeration-type' position enum_elems ')' .
+SizedEnumType		= '(' 'bounded-enumeration-type' position enum_elems type ')' .
+BuiltinType			= '(' 'builtin-type' position ')' .
+> .
+
+val_decls = '(' 'val-decls' position val_decls_body ')' .
+val_decls_body = <
+EmptyValDecls		= .
+StepValDecls		= val_decls_body val_decl .
+> .
+
+val_decl = '(' 'val-decl' position breeze_ident expr ')' .
+
+expr = <
+LiteralExpr				= '(' 'literal-expr' position breeze_literal ')' .
+IdentExpr				= '(' 'ident-expr' position breeze_ident ')' .
+StringExpr				= '(' 'string-expr' position breeze_ident ')' .
+DontCareExpr			= '(' 'dont-care-expr' position ')' .
+ImplicantExpr			= '(' 'implicant-expr' position baseValue: breeze_literal dontCares: breeze_literal ')' .
+NamedAggregateConsExpr	= '(' 'named-aggr-cons-expr' position breeze_ident exprs ')' .
+AggregateConsExpr		= '(' 'aggr-cons-expr' position exprs ')' .
+NamedEnumElemExpr		= '(' 'enum-elem-expr' position Left: breeze_ident Right: breeze_ident ')' .
+UnaryExpr				= '(' 'unary-expr' position breeze_ident expr ')' .
+SizeofExpr				= '(' 'sizeof-expr' position breeze_ident ')' .
+BinaryExpr				= '(' 'binary-expr' position breeze_ident Left: expr Right: expr ')' .
+RecordElemExtractExpr	= '(' 'record-elem-extract-expr' position expr breeze_ident ')' .
+ArrayExtractExpr	 	= '(' 'array-extract-expr' position Array: expr Subscript: expr ')' .
+ArraySliceExpr			= '(' 'array-slice-expr' position expr range ')' .
+AsExpr					= '(' 'as-expr' position expr type ')' .
+BitArrayCastExpr		= '(' 'bit-array-cast-expr' position expr ')' .
+LetExpr					= '(' 'let-expr' position val_decls expr ')' .
+FunctionCallExpr		= '(' 'function-call-expr' position breeze_ident function_params ')' .
+ArrayAppendExpr			= '(' 'array-append-expr' position Left:expr Right:expr ')' .
+> .
+
+port_sense = <
+DefaultSense		= 'default' .
+ActiveSense 		= 'active' .
+PassiveSense		= 'passive' .
+> .
+
+port_direction = <
+InputDirection		= 'input' .
+OutputDirection		= 'output' .
+> .
+
+port = <
+ValuePort			= '(' 'value-port' position idents type ')' .
+ChannelPort			= '(' 'port' position port_sense port_direction idents type ')' .
+ChannelPortArray	= '(' 'arrayed-port' position port_sense port_direction idents range type ')' .
+SyncPort			= '(' 'sync-port' position port_sense idents ')' .
+SyncPortArray		= '(' 'arrayed-sync-port' position port_sense idents range ')' .
+ParamPort			= '(' 'param-port' position idents type ')' .
+TypeParamPort		= '(' 'type-param-port' position idents ')' .
+IfPorts				= '(' 'if-ports' position port_guards ')' .
+IfElsePorts			= '(' 'if-else-ports' position port_guards formal_ports ')' .
+> .
+
+block = '(' 'block' position decls command ')' .
+
+command = <
+ContinueCommand			= '(' 'continue' position ')' .
+HaltCommand				= '(' 'halt' position ')' .
+InputCommand			= '(' 'input' position lhs: lvalue rhs: lvalue ')' .
+InputEncloseCommand		= '(' 'input-enclose' position lvalues command ')' .
+InputEncloseBangCommand		= '(' 'input-enclose-bang' position lvalues command ')' .
+OutputCommand			= '(' 'output' position lvalue expr ')' .
+SyncCommand				= '(' 'sync' position lvalue ')' .
+AssignmentCommand		= '(' 'assign' position lvalue expr ')' .
+BlockCommand			= '(' 'block-command' position block ')' .
+SequentialCommand		= '(' 'sequential' position Left: command Right: command ')' .
+ParallelCommand			= '(' 'parallel' position Left: command Right: command ')' .
+PermissiveParallelCommand = '(' 'permissive-parallel' position Left: command Right: command ')' .
+LoopCommand				= '(' 'loop' position command ')' .
+WhileGuardsCommand		= '(' 'while-guards' position guards ')' .
+WhileGuardsAlsoCommand	= '(' 'while-guards-also' position guards command ')' .
+CommandWhileExprCommand	= '(' 'command-while-expr' position command expr ')' .
+CommandWhileGuardsCommand = '(' 'command-while-guards' position command guards ')' .
+CommandWhileGuardsAlsoCommand = '(' 'command-while-guards-also' position firstCommand: command guards alsoCommand: command ')' .
+IfCommand				= '(' 'if' position guards ')' .
+IfElseCommand			= '(' 'if-else' position guards command ')' .
+CaseCommand				= '(' 'case' position expr case_guards ')' .
+CaseElseCommand			= '(' 'case-else' position expr case_guards command ')' .
+ForCommand				= '(' 'for' position par_seq breeze_ident range command ')' .
+ProcedureCallCommon		= '(' 'procedure-call' position breeze_ident procedure_params ')' .
+LabelledCommand			= '(' 'labelled-command' position breeze_ident command ')' .
+SelectCommand			= '(' 'select' position channel_guards ')' .
+SelectBangCommand		= '(' 'select!' position channel_guards ')' .
+ArbitrateCommand		= '(' 'arbitrate' position channel_guards ')' .
+PrintCommand			= '(' 'print' position expr exprs ')' .
+SinkCommand				= '(' 'sink' position expr ')' .
+> .
+
+procedure_params = '(' 'procedure-params' position procedure_params_body ')' .
+procedure_params_body = <
+EmptyProcParam		= .
+StepProcParam		= procedure_params_body procedure_param .
+> .
+
+procedure_param = <
+ExprProcParam 	= '(' 'expr-proc-param' position expr ')' .
+TypeProcParam 	= '(' 'type-proc-param' position type ')' .
+BlockProcParam	= '(' 'block-proc-param' position block ')' .
+VarReadProcParam = '(' 'var-read-proc-param' position expr ')' .
+VarWriteProcParam = '(' 'var-write-proc-param' position lvalue ')' .
+> .
+
+function_params = '(' 'function-params' position function_params_body ')' .
+function_params_body = <
+EmptyFuncParam		= .
+StepFuncParam		= function_params_body function_param .
+> .
+
+function_param = <
+ExprFuncParam 	= '(' 'expr-func-param' position expr ')' .
+TypeFuncParam 	= '(' 'type-func-param' position type ')' .
+> .
+
+par_seq = <
+Sequential	= 'sequential' .
+Parallel	= 'parallel' .
+PermissiveParallel	= 'permissive-parallel' .
+> .
+
+guard = '(' 'guard' position expr command ')' .
+port_guard = '(' 'port-guard' position expr formal_ports ')' .
+decl_guard = '(' 'decl-guard' position expr decls ')' .
+channel_guard = '(' 'channel-guard' position lvalues command ')' .
+
+case_guard = <
+CaseMatchGuard	= '(' 'case-match-guard' position case_matches command ')' .
+ForCaseGuard	= '(' 'for-case-guard' position breeze_ident case_matches command ')' .
+> .
+
+lvalue = <
+IdentLvalue			= '(' 'ident-lvalue' position breeze_ident ')' .
+RecordElemLvalue	= '(' 'record-elem-lvalue' position lvalue breeze_ident ')' .
+ArrayElemLvalue 	= '(' 'array-elem-lvalue' position lvalue expr ')' .
+ArraySliceLvalue 	= '(' 'array-slice-lvalue' position lvalue range ')' .
+ArrayAppendLvalue	= '(' 'array-append-lvalue' position Left: lvalue Right: lvalue ')' .
+ArrayConsLvalue		= '(' 'array-cons-lvalue' position lvalues ')' .
+AsLvalue			= '(' 'as-lvalue' position lvalue type ')' .
+BitArrayCastLvalue	= '(' 'bit-array-cast-lvalue' position lvalue ')' .
+> .
+
+/* List rules */
+decls = '(' 'decls' position decls_body ')' .
+decls_body = <
+EmptyDecls	= .
+StepDecls	= decls_body decl .
+> .
+
+idents = '(' 'idents' position idents_body ')' .
+idents_body = <
+SingleIdents	= ident .
+StepIdents		= idents_body ident .
+> .
+
+exprs = '(' 'exprs' position exprs_body ')' .
+exprs_body = <
+EmptyExprs	= .
+StepExprs	= exprs_body linked_expr .
+> .
+
+lvalues = '(' 'lvalues' position lvalues_body ')' .
+lvalues_body = <
+SingleLvalue	= linked_lvalue .
+StepLvalues		= lvalues_body linked_lvalue .
+> .
+
+case_match_elem = <
+CaseRange		= '(' 'case-range' position range ')' .
+CaseImplicant	= '(' 'case-implicant' position expr ')' .
+> .
+
+case_matches = '(' 'case-matches' position case_matches_body ')' .
+case_matches_body = <
+SingleCaseMatch	= case_match_elem .
+StepCaseMatches	= case_matches_body case_match_elem .
+> .
+
+formal_ports = '(' 'formal-ports' position formal_ports_body ')' .
+formal_ports_body = <
+EmptyFormalPorts	= .
+StepFormalPorts		= formal_ports_body port .
+> .
+
+guards = '(' 'guards' position guards_body ')' .
+guards_body = <
+SingleGuard	= guard .
+StepGuards	= guards_body guard .
+> .
+
+port_guards = '(' 'port-guards' position port_guards_body ')' .
+port_guards_body = <
+SinglePortGuard	= port_guard .
+StepPortGuards	= port_guards_body port_guard .
+> .
+
+decl_guards = '(' 'decl-guards' position decl_guards_body ')' .
+decl_guards_body = <
+SingleDeclGuard	= decl_guard .
+StepDeclGuards	= decl_guards_body decl_guard .
+> .
+
+case_guards = '(' 'case-guards' position case_guards_body ')' .
+case_guards_body = <
+SingleCaseGuard	= case_guard .
+StepCaseGuards	= case_guards_body case_guard .
+> .
+
+channel_guards = '(' 'channel-guards' position channel_guards_body ')' .
+channel_guards_body = <
+SingleChannelGuard	= channel_guard .
+StepChannelGuards	= channel_guards_body channel_guard .
+> .
+
+record_elems = '(' 'record-elems' position record_elems_body ')' .
+record_elems_body = <
+SingleRecordElems	= record_elem .
+StepRecordElems		= record_elems_body record_elem .
+> .
+
+enum_elems = '(' 'enum-elems' position enum_elems_body ')' .
+enum_elems_body = <
+SingleEnumElems	= enum_elem .
+StepEnumElems	= enum_elems_body enum_elem .
+> .
+
+enum_elem = <
+DefaultValuedEnumElem	= '(' 'enum-elem' position breeze_ident ')' .
+ValuedEnumElem			= '(' 'valued-enum-elem' position breeze_ident expr ')' .
+> .
+
+/* Linkable elements */
+record_elem		= '(' 'record-elem' position idents type ')' .
+ident	= breeze_ident .
+linked_expr		= expr .
+
+linked_lvalue = <
+LinkedBlock				= '(' 'block-lvalue' position block ')' .
+LinkedChannel 			= '(' 'channel-lvalue' position lvalue ')' .
+RenamedLinkedChannel 	= '(' 'renamed-channel-lvalue' position lvalue breeze_ident ')' .
+> .
+
+/* Terminal attributes */
+boolean				: [value: bool]			{ value := false; } .
+breeze_literal		: [value: PtrMP_INT] 	{ value := NewMP_INT (0); } .
+breeze_keyword		: [keyword: tIdent] 	{ keyword := NoIdent; } .
+breeze_ident		: [ident: tIdent]		{ ident := NoIdent; } .
+
+/* Abstract syntax tree construction */
+MODULE Tree
+
+PARSER GLOBAL
+{
+#include "Tree.h"
+}
+
+DECLARE
+
+	breeze_file = [Tree: tTree] .
+
+	/* Breeze Tree attributes (not parts) */
+	breeze_decl breeze_type breeze_record_elems
+	breeze_enum_elems breeze_decls = [Tree: tTree] .
+
+	/* Part Tree attributes */
+	comp_parameter comp_parameters 
+	breeze_param_decl breeze_param_decls 
+	part_component part_components 
+	part_port part_ports = [Tree: tTree] .
+
+	/* Balsa Tree attributes */
+	block = [Tree: tTree] .
+	case_guards_body case_guards case_guard = [Tree: tTree] .
+	case_match_elem case_matches_body case_matches = [Tree: tTree] .
+	channel_guards_body channel_guards channel_guard = [Tree: tTree] .
+	command = [Tree: tTree] .
+	decl_guards_body decl_guards decl_guard = [Tree: tTree] .
+	decls_body decls decl = [Tree: tTree] .
+	enum_elems_body enum_elems enum_elem = [Tree: tTree] .
+	exprs_body exprs expr = [Tree: tTree] .
+	formal_ports_body = [Tree: tTree] .
+	formal_ports = [Tree: tTree] .
+	guards_body guards guard = [Tree: tTree] .
+	idents_body idents ident = [Tree: tTree] .
+	linked_expr = [Tree: tTree] .
+	linked_lvalue = [Tree: tTree] .
+	lvalues_body lvalues lvalue = [Tree: tTree] .
+	port_guards_body port_guards port_guard = [Tree: tTree] .
+	port = [Tree: tTree] .
+	procedure_params_body procedure_params procedure_param = [Tree: tTree] .
+	function_params_body function_params function_param = [Tree: tTree] .
+	range = [Tree: tTree] .
+	record_elems_body record_elems record_elem = [Tree: tTree] .
+	type = [Tree: tTree] .
+	val_decls_body val_decls val_decl = [Tree: tTree] .
+
+	/* Non-tree synth. attributes */
+	breeze_option	= [Position: tPosition] [type: tTree] [tokens: PtrLispList] .
+	breeze_options	= [Position: tPosition] [type: tTree] [list: PtrLispList] .
+	lisp_token		= [token: Lisp] .
+	lisp_tokens		= [tokens: PtrLispList] .
+	port_sense		= [portSense: PortSense] .
+	port_direction	= [isOutput: bool] .
+	par_seq			= [isParallel: bool] [isPermissive: bool] .
+	position		= [Position: tPosition] .
+	part_channel_sense = [isPull: bool] .
+	channel_numbers = [channelNos: PtrintList] .
+	part_channels 	= [channels: PtrWireList] .
+	part_optional_callcontexts 	= [callcontexts: PtrCallContextList] .
+	part_callcontexts 	= [callcontexts: PtrCallContextList] .
+	channel_options	= [multicast: bool] .
+
+RULE
+
+breeze_file = {
+	Tree := {
+		Tree = Breeze_TreeRoot = ReverseTree (breeze_decls:Tree);
+	};
+} .
+
+/* position */
+NoPositionPosition	= { Position := NoPosition; } .
+NormalPosition		= {
+	Position := {
+		Position.Line = mpz_get_ui (line:value);
+		Position.Column = mpz_get_ui (column:value);
+		Position.File = NewIdentList (filename:ident, NoPosition, NULL);
+		Position.CallContext = (CallContext *) mpz_get_ui (callcontext:value);
+	};
+}.
+OldShortPosition	= {
+	Position := {
+		Position.Line = mpz_get_ui (line:value);
+		Position.Column = mpz_get_ui (column:value);
+		Position.File = NULL;
+		Position.CallContext = 0;
+	};
+} .
+
+/* decl */
+TypeDecl				= { Tree := mTypeDecl (position:Position, NoTree, breeze_ident:ident, type:Tree); } .
+TypedConstantDecl		= { Tree := mConstantDecl (position:Position, NoTree,
+	breeze_ident:ident, mCoercedExpr (expr:Tree), type:Tree); } .
+UnTypedConstantDecl		= { Tree := mConstantDecl (position:Position, NoTree,
+	breeze_ident:ident, mCoercedExpr (expr:Tree), mNullType (NoPosition)); } .
+VariableDecl			= { Tree := mVariableDecl (position:Position, NoTree,
+	ReverseTree (idents:Tree), type:Tree); } .
+InitVariableDecl		= { Tree := mInitVariableDecl (position:Position, NoTree,
+	ReverseTree (idents:Tree), mCoercedExpr (expr:Tree), type:Tree); } .
+ChannelDecl				= { Tree := mChannelDecl (position:Position, NoTree,
+	ReverseTree (idents:Tree), type:Tree, channel_options:multicast); } .
+ChannelArrayDecl		= { Tree := mChannelArrayDecl (position:Position, NoTree,
+	ReverseTree (idents:Tree), type:Tree, range:Tree, channel_options:multicast); } .
+SyncDecl				= { Tree := mSyncDecl (position:Position, NoTree, ReverseTree (idents:Tree), channel_options:multicast); } .
+SyncArrayDecl			= { Tree := mSyncArrayDecl (position:Position, NoTree, ReverseTree (idents:Tree),
+	range:Tree, channel_options:multicast); } .
+ProcedureDecl			= { Tree := mProcedureDecl (position:Position, NoTree, breeze_ident:ident,
+	ReverseTree (formal_ports:Tree), block:Tree); } .
+TypedFunctionDecl		= { Tree := mFunctionDecl (position:Position, NoTree, breeze_ident:ident,
+	ReverseTree (formal_ports:Tree), mCoercedExpr (expr:Tree), type:Tree); } .
+UntypedFunctionDecl		= { Tree := mFunctionDecl (position:Position, NoTree, breeze_ident:ident,
+	ReverseTree (formal_ports:Tree), mCoercedExpr (expr:Tree), mNullType (NoPosition)); } .
+BuiltinFunctionDecl		= { Tree := mBuiltinFunctionDecl (position:Position, NoTree, breeze_ident:ident,
+	ReverseTree (formal_ports:Tree), type:Tree); } .
+ProcAliasDecl			= { Tree := mProcAliasDecl (position:Position, NoTree,
+	newName:ident, oldName:ident, mNullProcParams (position:Position)); } .
+ProcParamAliasDecl		= { Tree := mProcAliasDecl (position:Position, NoTree,
+	newName:ident, oldName:ident, ReverseTree (procedure_params:Tree)); } .
+SharedDecl			= { Tree := mSharedDecl (position:Position, NoTree, breeze_ident:ident, block:Tree);}.
+PartDecl			= {
+	Tree := {
+		unsigned channelCount;
+		GList *callcontexts = part_optional_callcontexts:callcontexts;
+		CallContext_MultipleTranslateWires (part_channels:channels, callcontexts);
+		PtrWireArray channels = ConvertWireListToArray (part_channels:channels, &channelCount);
+		Tree = mPartDecl (breeze_options:Position, NoTree, breeze_ident:ident,
+			ReverseLispList (breeze_options:list), ReverseTree (part_ports:Tree),
+			channels, channelCount, part_components:Tree, callcontexts);
+	};
+} .
+IfDecls				= { Tree := mIfDecls (position:Position, NoTree, ReverseTree (decl_guards:Tree)); } .
+IfElseDecls			= { Tree := mIfElseDecls (position:Position, NoTree, ReverseTree (decl_guards:Tree), ReverseTree (decls:Tree)); } .
+PrintDecl			= { Tree := mPrintDecl (position:Position, NoTree, expr:Tree, ReverseTree (exprs:Tree)); } .
+
+/* channel_options */
+EmptyChannelOptions	= { multicast := false; } .
+MulticastChannelOptions	= { multicast := true; } .
+
+/* breeze_decl */
+BreezeImportDecl		= { Tree := mImportDecl (NoPosition, NoTree,
+	mIdent (NoPosition, mNullIdents (NoPosition), breeze_ident:ident));
+} .
+BreezeFileDecl			= { Tree := mFileDecl (NoPosition, NoTree,
+	mIdent (NoPosition, mNullIdents (NoPosition), breeze_ident:ident));
+} .
+BreezeConstantDecl	= { Tree := mConstantDecl (NoPosition, NoTree,
+	breeze_ident:ident, mCoercedExpr (mAsExpr (NoPosition, mLiteralExpr (NoPosition, breeze_literal:value),
+	breeze_type:Tree)), breeze_type:Tree);
+} .
+BreezeImplicantDecl	= { Tree := mConstantDecl (NoPosition, NoTree,
+	breeze_ident:ident, mCoercedExpr (mAsExpr (NoPosition, mImplicantExpr (NoPosition,
+	NewImplicant (baseValue:value, dontCares:value)), breeze_type:Tree)), breeze_type:Tree);
+} .
+BreezeTypeDecl		= { Tree := mTypeDecl (NoPosition, NoTree, breeze_ident:ident, breeze_type:Tree); } .
+BalsaDecl			= { Tree := decl:Tree; } .
+
+/* breeze_type */
+BreezeExistingType	= { Tree := mExistingType (NoPosition, breeze_ident:ident); } .
+BreezeAliasType		= { Tree := mExistingType (NoPosition, breeze_ident:ident); } .
+BreezeNumericType	= { Tree := mNumericType (NoPosition, boolean:value,
+	mLiteralExpr (NoPosition, breeze_literal:value)); } .
+BreezeArrayType		= { 
+	Tree := {
+		PtrMP_INT upperIndex = CopyMP_INT (lowIndex:value);
+		mpz_add (upperIndex, upperIndex, size:value);
+		mpz_sub_ui (upperIndex, upperIndex, 1);
+		Tree = mArrayType (NoPosition, baseType:Tree, mSpecifiedRange (NoPosition,
+			mAsExpr (NoPosition, mLiteralExpr (NoPosition, lowIndex:value), indexType:Tree),
+			mAsExpr (NoPosition, mLiteralExpr (NoPosition, upperIndex), indexType:Tree)));
+	};
+} .
+BreezeArrayType2	= { 
+	Tree := {
+		PtrMP_INT upperIndex = CopyMP_INT (lowIndex:value);
+		mpz_add (upperIndex, upperIndex, size:value);
+		mpz_sub_ui (upperIndex, upperIndex, 1);
+		Tree = mArrayType (NoPosition, breeze_type:Tree, mSpecifiedRange (NoPosition,
+			mLiteralExpr (NoPosition, lowIndex:value),
+			mLiteralExpr (NoPosition, upperIndex)));
+	};
+} .
+BreezeRecordType	= { Tree := mRecordType (NoPosition, ReverseTree (breeze_record_elems:Tree),
+	mNumericType (NoPosition, false, mLiteralExpr (NoPosition, breeze_literal:value))); } .
+BreezeEnumType		= { Tree := mEnumType (NoPosition, ReverseTree (breeze_enum_elems:Tree),
+	mNumericType (NoPosition, boolean:value, mLiteralExpr (NoPosition, breeze_literal:value))); } .
+BreezeBuiltinType	= { Tree := mBuiltinType (NoPosition); } .
+
+/* breeze_record_elems */
+BreezeEmptyRecordElems		= { Tree := mNullRecordElems (NoPosition); } .
+BreezeStepRecordElems		= {
+	Tree := mRecordElem (NoPosition, breeze_record_elems:Tree, mIdent (NoPosition, mNullIdents (NoPosition),
+		breeze_ident:ident), breeze_type:Tree);
+} .
+
+/* breeze_enum_elems */
+BreezeEmptyEnumElems	= { Tree := mNullEnumElems (NoPosition); } .
+BreezeStepEnumElems	= { Tree := mValuedEnumElem (NoPosition, breeze_enum_elems:Tree,
+	breeze_ident:ident, mCoercedExpr (mLiteralExpr (NoPosition, breeze_literal:value)));
+} .
+
+/* breeze_option */
+PositionOption	= {
+	Position := position:Position;
+	type := NoTree;
+	tokens := NULL;
+} .
+GeneralOption	= {
+	Position := NoPosition;
+	type := NoTree;
+	tokens := NewLispList (NewLispSymbol (breeze_keyword:keyword), ReverseLispList (lisp_tokens:tokens));
+} .
+TypeOption		= {
+	Position := NoPosition;
+	type := breeze_type:Tree;
+	tokens := NULL;
+} .
+
+/* lisp_tokens */
+EmptyLispTokens = { tokens := NULL; } .
+StepLispTokens	= { tokens := NewLispList (lisp_token:token, lisp_tokens:tokens); } .
+
+/* lisp_token */
+SymbolLispToken		= { token := NewLispSymbol (breeze_keyword:keyword); } .
+StringLispToken		= { token := NewLispString (breeze_ident:ident); } .
+BooleanLispToken	= { token := NewLispBoolean (boolean:value); } .
+NumberLispToken		= { token := NewLispNumber (breeze_literal:value); } .
+ListLispToken		= { token := NewLispSublist (ReverseLispList (lisp_tokens:tokens)); } .
+
+/* breeze_options */
+EmptyOptions	= { Position := NoPosition; type := NULL; list := NULL; } .
+StepOptions		= {
+	Position := (breeze_option:Position.Line != 0 ? breeze_option:Position \: breeze_options:Position);
+	list := (breeze_option:tokens
+		? NewLispList (NewLispSublist (breeze_option:tokens), breeze_options:list)
+		\: breeze_options:list
+	);
+	type := (breeze_option:type == NoTree ? breeze_option:type \: breeze_options:type);
+} .
+
+/* range */
+SingleValueRange	= { Tree := mSpecifiedRange (position:Position, mNullExpr (position:Position), expr:Tree); } .
+SpanningRange		= { Tree := mSpecifiedRange (position:Position, Lower:Tree, Upper:Tree); } .
+TypeSpanningRange	= { Tree := mTypeRange (position:Position, type:Tree); } .
+
+/* type */
+NewType			= { Tree := mNewType (position:Position, type:Tree); } .
+NumericType		= { Tree := mNumericType (position:Position, boolean:value, expr:Tree); } .
+ArrayType		= { Tree := mArrayType (position:Position, type:Tree, range:Tree); } .
+ExistingType	= { Tree := mExistingType (breeze_ident:Position, breeze_ident:ident); } .
+BuiltinType		= { Tree := mBuiltinType (position:Position); } .
+
+/* record_type */
+UnsizedRecordType	= { Tree := mRecordType (position:Position, ReverseTree (record_elems:Tree), mNullType (position:Position)); } .
+SizedRecordType		= { Tree := mRecordType (position:Position, ReverseTree (record_elems:Tree), type:Tree); } .
+
+/* enum_type */
+UnsizedEnumType	= { Tree := mEnumType (position:Position, ReverseTree (enum_elems:Tree), mNullType (position:Position)); } .
+SizedEnumType	= { Tree := mEnumType (position:Position, ReverseTree (enum_elems:Tree), type:Tree); } .
+
+/* enum_elem */
+enum_elems		= { Tree := enum_elems_body:Tree; } .
+DefaultValuedEnumElem	= { Tree := mDefaultValuedEnumElem (breeze_ident:Position, NoTree, breeze_ident:ident); } .
+ValuedEnumElem			= { Tree := mValuedEnumElem (breeze_ident:Position, NoTree, breeze_ident:ident,
+	mCoercedExpr (expr:Tree)); } .
+
+/* val_decls */
+val_decls		= { Tree := val_decls_body:Tree; } .
+EmptyValDecls	= { Tree := mNullValDecls (NoPosition); } .
+StepValDecls	= { Tree := { val_decl:Tree->\ValDecl.next = val_decls_body:Tree; Tree = val_decl:Tree; }; } .
+
+val_decl	= { Tree := mValDecl (position:Position, NoTree, breeze_ident:ident, expr:Tree); } .
+
+/* expr */
+LiteralExpr				= { Tree := mLiteralExpr (position:Position, breeze_literal:value); } .
+IdentExpr				= { Tree := mIdentExpr (position:Position, breeze_ident:ident); } .
+StringExpr				= { Tree := mStringExpr (position:Position, PeekString (breeze_ident:ident)); } .
+DontCareExpr			= { Tree := mDontCareExpr (position:Position); } .
+ImplicantExpr			= { Tree := mImplicantExpr (position:Position, NewImplicant (baseValue:value, dontCares:value)); } .
+NamedAggregateConsExpr	= { Tree := mAggregateConsExpr (position:Position, breeze_ident:ident, ReverseTree (exprs:Tree)); } .
+AggregateConsExpr		= { Tree := mAggregateConsExpr (position:Position, NoIdent, ReverseTree (exprs:Tree)); } .
+NamedEnumElemExpr		= { Tree := mNamedEnumElemExpr (position:Position, Left:ident, Right:ident); } .
+ArrayAppendExpr			= { Tree := mArrayAppendExpr (position:Position, Left:Tree, Right:Tree); } .
+UnaryExpr				= { Tree := mUnaryExpr (position:Position, FindUnaryOperator (breeze_ident:ident, false),
+	expr:Tree); } .
+SizeofExpr				= { Tree := mSizeofExpr (position:Position, breeze_ident:ident); } .
+BinaryExpr				= { Tree := mBinaryExpr (position:Position, FindBinaryOperator (breeze_ident:ident, false), Left:Tree, Right:Tree);
+} .
+RecordElemExtractExpr	= { Tree := mRecordElemExtractExpr (position:Position, expr:Tree, breeze_ident:ident); } .
+ArrayExtractExpr		= { Tree := mArrayExtractExpr (position:Position, Array:Tree, mCoercedExpr(Subscript:Tree)); } .
+ArraySliceExpr			= { Tree := mArraySliceExpr (position:Position, expr:Tree, range:Tree); } .
+AsExpr					= { Tree := mAsExpr (position:Position, expr:Tree, type:Tree); } .
+BitArrayCastExpr		= { Tree := mBitArrayCastExpr (position:Position, expr:Tree); } .
+LetExpr					= { Tree := mLetExpr (position:Position, ReverseTree (val_decls:Tree), expr:Tree); } .
+FunctionCallExpr		= { Tree := mFunctionCallExpr (position:Position, breeze_ident:ident, ReverseTree (function_params:Tree)); } . 
+
+/* port_sense */
+DefaultSense	= { portSense := DefaultPortSense; /* Assume active ! */ } .
+ActiveSense		= { portSense := ActivePortSense; } .
+PassiveSense	= { portSense := PassivePortSense; } .
+
+/* port_direction */
+InputDirection		= { isOutput := false; } .
+OutputDirection		= { isOutput := true; } .
+
+/* formal_parameters */
+ValuePort			= { Tree := mValuePort (position:Position, NoTree, ReverseTree (idents:Tree), type:Tree); } .
+ParamPort			= { Tree := mParamPort (position:Position, NoTree, ReverseTree (idents:Tree), type:Tree); } .
+TypeParamPort		= { Tree := mTypeParamPort (position:Position, NoTree, ReverseTree (idents:Tree)); } .
+ChannelPort			= { Tree := mChannelPort (position:Position, NoTree, ReverseTree (idents:Tree), type:Tree,
+	port_sense:portSense, port_direction:isOutput, NULL); } .
+ChannelPortArray	= { Tree := mChannelPortArray (position:Position, NoTree, ReverseTree (idents:Tree), type:Tree,
+	port_sense:portSense, port_direction:isOutput, range:Tree, NULL); } .
+SyncPort			= { Tree := mSyncPort (position:Position, NoTree, ReverseTree (idents:Tree), port_sense:portSense,
+	NULL); } .
+SyncPortArray		= { Tree := mSyncPortArray (position:Position, NoTree, ReverseTree (idents:Tree),
+	port_sense:portSense, range:Tree, NULL); } .
+IfPorts				= { Tree := mIfPorts (position:Position, NoTree, ReverseTree (port_guards:Tree)); } .
+IfElsePorts			= { Tree := mIfElsePorts (position:Position, NoTree, ReverseTree (port_guards:Tree),
+	ReverseTree (formal_ports:Tree)); } .
+
+/* block */
+block				= { Tree := mBlock (position:Position, ReverseTree (decls:Tree), command:Tree); } .
+
+/* command */
+ContinueCommand			= { Tree := mContinueCommand (position:Position); } .
+HaltCommand				= { Tree := mHaltCommand (position:Position); } .
+InputCommand			= { Tree := mInputCommand (position:Position, lhs:Tree, rhs:Tree); } .
+InputEncloseCommand		= { Tree := mInputEncloseCommand (position:Position, lvalues:Tree, command:Tree); } .
+InputEncloseBangCommand		= { Tree := mInputEncloseBangCommand (position:Position, lvalues:Tree, command:Tree); } .
+OutputCommand			= { Tree := mOutputCommand (position:Position, lvalue:Tree, mCoercedExpr (expr:Tree)); } .
+SyncCommand				= { Tree := mSyncCommand (position:Position, lvalue:Tree); } .
+AssignmentCommand		= { Tree := mAssignmentCommand (position:Position, lvalue:Tree, mCoercedExpr (expr:Tree)); } .
+BlockCommand			= { Tree := mBlockCommand (position:Position, block:Tree); } .
+SequentialCommand		= { Tree := mSequentialCommand (position:Position, Left:Tree, Right:Tree); } .
+ParallelCommand			= { Tree := mParallelCommand (position:Position, false, Left:Tree, Right:Tree); } .
+PermissiveParallelCommand	= { Tree := mParallelCommand (position:Position, true, Left:Tree, Right:Tree); } .
+LoopCommand				= { Tree := mLoopCommand (position:Position, command:Tree); } .
+WhileGuardsCommand		= { Tree := mWhileGuardsCommand (position:Position, ReverseTree (guards:Tree)); } .
+WhileGuardsAlsoCommand	= { Tree := mWhileGuardsAlsoCommand (position:Position, ReverseTree (guards:Tree), command:Tree); } .
+CommandWhileExprCommand	= { Tree := mCommandWhileExprCommand (position:Position, command:Tree, expr:Tree); } .
+CommandWhileGuardsCommand	= { Tree := mCommandWhileGuardsCommand (position:Position, command:Tree, ReverseTree (guards:Tree)); } .
+CommandWhileGuardsAlsoCommand	= { Tree := mCommandWhileGuardsAlsoCommand (position:Position, firstCommand:Tree, ReverseTree (guards:Tree),
+	alsoCommand:Tree); } .
+IfCommand				= { Tree := mIfCommand (position:Position, ReverseTree (guards:Tree)); } .
+IfElseCommand			= { Tree := mIfElseCommand (position:Position, ReverseTree (guards:Tree), command:Tree); } .
+CaseCommand				= { Tree := mCaseCommand (position:Position, expr:Tree,
+	ReverseTree (case_guards:Tree), mNullCommand (position:Position)); } .
+CaseElseCommand			= { Tree := mCaseCommand (position:Position, expr:Tree, ReverseTree (case_guards:Tree), command:Tree); } .
+ForCommand				= { Tree := mForCommand (position:Position, par_seq:isParallel, par_seq:isPermissive, breeze_ident:ident,
+	range:Tree, command:Tree); } .
+
+ProcedureCallCommon	= { Tree := mProcedureCallCommonCommand (position:Position, breeze_ident:ident, ReverseTree (procedure_params:Tree)); } .
+LabelledCommand			= { Tree := command:Tree; } .
+
+/* procedure_params */
+procedure_params		= { Tree := procedure_params_body:Tree; } .
+EmptyProcParam 			= { Tree := mNullProcParams (NoPosition); } .
+StepProcParam  = { Tree := { procedure_param:Tree->\ProcParam.next = procedure_params_body:Tree;
+	Tree = procedure_param:Tree; }; } .
+
+/* procedure_param */
+ExprProcParam 	= { Tree := mExprProcParam (position:Position, NoTree, mCoercedExpr (expr:Tree)); } .
+TypeProcParam 	= { Tree := mTypeProcParam (position:Position, NoTree, type:Tree); } .
+BlockProcParam	= { Tree := mBlockProcParam (position:Position, NoTree, block:Tree); } .
+VarReadProcParam = { Tree := mVarReadProcParam (position:Position, NoTree, mCoercedExpr (expr:Tree)); } .
+VarWriteProcParam = { Tree := mVarWriteProcParam (position:Position, NoTree, lvalue:Tree); } .
+
+/* function_params */
+function_params		= { Tree := function_params_body:Tree; } .
+EmptyFuncParam 		= { Tree := mNullFuncParams (NoPosition); } .
+StepFuncParam  = { Tree := { function_param:Tree->\FuncParam.next = function_params_body:Tree;
+	Tree = function_param:Tree; }; } .
+
+/* function_param */
+ExprFuncParam 	= { Tree := mExprFuncParam (position:Position, NoTree, mCoercedExpr (expr:Tree)); } .
+TypeFuncParam 	= { Tree := mTypeFuncParam (position:Position, NoTree, type:Tree); } .
+
+SelectCommand		= { Tree := mSelectCommand (position:Position, channel_guards:Tree); } .
+SelectBangCommand	= { Tree := mSelectBangCommand (position:Position, channel_guards:Tree); } .
+ArbitrateCommand	= { Tree := mArbitrateCommand (position:Position, channel_guards:Tree); } .
+PrintCommand		= { Tree := mPrintCommand (position:Position, expr:Tree, ReverseTree (exprs:Tree)); } .
+SinkCommand			= { Tree := mSinkCommand (position:Position, expr:Tree); } .
+
+/* par_seq */
+Sequential	= { isParallel := false; isPermissive := false; } .
+Parallel	= { isParallel := true; isPermissive := false; } .
+PermissiveParallel	= { isParallel := true; isPermissive := true; } .
+
+/* guard */
+guard	= { Tree := mGuard (position:Position, NoTree, expr:Tree, command:Tree); } .
+/* port_guard */
+port_guard = { Tree := mPortGuard (position:Position, NoTree, expr:Tree, ReverseTree (formal_ports:Tree)); } .
+/* decl_guard */
+decl_guard = { Tree := mDeclGuard (position:Position, NoTree, expr:Tree, ReverseTree (decls:Tree)); } .
+/* case_guard */
+CaseMatchGuard	= { Tree := mCaseMatchGuard (position:Position, NoTree, case_matches:Tree, command:Tree); } .
+ForCaseGuard	= { Tree := mForCaseGuard (position:Position, NoTree, breeze_ident:ident, case_matches:Tree, command:Tree); } .
+/* channel_guard */
+channel_guard	= { Tree := mChannelGuard (position:Position, NoTree, ReverseTree (lvalues:Tree), command:Tree); } .
+
+/* lvalue -> Lvalue */
+IdentLvalue			= { Tree := mIdentLvalue (position:Position, breeze_ident:ident); } .
+RecordElemLvalue	= { Tree := mRecordElemLvalue (position:Position, lvalue:Tree, breeze_ident:ident); } .
+ArrayElemLvalue	= { Tree := mArrayElemLvalue (position:Position, lvalue:Tree, mCoercedExpr (expr:Tree)); } .
+ArraySliceLvalue   = { Tree := mArraySliceLvalue (position:Position, lvalue:Tree, range:Tree); } .
+ArrayAppendLvalue	= { Tree := mArrayAppendLvalue (position:Position, Left:Tree, Right:Tree); } .
+ArrayConsLvalue	= { Tree := mArrayConsLvalue (position:Position, ReverseTree (lvalues:Tree)); } .
+AsLvalue	= { Tree := mAsLvalue (position:Position, lvalue:Tree, type:Tree); } .
+BitArrayCastLvalue	= { Tree := mBitArrayCastLvalue (position:Position, lvalue:Tree); } .
+
+/* List rules */
+
+/* breeze_decls */
+BreezeEmptyDecls	= { Tree := mNullDecls (NoPosition); } .
+BreezeStepDecls		= { Tree := { breeze_decl:Tree->\Decl.next = breeze_decls:Tree; Tree = breeze_decl:Tree; }; } .
+
+/* decls */
+decls		= { Tree := decls_body:Tree; } .
+EmptyDecls	= { Tree := mNullDecls (NoPosition); } .
+StepDecls	= { Tree := { decl:Tree->\Decl.next = decls_body:Tree; Tree = decl:Tree; }; } .
+
+/* idents */
+idents			= { Tree := idents_body:Tree; } .
+SingleIdents	= { Tree := { ident:Tree->\Ident.next = mNullIdents (NoPosition); Tree = ident:Tree;};}.
+StepIdents		= { Tree := { ident:Tree->\Ident.next = idents_body:Tree; Tree = ident:Tree; }; } .
+
+/* exprs */
+exprs		= { Tree := exprs_body:Tree; } .
+EmptyExprs	= { Tree := mNullExprLists (NoPosition); } .
+StepExprs	= { Tree := { linked_expr:Tree->\ExprList.next = exprs_body:Tree; Tree = linked_expr:Tree; }; } .
+
+/* lvalues */
+lvalues		= { Tree := lvalues_body:Tree; } .
+SingleLvalue	= { Tree := { linked_lvalue:Tree->\LvalueList.next =
+	mNullLvalueLists (NoPosition); Tree = linked_lvalue:Tree; }; } .
+StepLvalues	= { Tree := { linked_lvalue:Tree->\LvalueList.next = lvalues_body:Tree;
+	Tree = linked_lvalue:Tree; }; } .
+
+/* case_matches */
+case_matches		= { Tree := case_matches_body:Tree; } .
+SingleCaseMatch		= { Tree := { case_match_elem:Tree->\CaseMatch.next =
+	mNullCaseMatchs (NoPosition); Tree = case_match_elem:Tree; }; } .
+StepCaseMatches		= { Tree := { case_match_elem:Tree->\CaseRange.next = case_matches_body:Tree;
+	Tree = case_match_elem:Tree; }; } .
+
+/* formal_ports */
+formal_ports		= { Tree := formal_ports_body:Tree; } .
+EmptyFormalPorts	= { Tree := mNullFormalPorts (NoPosition); } .
+StepFormalPorts		= { Tree := { port:Tree->\FormalPort.next = formal_ports_body:Tree; Tree = port:Tree; }; } .
+
+/* channel_numbers */
+EmptyChannelNumbers = { channelNos := NULL; } .
+StepChannelNumbers	= { channelNos := NewintList (mpz_get_ui (breeze_literal:value), breeze_literal:Position, channel_numbers:channelNos); } .
+ChannelNumberArray 	= { channelNos := AppendintLists (sublist:channelNos, list:channelNos); } .
+
+/* part_components */
+EmptyComps	= { Tree := mNullComps (NoPosition); } .
+StepComps	= { Tree := { part_component:Tree->\Comp.next = part_components:Tree; Tree = part_component:Tree; }; } .
+
+/* breeze_param_decl */
+BreezeParameter		= { Tree := mBreezeExprParameter (NoPosition, NoTree, breeze_ident:ident, breeze_type:Tree); } .
+BreezeTypeParameter	= { Tree := mBreezeTypeParameter (NoPosition, NoTree, breeze_ident:ident); } .
+
+/* breeze_param_decls */
+EmptyBreezeParamDecls	= { Tree := mNullBreezeParameters (NoPosition); } .
+StepBreezeParamDecls	= { Tree := { breeze_param_decl:Tree->\BreezeParameter.next = breeze_param_decls:Tree;
+	Tree = breeze_param_decl:Tree; }; } .
+
+/* part_ports */
+SinglePartPorts	= { Tree := { part_port:Tree->\FormalPort.next = mNullFormalPorts (NoPosition); Tree = part_port:Tree; }; } .
+StepPartPorts	= { Tree := { part_port:Tree->\FormalPort.next = part_ports:Tree; Tree = part_port:Tree; }; } .
+
+/* part_channels */
+EmptyPartChannels	= { channels := NULL; } .
+StepPartDataChannel = {
+	channels := {
+		Lisp nameNode;
+		PtrWire wire = NewWire (0 /* Fixed later */, mpz_get_ui (breeze_literal:value),
+			NoType, /* These have to be evaluated by PartDeclarationFillIn! */
+			0, part_channel_sense:isPull, breeze_options:Position);
+		wire->type.tree = breeze_options:type;
+
+		wire->options = ReverseLispList (breeze_options:list);
+		if (RemoveHeadedLispListElement (&wire->options, nameIdent, &nameNode))
+			wire->ident = CAR (CDR (nameNode.value.sublist)).value.string;
+		channels = NewWireList (wire, part_channels:channels);
+	};
+} .
+StepPartSync = {
+	channels := {
+		Lisp nameNode;
+		PtrWire wire = NewSyncWire (0 /* Fixed later */, breeze_options:Position);
+		wire->type.tree = NoTree;
+
+		wire->options = ReverseLispList (breeze_options:list);
+		if (RemoveHeadedLispListElement (&wire->options, nameIdent, &nameNode))
+			wire->ident = CAR (CDR (nameNode.value.sublist)).value.string;
+		channels = NewWireList (wire, part_channels:channels);
+	};
+} .
+
+/* part_callcontexts */
+EmptyOptionalCallcontexts	= { callcontexts := NULL; } .
+NotEmptyOptionalCallcontexts	= { callcontexts := part_callcontexts:callcontexts; } .
+
+EmptyCallcontexts	= { callcontexts := NULL; } .
+StepCallcontexts = {
+	callcontexts := {
+		    PtrCallContext callcontext = CallContext_Add (breeze_ident:ident, callerpos:Position, calleepos:Position, NULL);
+		    callcontext->data = (PtrCallContext) mpz_get_ui (num:value);
+		    callcontexts = g_list_prepend (part_callcontexts:callcontexts, callcontext);
+	};
+} .
+
+
+/* comp_parameters */
+EmptyCompParameters	= { Tree := mNullParameters (NoPosition); } .
+StepCompParameters	= { Tree := { comp_parameter:Tree->\Parameter.next = comp_parameters:Tree; Tree = comp_parameter:Tree; }; } .
+
+/* guards */
+guards		= { Tree := guards_body:Tree; } .
+SingleGuard	= { Tree := { guard:Tree->\Guard.next = mNullGuards (NoPosition); Tree = guard:Tree; }; } .
+StepGuards	= { Tree := { guard:Tree->\Guard.next = guards_body:Tree; Tree = guard:Tree; }; } .
+
+/* port_guards */
+port_guards		= { Tree := port_guards_body:Tree; } .
+SinglePortGuard	= { Tree := { port_guard:Tree->\PortGuard.next = mNullPortGuards (NoPosition); Tree = port_guard:Tree; }; } .
+StepPortGuards	= { Tree := { port_guard:Tree->\PortGuard.next = port_guards_body:Tree; Tree = port_guard:Tree; }; } .
+
+/* decl_guards */
+decl_guards		= { Tree := decl_guards_body:Tree; } .
+SingleDeclGuard	= { Tree := { decl_guard:Tree->\DeclGuard.next = mNullDeclGuards (NoPosition); Tree = decl_guard:Tree; }; } .
+StepDeclGuards	= { Tree := { decl_guard:Tree->\DeclGuard.next = decl_guards_body:Tree; Tree = decl_guard:Tree; }; } .
+
+/* case_guards */
+case_guards		= { Tree := case_guards_body:Tree; } .
+SingleCaseGuard	= { Tree := { case_guard:Tree->\CaseGuard.next = mNullCaseGuards (NoPosition); Tree = case_guard:Tree; }; } .
+StepCaseGuards	= { Tree := { case_guard:Tree->\CaseGuard.next = case_guards_body:Tree; Tree = case_guard:Tree; }; } .
+
+/* channel_guards */
+channel_guards		= { Tree := channel_guards_body:Tree; } .
+SingleChannelGuard	= { Tree := { channel_guard:Tree->\ChannelGuard.next = mNullChannelGuards (NoPosition);
+	Tree = channel_guard:Tree; }; } .
+StepChannelGuards	= { Tree := { channel_guard:Tree->\ChannelGuard.next = channel_guards_body:Tree;
+	Tree = channel_guard:Tree; }; } .
+
+/* record_elems */
+record_elems		= { Tree := record_elems_body:Tree; } .
+SingleRecordElems	= { Tree := { record_elem:Tree->\RecordElem.next = mNullRecordElems (NoPosition);
+	Tree = record_elem:Tree; }; } .
+StepRecordElems		= { Tree := { record_elem:Tree->\RecordElem.next = record_elems_body:Tree;
+	Tree = record_elem:Tree; }; } .
+
+/* enum_elems */
+SingleEnumElems	= { Tree := { enum_elem:Tree->\EnumElem.next = mNullEnumElems (NoPosition); Tree = enum_elem:Tree; }; }.
+StepEnumElems	= { Tree := { enum_elem:Tree->\EnumElem.next = enum_elems_body:Tree; Tree = enum_elem:Tree; }; } .
+
+/* Linked structures */
+record_elem			= { Tree := mRecordElem (position:Position, NoTree, ReverseTree (idents:Tree), type:Tree); } .
+/* FIXME, positions */
+ident				= { Tree := mIdent (breeze_ident:Position, NoTree, breeze_ident:ident); } .
+linked_expr			= { Tree := mExprList (NoPosition, NoTree, mCoercedExpr (expr:Tree)); } .
+CaseRange			= { Tree := mCaseRange (position:Position, NoTree, range:Tree); } .
+CaseImplicant		= { Tree := mCaseImplicant (position:Position, NoTree, expr:Tree) ; } .
+LinkedChannel 		= { Tree := mLinkedChannel (position:Position, NoTree, NoIdent, lvalue:Tree); } .
+RenamedLinkedChannel = { Tree := mLinkedChannel (position:Position, NoTree, breeze_ident:ident, lvalue:Tree); } .
+LinkedBlock			= { Tree := mLinkedBlock (position:Position, NoTree, block:Tree); } .
+
+/* part_component */
+Component = {
+	Tree := {
+		Ptrconstchar name = PeekString (breeze_ident:ident);
+
+		Tree = mNormalComp (breeze_options:Position, NoTree, breeze_ident:ident, (*name == '$') /* internal */,
+			ReverseTree (comp_parameters:Tree), ReverseintList (channel_numbers:channelNos),
+			ReverseLispList (breeze_options:list));
+	};
+} .
+
+UndeclaredComponent = {
+	Tree := {
+		Tree = mUndeclaredComp (breeze_options:Position, NoTree, componentName:ident,
+			ReverseTree (comp_parameters:Tree), ReverseintList (channel_numbers:channelNos),
+			componentType:ident, baseComponentName:ident,
+			ReverseTree (breeze_param_decls:Tree),
+			ReverseTree (part_ports:Tree),
+			ReverseLispList (breeze_options:list)
+		);
+	};
+} .
+
+/* parameter */
+NumberParameter	= { Tree := mNumberParameter (breeze_literal:Position, NoTree, breeze_literal:value); } .
+StringParameter	= { Tree := mStringParameter (breeze_ident:Position, NoTree, breeze_ident:ident); } .
+TypeParameter	= { Tree := mTypeParameter (breeze_type:Tree->AType.\position, NoTree, breeze_type:Tree); } .
+
+/* part_port */
+PartChannelPort		= { Tree := mChannelPort (breeze_options:Position, NoTree, mIdent (NoPosition, mNullIdents (NoPosition),
+	breeze_ident:ident), breeze_type:Tree, port_sense:portSense, port_direction:isOutput,
+	ReverseLispList (breeze_options:list)); } .
+PartChannelArrayedPort = {
+	Tree := {
+		PtrMP_INT upperIndex = CopyMP_INT (lowIndex:value);
+		mpz_add (upperIndex, upperIndex, portCount:value);
+		mpz_sub_ui (upperIndex, upperIndex, 1);
+
+		Tree = mChannelPortArray (breeze_options:Position, NoTree, mIdent (NoPosition, mNullIdents (NoPosition), breeze_ident:ident),
+			portType:Tree, port_sense:portSense, port_direction:isOutput,
+			mSpecifiedRange (NoPosition,
+				mAsExpr (NoPosition, mLiteralExpr (NoPosition, lowIndex:value), indexType:Tree),
+				mAsExpr (NoPosition, mLiteralExpr (NoPosition, upperIndex), indexType:Tree)),
+			ReverseLispList (breeze_options:list));
+	};
+} .
+PartSyncPort		= { Tree := mSyncPort (breeze_options:Position, NoTree, mIdent (NoPosition, mNullIdents (NoPosition),
+	breeze_ident:ident), port_sense:portSense, ReverseLispList (breeze_options:list)); } .
+PartSyncArrayedPort = {
+	Tree := {
+		PtrMP_INT upperIndex = CopyMP_INT (lowIndex:value);
+		mpz_add (upperIndex, upperIndex, portCount:value);
+		mpz_sub_ui (upperIndex, upperIndex, 1);
+
+		Tree = mSyncPortArray (breeze_options:Position, NoTree, mIdent (NoPosition, mNullIdents (NoPosition), breeze_ident:ident),
+			port_sense:portSense,
+			mSpecifiedRange (NoPosition,
+				mAsExpr (NoPosition, mLiteralExpr (NoPosition, lowIndex:value), breeze_type:Tree),
+				mAsExpr (NoPosition, mLiteralExpr (NoPosition, upperIndex), breeze_type:Tree)),
+			ReverseLispList (breeze_options:list));
+	};
+} .
+
+/* part_channel_sense */
+PushPartChannelSense	= { isPull := false; } .
+PullPartChannelSense	= { isPull := true; } .
+
+END Tree

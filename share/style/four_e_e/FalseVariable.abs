@@ -1,0 +1,16 @@
+(nodes
+	("data" (param "width") 0 1)
+)
+(gates)
+(connections
+	(connect (req "write") (req "signal"))
+	(connect (ack "signal") (ack "write"))
+
+	(macro single-rail-connect-read-ports (param "width") (param "readPortCount") (param "specification") "data")
+	(if (and suggest-buffers (> (param "readPortCount") 2))
+		(cell "suggested-buffer" (node "data") (data "write"))
+		(connect (data "write") (node "data"))
+	)
+
+	(connect (combine (req (each "read"))) (combine (ack (each "read"))))
+)

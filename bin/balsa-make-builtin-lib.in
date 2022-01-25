@@ -1,0 +1,122 @@
+#! /bin/sh
+#
+#	The Balsa Asynchronous Hardware Synthesis System
+#	Copyright (C) 1995-2007 School of Computer Science
+#	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+#	
+#	This program is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; either version 2 of the License, or
+#	(at your option) any later version.
+#	
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#	
+#	You should have received a copy of the GNU General Public License
+#	along with this program; if not, write to the Free Software
+#	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#
+#	`balsa-make-builtin-lib'
+#	Process the given .c files into .a and .so libraries suitable for
+#	use in Balsa builtin function definitions for simulation
+#	@configure_input@
+#
+#	$Id: balsa-make-builtin-lib.in,v 1.6 2003/08/26 21:16:33 bardslea Exp $
+#
+
+BALSAINSTALLEDHOME=@prefix@
+if [ "${BALSAHOME}" = "" ]; then
+	BALSAHOME=${BALSAINSTALLEDHOME}
+fi
+PATH=${BALSAHOME}:${PATH}
+
+if [ $# -lt 2 ]; then
+	balsa-prog-banner balsa-make-builtin-lib 'balsa-make-builtin-lib: Builtin function lib. generator' \
+		'2003, The University of Manchester'
+	echo "version @VERSION@"
+	echo 'usage: balsa-make-builtin-lib [ <switches> ] <libname> ( <compiler-options> <c-files> )+'
+	echo
+	echo 'switches: -i <rel-path> - compile inside the uninstalled Balsa package. <rel-path> is a relative path'
+	echo '                          to the top of the package'
+	echo '          -j <dir>      - install in the named directory' 
+	echo '          -c            - only compile, do not install'
+	echo '          -I            - only install.  Checks for .la file'
+	echo
+	exit 1
+fi
+
+RELPATH=
+INCLUDES=-I.
+INSTALLDIR=${PWD}
+DOCOMPILE=1
+DOINSTALL=1
+
+INSWITCHES=1
+while [ $# != 0 ] && [ -n "${INSWITCHES}" ]; do
+	case $1 in
+		-i)
+			shift
+			RELPATH=$1
+			LIBTOOL=${RELPATH}/libtool
+			INSTALL=${RELPATH}/install-sh
+			;;
+		-j)
+			shift
+			INSTALLDIR=$1
+			;;
+		-c) DOINSTALL= ;;
+		-I) DOCOMPILE= ;;
+		-*)
+			echo "*** invalid option:" $1
+			exit 1
+			;;
+		*)
+			LIBNAME=$1
+			INSWITCHES=
+			;;
+	esac
+	shift
+done
+
+if [ -z "${RELPATH}" ]; then
+	INCLUDES="${INCLUDES} -I${BALSAHOME}/include"
+	LIBTOOL=${BALSAHOME}/bin/balsa-libtool
+	INSTALL=${BALSAHOME}/bin/balsa-install-sh
+fi
+
+# Test compilation
+if [ -n "${DOCOMPILE}" ]; then
+	if ${LIBTOOL} --mode=compile @CC@ @CFLAGS@ -c ${INCLUDES} -o ${LIBNAME}.o $* &&
+		${LIBTOOL} --mode=link @CC@ @CFLAGS@ -o ${LIBNAME}.la -c ${INCLUDES} ${LIBNAME}.lo -rpath ${INSTALLDIR} -module
+	then
+		:
+	else
+		echo '*** balsa-make-builtin-lib: compilation failed'
+		exit 1
+	fi
+fi
+
+if @NM@ -g ${LIBNAME}.o | grep BalsaSim_BuiltinLibrary_${LIBNAME} > /dev/null
+then
+	:
+else
+	echo '***' balsa-make-builtin-lib: builtin library sources must include an initialisation
+	echo     function created with BALSA_SIM_REGISTER_BUILTIN_LIB
+	exit 1
+fi
+
+if [ -n "${DOINSTALL}" ]; then
+	if [ -r ${LIBNAME}.la ]; then
+		:
+	else
+		echo '*** balsa-make-builtin-lib: must compile (generate .la file) before installation'
+		exit 1
+	fi
+
+	install -d ${INSTALLDIR} &&
+	${LIBTOOL} --mode=install ${INSTALL} -c ${LIBNAME}.la ${INSTALLDIR} &&
+	${LIBTOOL} --mode=finish ${INSTALLDIR}
+fi
+

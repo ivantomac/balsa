@@ -1,0 +1,143 @@
+(--
+	The Balsa Asynchronous Hardware Synthesis System
+	Copyright (C) 1995-2003 Department of Computer Science
+	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+	`buffers.balsa'
+	Parameterised buffer descriptions
+
+	$Id: buffers.balsa,v 1.5 2003/02/08 19:39:42 bardslea Exp $
+--)
+
+import [balsa.types.basic]
+
+-- Buffer: single place sequential read, write buffer with type param.
+procedure Buffer (
+	parameter X : type;
+	input	i : X;
+	output	o : X ) is
+local variable x : X
+begin
+	loop
+		i -> x ;
+		o <- x
+	end
+end
+
+-- InitialisedBuffer: write then read buffer with initial value specified by param.
+procedure InitialisedBuffer (
+	parameter X : type;
+	parameter init : X;
+	input	i : X;
+	output	o : X ) is
+local variable x : X
+begin
+	x := init ;
+	loop
+		o <- x ;
+		i -> x
+	end
+end
+
+-- SyncBuffer: single place sequential read, write buffer without data
+procedure SyncBuffer (
+	sync i;
+	sync o ) is
+begin
+	loop
+		sync i ;
+		sync o
+	end
+end
+
+-- PushBuffer: like Buffer but with a passive input
+procedure PushBuffer (
+	parameter X : type;
+	input	i : X;
+	output	o : X ) is
+local variable x : X
+begin
+	loop
+		select i then x := i end ;
+		o <- x
+	end
+end
+
+-- PushInitialisedBuffer: like InitialisedBuffer but with a passive input
+procedure PushInitialisedBuffer (
+	parameter X : type;
+	parameter init : X;
+	input	i : X;
+	output	o : X ) is
+local variable x : X
+begin
+	x := init ;
+	loop
+		o <- x ;
+		select i then x := i end
+	end
+end
+
+-- PushSyncBuffer: as SyncBuffer but with a passive "input"
+procedure PushSyncBuffer (
+	sync i;
+	sync o ) is
+begin
+	loop
+		select i then continue end ;
+		sync o
+	end
+end
+
+-- BufferN: n-place buffer made by parallel composition of Buffer.
+--		has parameters for type and number of places
+procedure BufferN (
+	parameter X : type;
+	parameter places : cardinal;
+	input	i : X;
+	output	o : X ) is
+local procedure buffer is Buffer (X)
+begin
+	if places = 0 then
+		print error, "BufferN must have at least 1 place"
+	|  places = 1 then -- Only one place
+		buffer (i, o)
+	|  places >= 2 then -- Two or more, need `end' buffers
+		local array 1..places-1 of channel ichan : X
+		begin
+			buffer (i, ichan[1]) ||
+			if places > 2 then
+				for || i in 1..places-2 then
+					buffer (ichan[i], ichan[i+1])
+				end 
+			end ||
+			buffer (ichan[places-1], o)
+		end
+	end
+end
+
+-- {Bit,Boolean,Byte,Nybble,Nibble,SByte,SNybble,SNibble}Buffer: buffers over common types
+--		from [balsa.types.basic]
+procedure BitBuffer is Buffer (bit)
+procedure BooleanBuffer is Buffer (boolean)
+procedure ByteBuffer is Buffer (byte)
+procedure NybbleBuffer is Buffer (nybble)
+procedure NibbleBuffer is NybbleBuffer
+procedure SByteBuffer is Buffer (sbyte)
+procedure SNybbleBuffer is Buffer (snybble)
+procedure SNibbleBuffer is SNybbleBuffer
+

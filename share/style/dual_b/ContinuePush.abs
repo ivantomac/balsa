@@ -1,0 +1,8 @@
+(nodes
+	("partAck" (param "width") 0 1)
+)
+(gates
+	(or (node "partAck") (req0 "inp") (req1 "inp"))
+	(c-element (ack "inp") (smash (node "partAck")))
+)
+(connections)

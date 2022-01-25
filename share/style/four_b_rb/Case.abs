@@ -1,0 +1,19 @@
+(nodes
+	("t" (param "inputWidth") 0 1)
+	("c" (param "inputWidth") 0 1)
+	("elseAck" 1 0 1)
+)
+(gates
+	(demux2 (combine (dup (param "inputWidth") (req "inp"))) (node "c") (node "t") (data "inp"))
+	(if (complete-encoding? (param "specification") (param "inputWidth"))
+		(gates
+			(decode and-or (param "specification") (node "c") (node "t") (req (each "activateOut")))
+			(or (ack "inp") (ack (each "activateOut")))
+		)
+		(gates
+			(decode and-or (param "specification") (node "c") (node "t")
+				(req (each "activateOut")) (node "elseAck"))
+			(or (ack "inp") (ack (each "activateOut")) (node "elseAck"))
+		)
+	)
+)

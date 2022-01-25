@@ -1,0 +1,6 @@
+(nodes)
+(gates)
+(connections
+	(connect (req "inp") (req "out"))
+	(connect (ack "out") (ack "inp"))
+)

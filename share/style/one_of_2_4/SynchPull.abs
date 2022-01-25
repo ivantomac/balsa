@@ -1,0 +1,17 @@
+(defines
+	(plural (> (param "width") 1)) ;; more than one
+)
+(nodes)
+(gates
+	(c-element (req "inp") (req (each "pout")))
+)
+(connections
+	(connect (ack0 "inp") (ack0 (each "pout")))
+	(connect (ack1 "inp") (ack1 (each "pout")))
+	(if plural
+		(gates
+			(connect (ack2 "inp") (ack2 (each "pout")))
+			(connect (ack3 "inp") (ack3 (each "pout")))
+		)
+	)
+)

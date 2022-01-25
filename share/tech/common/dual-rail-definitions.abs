@@ -1,0 +1,86 @@
+;;; implicant-mapping: make a bitwise little-endian of an implicant using - as don't care
+(define dual-rail-implicant-mapping (lambda (implicant width)
+	(let
+		((ret (make-string width #\-))
+		(bit-width (quotient width 2)))
+		(for-each (lambda (index)
+			(if (bit-set? index (car implicant))
+				(string-set! ret (+ (* index 2) 1) #\1)
+				(if (not (bit-set? index (cdr implicant)))
+					(string-set! ret (* index 2) #\1)
+					'()
+				)
+			)
+		) (.. 0 (- bit-width 1)))
+		(list ret)
+	)
+))
+
+(define dual-rail-connect-read-ports (lambda (width-arg read-port-count-arg spec-string-arg store-node-name read-req-node-name)
+	(let
+		((width (eval width-arg))
+		 (read-port-count (eval read-port-count-arg))
+		 (read-port-specification (parse-case-spec (eval spec-string-arg)))
+		 (spec-length (length read-port-specification))
+	 	 (specified-gates (foldl.. (lambda (gates index specification)
+			(append gates
+				(case (car specification)
+					((value)
+						(let
+							((val (cadr specification)))
+							(if val ;; single index
+								(list
+									'(and (ack0 (bundle "read" ,index)) (slice ,val 1 (node (bundle ,store-node-name 0))) (node (bundle ,read-req-node-name ,index)))
+									'(and (ack1 (bundle "read" ,index)) (slice ,val 1 (node (bundle ,store-node-name 1))) (node (bundle ,read-req-node-name ,index)))
+								)
+								(list
+									'(and (ack0 (bundle "read" ,index)) (node (bundle ,store-node-name 0)) (combine (dup ,width (node (bundle ,read-req-node-name ,index)))))
+									'(and (ack1 (bundle "read" ,index)) (node (bundle ,store-node-name 1)) (combine (dup ,width (node (bundle ,read-req-node-name ,index)))))
+								)
+							)
+						)
+					)
+					((range)
+						(let
+							((start (cadr specification))
+							 (end (caddr specification))
+							 (low-index (min start end)) 
+							 (high-index (max start end))
+							 (count (- high-index low-index -1))
+							)
+							(list
+								'(and (ack0 (bundle "read" ,index)) (slice ,low-index ,count (node (bundle ,store-node-name 0))) (combine (dup ,count (node (bundle ,read-req-node-name ,index)))))
+								'(and (ack1 (bundle "read" ,index)) (slice ,low-index ,count (node (bundle ,store-node-name 1))) (combine (dup ,count (node (bundle ,read-req-node-name ,index)))))
+
+							)
+						)
+					)
+					((implicant) ;; just using 1s value 
+						(let
+							((mask (cadr specification))
+							 (mask-width (pop-count mask))
+							)
+							(list
+								'(and (ack0 (bundle "read" ,index)) (filter mask (node (bundle ,store-node-name 0))) (combine (dup ,mask-width (node (bundle ,read-req-node-name ,index)))))
+								'(and (ack1 (bundle "read" ,index)) (filter mask (node (bundle ,store-node-name 1))) (combine (dup ,mask-width (node (bundle ,read-req-node-name ,index)))))
+							)
+						)
+					)
+				)
+			)
+		) '(gates) 0 (- spec-length 1) read-port-specification)
+		)
+	 )
+	 (if (< spec-length read-port-count)
+		(foldl.. (lambda (gates i)
+			(append gates 
+				(list
+					'(and (ack0 (bundle "read" ,i)) (node (bundle ,store-node-name 0)) (combine (dup ,width (node (bundle ,read-req-node-name ,i)))))
+					'(and (ack1 (bundle "read" ,i)) (node (bundle ,store-node-name 1)) (combine (dup ,width (node (bundle ,read-req-node-name ,i)))))
+				)
+			)
+		) specified-gates spec-length (- read-port-count 1))
+		specified-gates
+	 )
+	)
+))

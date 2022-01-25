@@ -1,0 +1,8 @@
+(nodes)
+(gates
+	(c-element (ack "out") (ack "LSInp") (ack "MSInp"))	
+)
+(connections
+	(connect (req "out") (req "LSInp") (req "MSInp"))
+	(connect (combine (data "LSInp") (data "MSInp")) (data "out"))
+)

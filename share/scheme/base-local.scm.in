@@ -1,0 +1,68 @@
+;;;
+;;;	The Balsa Asynchronous Hardware Synthesis System
+;;;	Copyright (C) 1995-2008 School of Computer Science
+;;;	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+;;;	
+;;;	This program is free software; you can redistribute it and/or modify
+;;;	it under the terms of the GNU General Public License as published by
+;;;	the Free Software Foundation; either version 2 of the License, or
+;;;	(at your option) any later version.
+;;;	
+;;;	This program is distributed in the hope that it will be useful,
+;;;	but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;	GNU General Public License for more details.
+;;;	
+;;;	You should have received a copy of the GNU General Public License
+;;;	along with this program; if not, write to the Free Software
+;;;	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+;;;
+;;;	`base-local.scm'
+;;;	Base definitions for Guile Scheme environment for Balsa
+;;;	for scripts executed in the build tree.
+;;;	@configure_input@
+;;;
+
+(debug-set! stack 0)
+
+;;; balsa-scheme-simple-import: if not already defined, this is how to load other files in the
+;;;		scheme-src-dir directory.
+(define balsa-scheme-simple-import (lambda (m) (load (string-append top-dir "/share/scheme/" m))))
+
+;;; load miscellaneous library functions
+(balsa-scheme-simple-import "misc.scm")
+;;; and globals
+(balsa-scheme-simple-import "globals.scm")
+
+;;; balsa-scheme-import: find balsa scheme files from a path list of symbols.
+;;;		If a single symbol is given then the file scheme-src-dir/name.scm is sought
+;;;		For more than one symbol the file scheme-src-dir/1stsym-2ndsym-...-lastsym.scm
+;;;		should be loaded.
+(define balsa-scheme-import (lambda module-path
+	(if (and balsa-loaded-modules (not (hash-ref balsa-loaded-modules module-path)))
+		(let*
+			((name-parts (map (lambda (sym) (string-downcase (symbol->string sym))) module-path))
+			 (filename (string-append scheme-src-dir (build-separated-string name-parts "-") ".scm"))
+			)
+			(hash-set! balsa-loaded-modules module-path #t)
+			(load filename)
+		)
+	)
+))
+
+;;; balsa-set-tech: dummy
+(define balsa-set-tech (lambda (tech) #f))
+
+;;; balsa-init: initialise Balsa system globals
+(define balsa-init (lambda ()
+	(set! balsa-loaded-modules (make-hash-table 10))
+	(hash-set! balsa-loaded-modules '(misc) #t)
+	(set! balsa-home top-dir)
+	(set! data-dir (string-append top-dir "/share/"))
+	(set! scheme-src-dir (string-append data-dir "scheme/"))
+	(set! breeze-tech-dir (string-append data-dir "tech/" breeze-tech "/"))
+	(set! breeze-primitives-file (string-append breeze-tech-dir "components.abs"))
+	(set! breeze-gates-mapping-file (string-append breeze-tech-dir "gate-mappings.scm"))
+	(set! breeze-primitives-figures-dir (string-append balsa-home "/doc/figures/components/"))
+))
+

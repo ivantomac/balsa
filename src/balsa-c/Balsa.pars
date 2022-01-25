@@ -1,0 +1,856 @@
+/*
+	The Balsa Asynchronous Hardware Synthesis System
+	Copyright (C) 1995-2003 Department of Computer Science
+	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+	`Balsa.pars'
+	Parser for `Balsa'
+	
+	$Id: Balsa.pars,v 1.31 2004/05/16 17:24:34 bardslea Exp $
+*/
+
+SCANNER BalsaScan
+PARSER Balsa
+
+GLOBAL
+{
+#include "BalsaScan.h"
+#include "Tree.h"
+#include "BalsaScanSource.h"
+#include "arith.h"
+#include "ports.h"
+#include "implicants.h"
+#include <string.h>
+
+	/* AppendDeclTrees : append tree2 onto tree1 */
+	tTree AppendDeclTrees (tTree tree1, tTree tree2)
+	{
+		tTree ret = tree2;
+
+		if (tree1->Kind != kNullDecls)
+		{
+			tTree leaf = tree1;
+			ret = tree1;
+			while (leaf->Decl.next && leaf->Decl.next->Kind != kNullDecls)
+			{ leaf = leaf->Decl.next; }
+			leaf->Decl.next = tree2;
+		}
+		return ret;
+	}
+}
+
+BEGIN
+{
+	BalsaScan_BeginScanner ();
+}
+
+PREC
+	/*** Expression operators                        Increasing prec. ***/
+	LEFT 'let'						/* Let definitions 				|   */
+	LEFT 'or' 'xor'					/* Logical or 					|   */
+	LEFT 'and'						/* Logical and 					|   */
+	LEFT '=' '/='					/* Equality / Non equality 		|   */
+	LEFT '<' '>' '<=' '>='			/* Inequalities 				|   */
+	LEFT '+' '-' '@'				/* Additive operators 			|   */
+	LEFT '*' '/' '%'				/* Multiplicative operators 	|   */
+	RIGHT '^'						/* Power operator				|   */
+	RIGHT 'not' 'log' /* unary - */ /* Unary operators	    		|   */
+	LEFT '['						/* Array element extraction     |   */
+	LEFT '#'						/* Any type to bit array cast  \|/  */
+	LEFT '.'						/* Record element extraction    V   */
+
+	/*** Command separators ***/
+	LEFT ';'						/* Sequential execution         |   */
+	LEFT '||', '||!'				/* Parallel execution		   \|/  */
+	LEFT ':'						/* Labelling                    V   */
+
+PROPERTY INPUT
+
+RULE
+
+program = <
+BalsaProgramWithImports		= imports decls .
+> .
+
+/* Imported breeze files */
+imports = <
+EmptyImport		= .
+StepImport		= imports import .
+> .
+
+import	= import_keyword open_brace_in_import path close_brace_in_import .
+
+qualified_decl = <
+Decl		= decl .
+IfDecls		= 'if' decl_guards 'end' .
+IfElseDecls	= 'if' decl_guards 'else' decls 'end' .
+> .
+
+decl = <
+TypeDecl					= 'type' ident 'is' type_decl_body .
+ConstantDecl				= 'constant' ident '=' expr .
+ConstantDeclWithType		= 'constant' ident '=' expr ':' type .
+VariableDecl				= 'variable' idents ':' type .
+InitVariableDecl			= 'variable' idents '=' expr ':' type .
+ChannelDecl					= channel_options 'channel' idents ':' type .
+ChannelArrayDecl			= channel_options 'array' range 'of' 'channel' idents ':' type .
+SyncDecl					= channel_options 'sync' idents .
+SyncArrayDecl				= channel_options 'array' range 'of' 'sync' idents .
+PortedProcedureDecl			= 'procedure' ident '(' formal_ports ')' 'is' procedure_block .
+VoidProcedureDecl			= 'procedure' ident 'is' procedure_block .
+ProcAliasDecl				= 'procedure' newName: ident 'is' oldName: ident .
+ParamProcAliasDecl			= 'procedure' newName: ident 'is' oldName: ident '(' procedure_params ')' .
+VoidFunctionDecl			= 'function' ident '=' expr .
+VoidFunctionDeclWithType	= 'function' ident '=' expr ':' type .
+FunctionDecl				= 'function' ident '(' formal_ports ')' '=' expr .
+FunctionDeclWithType		= 'function' ident '(' formal_ports ')' '=' expr ':' type .
+VoidBuiltinFunctionDeclWithType	= 'function' ident 'is' 'builtin' ':' type .
+BuiltinFunctionDeclWithType	= 'function' ident '(' formal_ports ')' 'is' 'builtin' ':' type .
+SharedDecl					= 'shared' ident 'is' procedure_block .
+SinglePrintDecl				= 'print' expr .
+PrintDecl					= 'print' expr ',' exprs .
+> .
+
+channel_options = <
+EmptyChannelOptions	= .
+MulticastChannelOptions	= 'multicast' .
+> .
+
+range = <
+SingleValueRange	= expr .
+SpanningRange		= Lower: expr '..' Upper: expr .
+TypeSpanningRange	= 'over' type .
+> .
+
+type = <
+ExistingType	= ident .
+ComposedType	= composed_type .
+> .
+
+type_decl_body = <
+AliasTypeDecl		= type .
+BuiltinType			= 'builtin' .
+NewTypeDecl			= 'new' type .
+UnsizedRecordType	= 'record' record_elems 'end' .
+SizedRecordType		= 'record' record_elems 'over' type .
+UnsizedEnumType		= 'enumeration' enum_elems 'end' .
+SizedEnumType		= 'enumeration' enum_elems 'over' type .
+> .
+
+numeric_type = <
+UnsignedNumericType	= expr 'bits' .
+SignedNumericType	= expr 'signed' 'bits' .
+> .
+
+val_decls = <
+EmptyValDecls		= .
+StepValDecls		= val_decls val_decl .
+> .
+
+val_decl = 'val' ident '=' expr .
+
+expr = <
+LiteralExpr				= literal .
+IdentExpr				= ident .
+StringExpr				= string .
+ImplicantExpr			= implicant .
+DontCareExpr			= '?' .
+NamedAggrConsExpr		= ident '{' exprs '}' .
+UnnamedAggrConsExpr		= '{' exprs '}' .
+NamedEnumElemExpr		= Left: ident "'" Right: ident .
+NegateExpr				= '-' expr  PREC 'not' .
+UnaryPlusExpr			= '+' expr  PREC 'not' .
+InvertExpr				= 'not' expr .
+LogExpr					= 'log' expr .
+SizeofExpr				= 'sizeof' ident .
+AddExpr					= Left: expr '+' Right: expr .
+SubtractExpr			= Left: expr '-' Right: expr .
+MultiplyExpr			= Left: expr '*' Right: expr .
+DivideExpr				= Left: expr '/' Right: expr .
+ModuloExpr				= Left: expr '%' Right: expr .
+PowerExpr				= Left: expr '^' Right: expr .
+EqualExpr				= Left: expr '=' Right: expr .
+NotEqualExpr			= Left: expr '/=' Right: expr .
+LessThanExpr			= Left: expr '<' Right: expr .
+GreaterThanExpr			= Left: expr '>' Right: expr .
+LessThanOrEqualExpr		= Left: expr '<=' Right: expr .
+GreaterThanOrEqualExpr	= Left: expr '>=' Right: expr .
+AndExpr					= Left: expr 'and' Right: expr .
+OrExpr					= Left: expr 'or' Right: expr .
+XorExpr					= Left: expr 'xor' Right: expr .
+RecordElemExtractExpr	= expr '.' ident .
+ArrayExtractExpr	 	= Array: expr '[' Subscript: expr ']' .
+ArraySpanningSliceExpr	= Array: expr '[' Lower: expr '..' Upper: expr ']' .
+ArrayTypeSliceExpr		= Array: expr '[' 'over' type ']' .
+AsExpr					= '(' expr 'as' type ')' .
+BitArrayCastExpr		= '#' expr .
+ParenthesisedExpr		= '(' expr ')' .
+LetExpr					= 'let' val_decls 'in' expr .
+VoidFunctionCallExpr	= ident '(' ')' .
+FunctionCallExpr		= ident '(' function_params ')' .
+ArrayAppendExpr		= Left:expr '@' Right:expr .
+> .
+
+port_sense = <
+DefaultSense		= .
+ActiveSense 		= 'active' .
+PassiveSense		= 'passive' .
+> .
+
+port_direction = <
+InputDirection		= 'input' .
+OutputDirection		= 'output' .
+> .
+
+port = <
+ValuePort			= idents ':' type .
+ChannelPort			= port_sense port_direction idents ':' type .
+ChannelPortArray	= 'array' range 'of' port_sense port_direction idents ':' type .
+SyncPort			= port_sense 'sync' idents .
+SyncPortArray		= 'array' range 'of' port_sense 'sync' idents .
+ParamPort			= 'parameter' idents ':' type .
+TypeParamPort		= 'parameter' idents ':' 'type' .
+IfPorts				= 'if' port_guards 'end' .
+IfElsePorts			= 'if' port_guards 'else' formal_ports 'end' .
+> .
+
+block = <
+BlockWithDecls		= 'local' decls 'begin' command 'end' .
+BlockWithoutDecls	= 'begin' command 'end' .
+BlockWithBrackets	= '[' command ']' .
+> .
+
+procedure_block = <
+OpenProcBlock	= decls 'begin' command 'end' .
+ClosedProcBlock	= 'local' decls 'begin' command 'end' .
+> .
+
+command = <
+ContinueCommand			= 'continue' .
+HaltCommand				= 'halt' .
+InputCommand			= lhs: lvalues '->' rhs: lvalue .
+InputEncloseCommand		= lvalues '->' 'then' command 'end' .
+InputEncloseBangCommand		= lvalues '->!' 'then' command 'end' .
+OutputCommand			= lvalue '<-' expr .
+SyncCommand				= 'sync' lvalue .
+AssignmentCommand		= lvalue ':=' expr .
+BlockCommand			= block .
+SequentialCommand		= Left: command ';' Right: command .
+ParallelCommand			= Left: command '||' Right: command .
+PermissiveParallelCommand = Left: command '||!' Right: command .
+LoopCommand				= 'loop' command 'end' .
+WhileGuardsCommand		= 'loop' 'while' guards 'end' .
+WhileGuardsAlsoCommand	= 'loop' 'while' guards 'also' command 'end' .
+CommandWhileExprCommand	= 'loop' command 'while' expr 'end' .
+CommandWhileGuardsCommand = 'loop' command 'while' guards 'end' .
+CommandWhileGuardsAlsoCommand = 'loop' firstCommand: command 'while' guards 'also' alsoCommand: command 'end' .
+IfCommand				= 'if' guards 'end' .
+IfElseCommand			= 'if' guards 'else' command 'end' .
+CaseCommand				= 'case' expr 'of' case_guards 'end' .
+CaseElseCommand			= 'case' expr 'of' case_guards 'else' command 'end' .
+ForCommand				= 'for' par_seq ident 'in' range 'then' command 'end' .
+ProcedureCallCommon		= ident '(' procedure_params ')' .
+VoidCallCommand			= ident '(' ')' .
+LabelledCommand			= ident ':' command .
+SelectCommand			= 'select' channel_guards 'end' .
+SelectBangCommand		= 'select!' channel_guards 'end' .
+ArbitrateCommand		= 'arbitrate' channel_guards 'end' .
+SinglePrintCommand		= 'print' expr .
+PrintCommand			= 'print' expr ',' exprs .
+SinkCommand				= 'sink' expr .
+> .
+
+procedure_params = <
+SingleProcParam		= procedure_param .
+StepProcParam		= procedure_params ',' procedure_param .
+> .
+
+function_params = <
+SingleFuncParam		= function_param .
+StepFuncParam		= function_params ',' function_param .
+> .
+
+composed_type = <
+NumericType	= numeric_type .
+ArrayType	= 'array' range 'of' type .
+> .
+
+procedure_param = <
+ExprProcParam 	= expr .
+TypeProcParam 	= composed_type .
+TypeProcParam2	= 'type' type.
+VarReadProcParam = '<-' expr .
+VarWriteProcParam = '->' lvalue .
+BlockProcParam	= block .
+> .
+
+function_param = <
+ExprFuncParam 	= expr .
+TypeFuncParam 	= composed_type .
+TypeFuncParam2	= 'type' type.
+> .
+
+par_seq = <
+Sequential	= ';' .
+Parallel	= '||' .
+PermissiveParallel	= '||!' .
+> .
+
+guard = expr 'then' command .
+port_guard = expr 'then' formal_ports .
+decl_guard = expr 'then' decls .
+channel_guard = channels 'then' command .
+
+case_guard = <
+PlainCaseGuard	= case_matches 'then' command .
+ForCaseGuard	= 'for' ident 'in' case_matches 'then' command .
+> .
+
+lvalue = <
+IdentLvalue			= ident .
+RecordElemLvalue	= lvalue '.' ident .
+ArrayElemLvalue 	= lvalue '[' expr ']' .
+ArraySpanningSliceLvalue 	= lvalue '[' Lower: expr '..' Upper: expr ']' .
+ArrayTypeSliceLvalue 		= lvalue '[' 'over' type ']' .
+ArrayAppendLvalue	= Left: lvalue '@' Right: lvalue .
+ArrayConsLvalue		= '{' channels '}' .
+AsLvalue 			= '(' lvalue 'as' type ')' .
+BitArrayCastLvalue	= '#' lvalue .
+> .
+
+/* List rules */
+decls = <
+EmptyDecls	= .
+StepDecls	= decls qualified_decl .
+> .
+
+path = <
+SinglePath	= linked_ident .
+StepPath	= path dot_in_import linked_ident .
+> .
+
+idents = <
+SingleIdents	= linked_ident .
+StepIdents		= idents ',' linked_ident .
+> .
+
+exprs = <
+SingleExprs	= linked_expr .
+StepExprs	= exprs ',' linked_expr .
+> .
+
+channels = <
+SingleChannels	= linked_channel .
+StepChannels	= channels ',' linked_channel .
+> .
+
+lvalues = <
+SingleLvalues	= linked_lvalue .
+StepLvalues		= lvalues ',' linked_lvalue .
+> .
+
+case_range_elem = <
+CaseRange		= Lower: expr '..' Upper: expr .
+CaseImplicant	= expr .
+> .
+
+case_matches = <
+SingleCaseMatch	= case_range_elem .
+StepCaseMatches	= case_matches ',' case_range_elem .
+> .
+
+formal_ports = <
+SingleFormalPorts	= port .
+StepFormalPorts		= formal_ports ';' port .
+> .
+
+guards = <
+SingleGuard	= guard .
+StepGuards	= guards '|' guard .
+> .
+
+port_guards = <
+SinglePortGuard	= port_guard .
+StepPortGuards	= port_guards '|' port_guard .
+> .
+
+decl_guards = <
+SingleDeclGuard	= decl_guard .
+StepDeclGuards	= decl_guards '|' decl_guard .
+> .
+
+case_guards = <
+SingleCaseGuard	= case_guard .
+StepCaseGuards	= case_guards '|' case_guard .
+> .
+
+channel_guards = <
+SingleChannelGuard	= channel_guard .
+StepChannelGuards	= channel_guards '|' channel_guard .
+> .
+
+record_elems = <
+SingleRecordElems	= linked_typed_idents .
+StepRecordElems		= record_elems ';' linked_typed_idents .
+> .
+
+enum_elems = <
+SingleEnumElems	= enum_elem .
+StepEnumElems	= enum_elems ',' enum_elem .
+> .
+
+enum_elem = <
+DefaultValuedEnumElem	= ident .
+ValuedEnumElem			= ident '=' expr .
+> .
+
+/* Linkable elements */
+linked_typed_idents = idents ':' type .
+linked_ident		= ident .
+linked_expr			= expr .
+
+linked_channel = <
+LinkedBlock				= block .
+LinkedChannel 			= lvalue .
+RenamedLinkedChannel 	= lvalue 'is' ident .
+RenamedLinkedChannel2 	= lvalue '->' ident .
+> .
+
+linked_lvalue =
+<
+LinkedLvalue			= lvalue .
+> .
+
+/* Terminal attributes */
+literal			: [value: PtrMP_INT] 		{ value := NewMP_INT (0); } .
+implicant		: [implicant: Implicant]	{ implicant := NoImplicant; } .
+ident			: [ident: tIdent] 			{ ident := NoIdent; } .
+string			: [string: Ptrchar]			{ string := ""; } .
+/* Abstract syntax tree construction */
+MODULE Tree
+
+PARSER GLOBAL
+{
+#include "Tree.h"
+}
+
+DECLARE
+
+	block procedure_block case_guard case_guards channel_guard channel_guards
+	command decls enum_elem enum_elems expr exprs formal_ports guard guards idents imports import
+	linked_expr linked_ident linked_channel linked_lvalue linked_typed_idents lvalue
+	lvalues channels numeric_type path port range
+	case_matches record_elems type type_decl_body val_decl val_decls program case_range_elem
+	procedure_params procedure_param function_params function_param
+	composed_type qualified_decl decl port_guard port_guards
+	decl_guard decl_guards = [Tree: tTree] .
+
+	port_sense		= [portSense: PortSense] .
+	port_direction	= [isOutput: bool] .
+	par_seq			= [isParallel: bool] [isPermissive: bool] .
+	channel_options	= [multicast: bool] .
+
+RULE
+
+BalsaProgramWithImports = {
+	Tree := {
+		Tree = TreeRoot = mBalsaProgram (ReverseTree (
+			AppendDeclTrees (decls:Tree, imports:Tree)));
+	};
+} .
+
+/* imports */
+EmptyImport	= { Tree := mNullDecls (NoPosition); } .
+StepImport	= { Tree := { import:Tree->\Decl.next = imports:Tree; Tree = import:Tree; }; } .
+
+/* import */
+import		= { Tree := {
+	Tree = mImportDecl (open_brace_in_import:Position, NoTree, path:Tree);
+
+	if (ReportImports)
+	{
+		printf ("\"%s\" ", MakePathFromDottedPath (path:Tree, '.'));
+	}
+}; } .
+
+/* qualified_decl */
+Decl		= { Tree := decl:Tree; } .
+IfDecls		= { Tree := mIfDecls ('if':Position, NoTree, ReverseTree (decl_guards:Tree)); } .
+IfElseDecls	= { Tree := mIfElseDecls ('if':Position, NoTree, ReverseTree (decl_guards:Tree), ReverseTree (decls:Tree)); } .
+
+/* decl */
+TypeDecl				= { Tree := mTypeDecl ('is':Position, NoTree, ident:ident, type_decl_body:Tree); } .
+ConstantDecl			= { Tree := mConstantDecl ('=':Position, NoTree,
+	ident:ident, mCoercedExpr (expr:Tree), mNullType (NoPosition)); } .
+ConstantDeclWithType	= { Tree := mConstantDecl ('=':Position, NoTree,
+	ident:ident, mCoercedExpr (expr:Tree), type:Tree); } .
+VariableDecl			= { Tree := mVariableDecl ('variable':Position, NoTree,
+	ReverseTree (idents:Tree), type:Tree); } .
+InitVariableDecl		= { Tree := mInitVariableDecl ('variable':Position, NoTree,
+	ReverseTree (idents:Tree), mCoercedExpr (expr:Tree), type:Tree); } .
+ChannelDecl				= { Tree := mChannelDecl ('channel':Position, NoTree,
+	ReverseTree (idents:Tree), type:Tree, channel_options:multicast); } .
+ChannelArrayDecl		= { Tree := mChannelArrayDecl ('channel':Position, NoTree,
+	ReverseTree (idents:Tree), type:Tree, range:Tree, channel_options:multicast); } .
+SyncDecl				= { Tree := mSyncDecl ('sync':Position, NoTree, ReverseTree (idents:Tree),
+	channel_options:multicast); } .
+SyncArrayDecl			= { Tree := mSyncArrayDecl ('sync':Position, NoTree, ReverseTree (idents:Tree),
+	range:Tree, channel_options:multicast); } .
+PortedProcedureDecl		= { Tree := mProcedureDecl ('procedure':Position, NoTree, ident:ident,
+	ReverseTree (formal_ports:Tree), procedure_block:Tree); } .
+FunctionDecl			= { Tree := mFunctionDecl ('function':Position, NoTree, ident:ident,
+	ReverseTree (formal_ports:Tree), mCoercedExpr (expr:Tree), mNullType (NoPosition)); } .
+FunctionDeclWithType	= { Tree := mFunctionDecl ('function':Position, NoTree, ident:ident,
+	ReverseTree (formal_ports:Tree), mCoercedExpr (expr:Tree), type:Tree); } .
+VoidFunctionDecl		= { Tree := mFunctionDecl ('function':Position, NoTree, ident:ident,
+	mNullFormalPorts (NoPosition), mCoercedExpr (expr:Tree), mNullType (NoPosition)); } .
+VoidFunctionDeclWithType = { Tree := mFunctionDecl ('function':Position, NoTree, ident:ident,
+	mNullFormalPorts (NoPosition), mCoercedExpr (expr:Tree), type:Tree); } .
+VoidBuiltinFunctionDeclWithType = { Tree := mBuiltinFunctionDecl ('function':Position, NoTree, ident:ident,
+	mNullFormalPorts (NoPosition), type:Tree); } .
+BuiltinFunctionDeclWithType	= { Tree := mBuiltinFunctionDecl ('function':Position, NoTree, ident:ident,
+	ReverseTree (formal_ports:Tree), type:Tree); } .
+VoidProcedureDecl		= { Tree := mProcedureDecl ('procedure':Position, NoTree, ident:ident,
+	mNullFormalPorts (NoPosition), procedure_block:Tree); } .
+ProcAliasDecl		= { Tree := mProcAliasDecl ('procedure':Position, NoTree,
+	newName:ident, oldName:ident, mNullProcParams ('procedure':Position)); } .
+ParamProcAliasDecl	= { Tree := mProcAliasDecl ('procedure':Position, NoTree,
+	newName:ident, oldName:ident, ReverseTree (procedure_params:Tree)); } .
+
+SharedDecl			= { Tree := mSharedDecl ('shared':Position, NoTree, ident:ident, procedure_block:Tree);}.
+SinglePrintDecl		= { Tree := mPrintDecl ('print':Position, NoTree, expr:Tree, mNullExprLists (NoPosition)); } .
+PrintDecl			= { Tree := mPrintDecl ('print':Position, NoTree, expr:Tree, ReverseTree (exprs:Tree)); } .
+
+/* channel_options */
+EmptyChannelOptions	= { multicast := false; } .
+MulticastChannelOptions	= { multicast := true; } .
+
+/* range */
+SingleValueRange	= { Tree := mSpecifiedRange (expr:Tree->\Expr.position, mNullExpr (NoPosition), expr:Tree); } .
+SpanningRange		= { Tree := mSpecifiedRange ('..':Position, Lower:Tree, Upper:Tree); } .
+TypeSpanningRange	= { Tree := mTypeRange ('over':Position, type:Tree); } .
+
+/* type */
+ComposedType	= { Tree := composed_type:Tree; } .
+ExistingType	= { Tree := mExistingType (ident:Position, ident:ident); } .
+BuiltinType		= { Tree := mBuiltinType ('builtin':Position); } .
+
+/* type_decl_body */
+AliasTypeDecl	= { Tree := type:Tree; } .
+NewTypeDecl		= { Tree := mNewType ('new':Position, type:Tree); } .
+
+/* numeric_type */
+UnsignedNumericType	= { Tree := mNumericType ('bits':Position, false, expr:Tree); } .
+SignedNumericType	= { Tree := mNumericType ('bits':Position, true, expr:Tree); } .
+
+/* record_type */
+UnsizedRecordType	= { Tree := mRecordType ('record':Position, ReverseTree (record_elems:Tree), mNullType (NoPosition)); } .
+SizedRecordType		= { Tree := mRecordType ('record':Position, ReverseTree (record_elems:Tree), type:Tree); } .
+
+/* enum_type */
+UnsizedEnumType	= { Tree := mEnumType ('enumeration':Position, ReverseTree (enum_elems:Tree), mNullType (NoPosition)); } .
+SizedEnumType	= { Tree := mEnumType ('enumeration':Position, ReverseTree (enum_elems:Tree), type:Tree); } .
+
+/* enum_elem */
+DefaultValuedEnumElem	= { Tree := mDefaultValuedEnumElem (ident:Position, NoTree, ident:ident); } .
+ValuedEnumElem			= { Tree := mValuedEnumElem (ident:Position, NoTree, ident:ident,
+	mCoercedExpr (expr:Tree)); } .
+
+/* val_decls */
+EmptyValDecls	= { Tree := mNullValDecls (NoPosition); } .
+StepValDecls	= { Tree := { val_decl:Tree->\ValDecl.next = val_decls:Tree; Tree = val_decl:Tree; }; } .
+
+val_decl	= { Tree := mValDecl ('val':Position, NoTree, ident:ident, expr:Tree); } .
+
+/* expr */
+LiteralExpr				= { Tree := mLiteralExpr (literal:Position, literal:value); } .
+IdentExpr				= { Tree := mIdentExpr (ident:Position, ident:ident); } .
+StringExpr				= { Tree := mStringExpr (string:Position, string:string); } .
+ImplicantExpr			= { Tree := mImplicantExpr (implicant:Position, implicant:implicant); } .
+DontCareExpr			= { Tree := mDontCareExpr ('?':Position); } .
+NamedAggrConsExpr		= { Tree := mAggregateConsExpr (ident:Position, ident:ident, ReverseTree (exprs:Tree)); } .
+UnnamedAggrConsExpr		= { Tree := mAggregateConsExpr ('{':Position, NoIdent, ReverseTree (exprs:Tree)); } .
+NamedEnumElemExpr		= { Tree := mNamedEnumElemExpr ("'":Position, Left:ident, Right:ident); } .
+ArrayAppendExpr		= { Tree := mArrayAppendExpr ('@':Position, Left:Tree, Right:Tree); } .
+NegateExpr				= { Tree := mUnaryExpr ('-':Position, NegateOperator, expr:Tree); } .
+UnaryPlusExpr			= { Tree := expr:Tree; } .
+InvertExpr				= { Tree := mUnaryExpr ('not':Position, InvertOperator, expr:Tree); } .
+LogExpr					= { Tree := mUnaryExpr ('log':Position, LogOperator, expr:Tree); } .
+SizeofExpr				= { Tree := mSizeofExpr ('sizeof':Position, ident:ident); } .
+AddExpr					= { Tree := mBinaryExpr ('+':Position, AddOperator, Left:Tree, Right:Tree); } .
+SubtractExpr			= { Tree := mBinaryExpr ('-':Position, SubtractOperator, Left:Tree, Right:Tree); } .
+MultiplyExpr			= { Tree := mBinaryExpr ('*':Position, MultiplyOperator, Left:Tree, Right:Tree); } .
+DivideExpr				= { Tree := mBinaryExpr ('/':Position, DivideOperator, Left:Tree, Right:Tree); } .
+ModuloExpr				= { Tree := mBinaryExpr ('%':Position, ModuloOperator, Left:Tree, Right:Tree); } .
+PowerExpr				= { Tree := mBinaryExpr ('^':Position, PowerOperator, Left:Tree, Right:Tree); } .
+EqualExpr				= { Tree := mBinaryExpr ('=':Position, EqualOperator, Left:Tree, Right:Tree); } .
+NotEqualExpr			= { Tree := mBinaryExpr ('/=':Position, NotEqualOperator, Left:Tree, Right:Tree); } .
+LessThanExpr			= { Tree := mBinaryExpr ('<':Position, LTOperator, Left:Tree, Right:Tree); } .
+GreaterThanExpr			= { Tree := mBinaryExpr ('>':Position, GTOperator, Left:Tree, Right:Tree); } .
+LessThanOrEqualExpr		= { Tree := mBinaryExpr ('<=':Position, LEOperator, Left:Tree, Right:Tree); } .
+GreaterThanOrEqualExpr	= { Tree := mBinaryExpr ('>=':Position, GEOperator, Left:Tree, Right:Tree); } .
+AndExpr					= { Tree := mBinaryExpr ('and':Position, AndOperator, Left:Tree, Right:Tree); } .
+OrExpr					= { Tree := mBinaryExpr ('or':Position, OrOperator, Left:Tree, Right:Tree); } .
+XorExpr					= { Tree := mBinaryExpr ('xor':Position, XorOperator, Left:Tree, Right:Tree); } .
+RecordElemExtractExpr	= { Tree := mRecordElemExtractExpr ('.':Position, expr:Tree, ident:ident); } .
+ArrayExtractExpr		= { Tree := mArrayExtractExpr ('[':Position, Array:Tree, mCoercedExpr(Subscript:Tree)); } .
+ArraySpanningSliceExpr	= { Tree := mArraySliceExpr ('[':Position, Array:Tree,
+	mSpecifiedRange ('..':Position, Lower:Tree, Upper:Tree)); } .
+ArrayTypeSliceExpr		= { Tree := mArraySliceExpr ('[':Position, Array:Tree,
+	mTypeRange ('over':Position, type:Tree)); } .
+AsExpr					= { Tree := mAsExpr ('as':Position, expr:Tree, type:Tree); } .
+BitArrayCastExpr		= { Tree := mBitArrayCastExpr ('#':Position, expr:Tree); } .
+ParenthesisedExpr		= { Tree := expr:Tree; } .
+LetExpr					= { Tree := mLetExpr ('let':Position, ReverseTree (val_decls:Tree), expr:Tree); } .
+VoidFunctionCallExpr	= { Tree := mFunctionCallExpr ('(':Position, ident:ident, mNullFuncParams ('(':Position)); } . 
+FunctionCallExpr		= { Tree := mFunctionCallExpr ('(':Position, ident:ident, ReverseTree (function_params:Tree)); } . 
+
+/* port_sense */
+DefaultSense	= { portSense := DefaultPortSense; /* Assume active ! */ } .
+ActiveSense		= { portSense := ActivePortSense; } .
+PassiveSense	= { portSense := PassivePortSense; } .
+
+/* port_direction */
+InputDirection		= { isOutput := false; } .
+OutputDirection		= { isOutput := true; } .
+
+/* formal_parameters */
+ValuePort			= { Tree := mValuePort (':':Position, NoTree, ReverseTree (idents:Tree), type:Tree); } .
+ParamPort			= { Tree := mParamPort (':':Position, NoTree, ReverseTree (idents:Tree), type:Tree); } .
+TypeParamPort		= { Tree := mTypeParamPort (':':Position, NoTree, ReverseTree (idents:Tree)); } .
+ChannelPort			= { Tree := mChannelPort (':':Position, NoTree, ReverseTree (idents:Tree), type:Tree,
+	port_sense:portSense, port_direction:isOutput, NULL); } .
+ChannelPortArray	= { Tree := mChannelPortArray ('array':Position, NoTree, ReverseTree (idents:Tree), type:Tree,
+	port_sense:portSense, port_direction:isOutput, range:Tree, NULL); } .
+SyncPort			= { Tree := mSyncPort ('sync':Position, NoTree, ReverseTree (idents:Tree), port_sense:portSense, NULL); } .
+SyncPortArray		= { Tree := mSyncPortArray ('array':Position, NoTree, ReverseTree (idents:Tree),
+	port_sense:portSense, range:Tree, NULL); } .
+IfPorts				= { Tree := mIfPorts ('if':Position, NoTree, ReverseTree (port_guards:Tree)); } .
+IfElsePorts			= { Tree := mIfElsePorts ('if':Position, NoTree, ReverseTree (port_guards:Tree),
+	ReverseTree (formal_ports:Tree)); } .
+
+/* block */
+BlockWithDecls		= { Tree := mBlock ('local':Position, ReverseTree (decls:Tree), command:Tree); } .
+BlockWithoutDecls	= { Tree := mBlock ('begin':Position, mNullDecls (NoPosition), command:Tree); } .
+BlockWithBrackets	= { Tree := mBlock ('[':Position, mNullDecls (NoPosition), command:Tree); } .
+
+/* procedure_block */
+OpenProcBlock		= { Tree := mBlock ('begin':Position, ReverseTree (decls:Tree), command:Tree); } .
+ClosedProcBlock		= { Tree := mBlock ('begin':Position, ReverseTree (decls:Tree), command:Tree); } .
+
+/* command */
+ContinueCommand			= { Tree := mContinueCommand ('continue':Position); } .
+HaltCommand				= { Tree := mHaltCommand ('halt':Position); } .
+InputCommand			= { Tree := {
+	if (lhs:Tree->\LvalueList.next->Kind != kNullLvalueLists)
+	{
+		LOG_ERROR (TooManyChannelsInInputCommand, NoIdent, '->':Position);
+		lhs:Tree->\LvalueList.next = mNullLvalueLists ('->':Position);
+	}
+	Tree = mInputCommand ('->':Position, lhs:Tree->\LinkedChannel.Lvalue, rhs:Tree);
+};} .
+InputEncloseCommand		= { Tree := mInputEncloseCommand ('->':Position, lvalues:Tree, command:Tree); } .
+InputEncloseBangCommand		= { Tree := { if (NoEagerInputs)
+	Tree = mInputEncloseCommand ('->!':Position, lvalues:Tree, command:Tree);
+	else Tree = mInputEncloseBangCommand ('->!':Position, lvalues:Tree, command:Tree); }; } .
+OutputCommand			= { Tree := mOutputCommand ('<-':Position, lvalue:Tree, mCoercedExpr (expr:Tree)); } .
+SyncCommand				= { Tree := mSyncCommand ('sync':Position, lvalue:Tree); } .
+AssignmentCommand		= { Tree := mAssignmentCommand (':=':Position, lvalue:Tree, mCoercedExpr (expr:Tree)); } .
+BlockCommand			= { Tree := mBlockCommand (NoPosition, block:Tree); } .
+SequentialCommand		= { Tree := mSequentialCommand (';':Position, Left:Tree, Right:Tree); } .
+ParallelCommand			= { Tree := mParallelCommand ('||':Position, false, Left:Tree, Right:Tree); } .
+PermissiveParallelCommand	= { Tree := mParallelCommand ('||!':Position, true, Left:Tree, Right:Tree); } .
+LoopCommand				= { Tree := mLoopCommand ('loop':Position, command:Tree); } .
+WhileGuardsCommand		= { Tree := mWhileGuardsCommand ('loop':Position, ReverseTree (guards:Tree)); } .
+WhileGuardsAlsoCommand	= { Tree := mWhileGuardsAlsoCommand ('loop':Position, ReverseTree (guards:Tree), command:Tree); } .
+CommandWhileExprCommand	= { Tree := mCommandWhileExprCommand ('loop':Position, command:Tree, expr:Tree); } .
+CommandWhileGuardsCommand = { Tree := mCommandWhileGuardsCommand ('loop':Position, command:Tree, ReverseTree (guards:Tree)); } .
+CommandWhileGuardsAlsoCommand = { Tree := mCommandWhileGuardsAlsoCommand ('loop':Position, firstCommand:Tree, ReverseTree (guards:Tree),
+	alsoCommand:Tree); } .
+IfCommand				= { Tree := mIfCommand ('if':Position, ReverseTree (guards:Tree)); } .
+IfElseCommand			= { Tree := mIfElseCommand ('if':Position, ReverseTree (guards:Tree), command:Tree); } .
+CaseCommand				= { Tree := mCaseCommand ('case':Position, expr:Tree,
+	ReverseTree (case_guards:Tree), mNullCommand (NoPosition)); } .
+CaseElseCommand			= { Tree := mCaseCommand ('case':Position, expr:Tree,
+	ReverseTree(case_guards:Tree), command:Tree); } .
+ForCommand				= { Tree := mForCommand ('for':Position, par_seq:isParallel, par_seq:isPermissive, ident:ident,
+	range:Tree, command:Tree); } .
+
+ProcedureCallCommon	= { Tree := mProcedureCallCommonCommand ('(':Position, ident:ident,
+	ReverseTree (procedure_params:Tree)); } .
+VoidCallCommand			= { Tree := mProcedureCallCommonCommand ('(':Position, ident:ident,
+	mNullProcParams ('(':Position)); } .
+LabelledCommand			= { Tree := command:Tree; } .
+
+/* procedure_params */
+SingleProcParam = { Tree := { procedure_param:Tree->\ProcParam.next =
+	mNullProcParams (procedure_param:Tree->\ProcedureParams.position);
+	Tree = procedure_param:Tree;};}.
+StepProcParam  = { Tree := { procedure_param:Tree->\ProcParam.next = procedure_params:Tree;
+	Tree = procedure_param:Tree; }; } .
+
+/* function_params */
+SingleFuncParam = { Tree := { function_param:Tree->\FuncParam.next =
+	mNullFuncParams (function_param:Tree->\FunctionParams.position);
+	Tree = function_param:Tree;};}.
+StepFuncParam  = { Tree := { function_param:Tree->\FuncParam.next = function_params:Tree;
+	Tree = function_param:Tree; }; } .
+
+/* composed_type, is type really */
+NumericType	= { Tree := numeric_type:Tree; } .
+ArrayType	= { Tree := mArrayType ('array':Position, type:Tree, range:Tree); } .
+
+/* procedure_param */
+ExprProcParam 	= { Tree := mExprProcParam (expr:Tree->\Expr.position, NoTree, mCoercedExpr (expr:Tree)); } .
+TypeProcParam2  = { Tree := mTypeProcParam ('type':Position, NoTree, type:Tree); } .
+TypeProcParam 	= { Tree := mTypeProcParam (composed_type:Tree->\AType.position, NoTree, composed_type:Tree); } .
+VarReadProcParam = { Tree := mVarReadProcParam ('<-':Position, NoTree, mCoercedExpr (expr:Tree)); } .
+VarWriteProcParam = { Tree := mVarWriteProcParam ('->':Position, NoTree, lvalue:Tree); } .
+BlockProcParam	= { Tree := mBlockProcParam (block:Tree->\Block.position, NoTree, block:Tree); } .
+
+/* function_param */
+ExprFuncParam 	= { Tree := mExprFuncParam (expr:Tree->\Expr.position, NoTree, mCoercedExpr (expr:Tree)); } .
+TypeFuncParam2  = { Tree := mTypeFuncParam ('type':Position, NoTree, type:Tree); } .
+TypeFuncParam 	= { Tree := mTypeFuncParam (composed_type:Tree->\AType.position, NoTree, composed_type:Tree); } .
+
+SelectCommand		= { Tree := mSelectCommand ('select':Position, channel_guards:Tree); } .
+SelectBangCommand	= { Tree := { if (NoEagerInputs)
+	Tree = mSelectCommand ('select!':Position, channel_guards:Tree);
+	else Tree = mSelectBangCommand ('select!':Position, channel_guards:Tree); }; } .
+ArbitrateCommand	= { Tree := mArbitrateCommand ('arbitrate':Position, channel_guards:Tree); } .
+SinglePrintCommand	= { Tree := mPrintCommand ('print':Position, expr:Tree, mNullExprLists (NoPosition)); } .
+PrintCommand		= { Tree := mPrintCommand ('print':Position, expr:Tree, ReverseTree (exprs:Tree)); } .
+SinkCommand			= { Tree := mSinkCommand ('sink':Position, expr:Tree); } .
+
+/* par_seq */
+Sequential	= { isParallel := false; isPermissive := false; } .
+Parallel	= { isParallel := true; isPermissive := false; } .
+PermissiveParallel	= { isParallel := true; isPermissive := true; } .
+
+/* guard */
+guard	= { Tree := mGuard ('then':Position, NoTree, expr:Tree, command:Tree); } .
+/* port_guard */
+port_guard = { Tree := mPortGuard ('then':Position, NoTree, expr:Tree, ReverseTree (formal_ports:Tree)); } .
+/* decl_guard */
+decl_guard = { Tree := mDeclGuard ('then':Position, NoTree, expr:Tree, ReverseTree (decls:Tree)); } .
+/* case_guard */
+PlainCaseGuard	= { Tree := mCaseMatchGuard ('then':Position, NoTree, case_matches:Tree, command:Tree); } .
+ForCaseGuard	= { Tree := mForCaseGuard ('then':Position, NoTree, ident:ident, case_matches:Tree, command:Tree); } .
+/* channel_guard */
+channel_guard	= { Tree := mChannelGuard ('then':Position, NoTree, ReverseTree (channels:Tree), command:Tree); } .
+
+/* lvalue -> Lvalue */
+IdentLvalue			= { Tree := mIdentLvalue (ident:Position, ident:ident); } .
+RecordElemLvalue	= { Tree := mRecordElemLvalue ('.':Position, lvalue:Tree, ident:ident); } .
+ArrayElemLvalue	= { Tree := mArrayElemLvalue ('[':Position, lvalue:Tree, mCoercedExpr (expr:Tree)); } .
+ArraySpanningSliceLvalue   = { Tree := mArraySliceLvalue ('[':Position, lvalue:Tree,
+	mSpecifiedRange ('..':Position, Lower:Tree, Upper:Tree)); } .
+ArrayTypeSliceLvalue   = { Tree := mArraySliceLvalue ('[':Position, lvalue:Tree,
+	mTypeRange ('over':Position, type:Tree)); } .
+ArrayAppendLvalue	= { Tree := mArrayAppendLvalue ('@':Position, Left:Tree, Right:Tree); } .
+ArrayConsLvalue	= { Tree := mArrayConsLvalue ('{':Position, ReverseTree (channels:Tree)); } .
+AsLvalue	= { Tree := mAsLvalue ('(':Position, lvalue:Tree, type:Tree); } .
+BitArrayCastLvalue	= { Tree := mBitArrayCastLvalue ('#':Position, lvalue:Tree); } .
+
+/* List rules */
+
+/* decls */
+EmptyDecls	= { Tree := mNullDecls (NoPosition); } .
+StepDecls	= { Tree := { qualified_decl:Tree->\Decl.next = decls:Tree; Tree = qualified_decl:Tree; }; } .
+
+/* path */
+SinglePath	= { Tree := { linked_ident:Tree->\Ident.next = mNullIdents (NoPosition); Tree = linked_ident:Tree;};}.
+StepPath	= { Tree := { linked_ident:Tree->\Ident.next = path:Tree; Tree = linked_ident:Tree; }; } .
+
+/* idents */
+SingleIdents	= { Tree := { linked_ident:Tree->\Ident.next = mNullIdents (NoPosition); Tree = linked_ident:Tree;};}.
+StepIdents		= { Tree := { linked_ident:Tree->\Ident.next = idents:Tree; Tree = linked_ident:Tree; }; } .
+
+/* exprs */
+SingleExprs	= { Tree := { linked_expr:Tree->\ExprList.next =
+	mNullExprLists (linked_expr:Tree->\ExprList.position); Tree = linked_expr:Tree; }; } .
+StepExprs	= { Tree := { linked_expr:Tree->\ExprList.next = exprs:Tree; Tree = linked_expr:Tree; }; } .
+
+/* channels */
+SingleChannels	= { Tree := { linked_channel:Tree->\LvalueList.next =
+	mNullLvalueLists (linked_channel:Tree->\NullLvalueLists.position); Tree = linked_channel:Tree; }; } .
+StepChannels	= { Tree := { linked_channel:Tree->\LvalueList.next = channels:Tree;
+	Tree = linked_channel:Tree; }; } .
+
+/* lvalues */
+SingleLvalues = { Tree := { linked_lvalue:Tree->\LvalueList.next =
+	mNullLvalueLists (linked_lvalue:Tree->\NullLvalueLists.position); Tree = linked_lvalue:Tree; }; } .
+StepLvalues	= { Tree := { linked_lvalue:Tree->\LvalueList.next = lvalues:Tree;
+	Tree = linked_lvalue:Tree; }; } .
+
+/* case_matches */
+SingleCaseMatch		= { Tree := { case_range_elem:Tree->\CaseMatch.next =
+	mNullCaseMatchs (NoPosition); Tree = case_range_elem:Tree; }; } .
+StepCaseMatches		= { Tree := { case_range_elem:Tree->\CaseMatch.next = case_matches:Tree;
+	Tree = case_range_elem:Tree; }; } .
+
+/* formal_ports */
+SingleFormalPorts	= { Tree := { port:Tree->\FormalPort.next = mNullFormalPorts (NoPosition); Tree = port:Tree; }; } .
+StepFormalPorts		= { Tree := { port:Tree->\FormalPort.next = formal_ports:Tree; Tree = port:Tree; }; } .
+
+/* guards */
+SingleGuard	= { Tree := { guard:Tree->\Guard.next = mNullGuards (NoPosition); Tree = guard:Tree; }; } .
+StepGuards	= { Tree := { guard:Tree->\Guard.next = guards:Tree; Tree = guard:Tree; }; } .
+
+/* port_guards */
+SinglePortGuard	= { Tree := { port_guard:Tree->\PortGuard.next = mNullPortGuards (NoPosition); Tree = port_guard:Tree; }; } .
+StepPortGuards	= { Tree := { port_guard:Tree->\PortGuard.next = port_guards:Tree; Tree = port_guard:Tree; }; } .
+
+/* decl_guards */
+SingleDeclGuard	= { Tree := { decl_guard:Tree->\DeclGuard.next = mNullDeclGuards (NoPosition); Tree = decl_guard:Tree; }; } .
+StepDeclGuards	= { Tree := { decl_guard:Tree->\DeclGuard.next = decl_guards:Tree; Tree = decl_guard:Tree; }; } .
+
+/* case_guards */
+SingleCaseGuard	= { Tree := { case_guard:Tree->\CaseGuard.next = mNullCaseGuards (NoPosition); Tree = case_guard:Tree; }; } .
+StepCaseGuards	= { Tree := { case_guard:Tree->\CaseGuard.next = case_guards:Tree; Tree = case_guard:Tree; }; } .
+
+/* channel_guards */
+SingleChannelGuard	= { Tree := { channel_guard:Tree->\ChannelGuard.next = mNullChannelGuards (NoPosition);
+	Tree = channel_guard:Tree; }; } .
+StepChannelGuards	= { Tree := { channel_guard:Tree->\ChannelGuard.next = channel_guards:Tree;
+	Tree = channel_guard:Tree; }; } .
+
+/* record_elems */
+SingleRecordElems	= { Tree := { linked_typed_idents:Tree->\RecordElem.next = mNullRecordElems (NoPosition);
+	Tree = linked_typed_idents:Tree; }; } .
+StepRecordElems		= { Tree := { linked_typed_idents:Tree->\RecordElem.next = record_elems:Tree;
+	Tree = linked_typed_idents:Tree; }; } .
+
+/* enum_elems */
+SingleEnumElems	= { Tree := { enum_elem:Tree->\EnumElem.next = mNullEnumElems (NoPosition); Tree = enum_elem:Tree; }; }.
+StepEnumElems	= { Tree := { enum_elem:Tree->\EnumElem.next = enum_elems:Tree; Tree = enum_elem:Tree; }; } .
+
+/* Linked structures */
+linked_typed_idents	= { Tree := mRecordElem (':':Position, NoTree, ReverseTree (idents:Tree), type:Tree); } .
+linked_ident		= { Tree := mIdent (ident:Position, NoTree, ident:ident); } .
+linked_expr			= { Tree := mExprList (expr:Tree->\Expr.position, NoTree, mCoercedExpr (expr:Tree)); } .
+CaseRange			= { Tree := mCaseRange ('..':Position, NoTree,
+	mSpecifiedRange ('..':Position, Lower:Tree, Upper:Tree));
+} .
+CaseImplicant		= { Tree := mCaseImplicant (expr:Tree->\Expr.position, NoTree, expr:Tree); } .
+LinkedChannel 		= { Tree := mLinkedChannel (lvalue:Tree->\Lvalue.position, NoTree, NoIdent, lvalue:Tree); } .
+LinkedLvalue 		= { Tree := mLinkedChannel (lvalue:Tree->\Lvalue.position, NoTree, NoIdent, lvalue:Tree); } .
+RenamedLinkedChannel = { Tree := mLinkedChannel (lvalue:Tree->\Lvalue.position, NoTree, ident:ident, lvalue:Tree); } .
+RenamedLinkedChannel2 = { Tree := mLinkedChannel (lvalue:Tree->\Lvalue.position, NoTree, ident:ident, lvalue:Tree); } .
+LinkedBlock			= { Tree := mLinkedBlock (block:Tree->\Block.position, NoTree, block:Tree); } .
+
+END Tree

@@ -1,0 +1,22 @@
+(defines
+	(latch (style-option "latch" "latch"))
+)
+(nodes
+	("data" (param "width") 0 1)
+	("nWriteReq" 1 0 1)
+	("bWriteReq" 1 0 1)
+	("nbWriteReq" 1 0 1)
+)
+(gates
+	(inv (node "nWriteReq") (req "write"))
+	(inv (node "bWriteReq") (node "nWriteReq"))
+	(inv (node "nbWriteReq") (node "bWriteReq"))
+	(inv (ack "write") (node "nbWriteReq"))
+	(cell latch
+		(combine (dup (param "width") (node "bWriteReq")))
+		(data "write")
+		(node "data")
+	)
+	(macro single-rail-connect-read-ports (param "width") (param "readPortCount") (param "specification") "data")
+	(connect (combine (req (each "read"))) (combine (ack (each "read"))))
+)

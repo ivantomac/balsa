@@ -1,0 +1,135 @@
+(defines
+	(ms-plural (> (param "MSInputWidth") 1))
+	(ls-plural (> (param "LSInputWidth") 1))
+	(ms-width-even (quotient (param "MSInputWidth") 2))
+	(ms-width-odd (quotient (+ (param "MSInputWidth") 1) 2))
+	(ls-width-even (quotient (param "LSInputWidth") 2))
+	(ls-width-odd (quotient (+ (param "LSInputWidth") 1) 2))
+	(out-width-even (quotient (param "outputWidth") 2))
+	(ms-odd (= (modulo (param "MSInputWidth") 2) 1))
+	(ls-odd (= (modulo (param "LSInputWidth") 2) 1))
+	(msl-node-size 	;; to stop nodes being created when unnecessary
+		(if ls-odd  ;; i.e when LS even (simple concatenation)
+			ms-width-odd
+			0
+		)
+	)
+	(msh-node-size 	;; high bit (one less for odd MS)
+		(if ls-odd  
+			ms-width-even
+			0
+		)
+	)
+	(ms-remainder 
+		(if ms-odd
+			ms-width-even
+			(- ms-width-even 1)
+		)	
+	)
+	(remainder-start (+ ls-width-odd 1))
+)
+(nodes
+	("r0lb" msl-node-size 0 1)
+	("r0hb" msh-node-size 0 1) ;; Counter intuitive as odd LS-msb takes first low bit
+	("r1lb" msl-node-size 0 1)
+	("r1hb" msh-node-size 0 1)
+)
+(gates
+	(connect (req "out") (req "LSInp") (req "MSInp"))
+	(if ls-plural
+		(gates
+			(connect (slice 0 ls-width-even (ack0 "LSInp")) (slice 0 ls-width-even (ack0 "out")))
+			(connect (slice 0 ls-width-even (ack1 "LSInp")) (slice 0 ls-width-even (ack1 "out")))
+			(connect (slice 0 ls-width-even (ack2 "LSInp")) (slice 0 ls-width-even (ack2 "out")))
+			(connect (slice 0 ls-width-even (ack3 "LSInp")) (slice 0 ls-width-even (ack3 "out")))
+		)
+	)
+	(if ls-odd
+		(gates
+			(if ms-plural
+				(gates
+					(or (slice 0 ms-width-even (node "r0lb")) 
+						(slice 0 ms-width-even (ack0 "MSInp"))
+						(slice 0 ms-width-even (ack2 "MSInp"))
+					)
+					(or (slice 0 ms-width-even (node "r1lb"))
+						(slice 0 ms-width-even (ack1 "MSInp"))
+						(slice 0 ms-width-even (ack3 "MSInp"))
+					)
+					(or (slice 0 ms-width-even (node "r0hb"))
+						(slice 0 ms-width-even (ack0 "MSInp"))
+						(slice 0 ms-width-even (ack1 "MSInp"))
+					)
+					(or (slice 0 ms-width-even (node "r1hb"))
+						(slice 0 ms-width-even (ack2 "MSInp"))
+						(slice 0 ms-width-even (ack3 "MSInp"))
+					)
+				)
+			)
+			(if ms-odd
+				(gates
+					(connect (slice ms-width-even 1 (ack0 "MSInp")) (slice ms-width-even 1 (node "r0lb")))
+					(connect (slice ms-width-even 1 (ack1 "MSInp")) (slice ms-width-even 1 (node "r1lb")))
+				)
+			) ;; Odd Bit (Combine two bits)
+			(c-element (slice ls-width-even 1 (ack0 "out"))
+				(slice 0 1 (node "r0lb"))
+				(slice ls-width-even 1 (ack0 "LSInp")))
+			(c-element (slice ls-width-even 1 (ack1 "out")) 
+				(slice 0 1 (node "r0lb")) 
+				(slice ls-width-even 1 (ack1 "LSInp")))
+			(c-element (slice ls-width-even 1 (ack2 "out")) 
+				(slice 0 1 (node "r1lb")) 
+				(slice ls-width-even 1 (ack0 "LSInp")))
+			(c-element (slice ls-width-even 1 (ack3 "out"))
+				(slice 0 1 (node "r1lb"))
+				(slice ls-width-even 1 (ack1 "LSInp"))
+			)
+			;; Now connect MS, shifted one place
+			(if ms-plural
+				(gates ;; High Bit becomes low bit when shifted...
+					(c-element (slice ls-width-odd ms-remainder (ack0 "out"))
+						(slice 1 ms-remainder (node "r0lb"))
+						(slice 0 ms-remainder (node "r0hb"))
+					)
+					(c-element (slice ls-width-odd ms-remainder (ack1 "out"))
+						(slice 1 ms-remainder (node "r0lb"))
+						(slice 0 ms-remainder (node "r1hb"))
+					)
+					(c-element (slice ls-width-odd ms-remainder (ack2 "out"))
+						(slice 1 ms-remainder (node "r1lb"))
+						(slice 0 ms-remainder (node "r0hb"))
+					)
+					(c-element (slice ls-width-odd ms-remainder (ack3 "out"))
+						(slice 1 ms-remainder (node "r1lb"))
+						(slice 0 ms-remainder (node "r1hb"))
+					)
+					(if (not ms-odd)
+						(gates
+							(connect (slice (- ms-width-even 1) 1 (node "r0hb")) (slice out-width-even 1 (ack0 "out")))
+							(connect (slice (- ms-width-even 1) 1 (node "r1hb")) (slice out-width-even 1 (ack1 "out")))
+						)
+					)
+				)
+			)	
+		)
+		(gates ; LS even simple connection
+			(if ms-plural
+				(gates
+					(connect (slice 0 ms-width-even (ack0 "MSInp")) (slice ls-width-even ms-width-even (ack0 "out")))
+					(connect (slice 0 ms-width-even (ack1 "MSInp")) (slice ls-width-even ms-width-even (ack1 "out")))
+					(connect (slice 0 ms-width-even (ack2 "MSInp")) (slice ls-width-even ms-width-even (ack2 "out")))
+					(connect (slice 0 ms-width-even (ack3 "MSInp")) (slice ls-width-even ms-width-even (ack3 "out")))
+				)
+			)
+			(if ms-odd
+				(gates
+					(connect (slice ms-width-even 1 (ack0 "MSInp")) (slice out-width-even 1 (ack0 "out")))
+					(connect (slice ms-width-even 1 (ack1 "MSInp")) (slice out-width-even 1 (ack1 "out")))
+				)
+			)
+		)
+	)
+)
+(connections
+)

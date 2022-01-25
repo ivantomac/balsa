@@ -1,0 +1,144 @@
+c
+# if defined __STDC__ | defined __cplusplus
+# define ARGS(parameters)	parameters
+# else
+# define ARGS(parameters)	()
+# endif
+
+typedef struct { tPosition yyPos; PtrMP_INT value; } yyliteral;
+typedef struct { tPosition yyPos; Implicant implicant; } yyimplicant;
+typedef struct { tPosition yyPos; tIdent ident; } yyident;
+typedef struct { tPosition yyPos; Ptrchar string; } yystring;
+
+typedef union {
+ tPosition Position;
+ yyliteral literal;
+ yyimplicant implicant;
+ yyident ident;
+ yystring string;
+} BalsaScan_tScanAttribute;
+
+extern void BalsaScan_ErrorAttribute ARGS((int Token, BalsaScan_tScanAttribute * pAttribute));
+%%
+void BalsaScan_ErrorAttribute
+# if defined __STDC__ | defined __cplusplus
+ (int Token, BalsaScan_tScanAttribute * pAttribute)
+# else
+ (Token, pAttribute) int Token; BalsaScan_tScanAttribute * pAttribute;
+# endif
+{
+ pAttribute->Position = BalsaScan_Attribute.Position;
+ switch (Token) {
+ case /* literal */ 1: 
+ pAttribute->literal.value = NewMP_INT (0);
+ ;
+ break;
+ case /* implicant */ 2: 
+ pAttribute->implicant.implicant = NoImplicant;
+ ;
+ break;
+ case /* ident */ 3: 
+ pAttribute->ident.ident = NoIdent;
+ ;
+ break;
+ case /* string */ 4: 
+ pAttribute->string.string = "";
+ ;
+ break;
+ }
+}
+%%
+1 S literal literal
+2 S implicant implicant
+3 S ident ident
+4 S string string
+5 N import_keyword import_keyword
+6 N open_brace_in_import open_brace_in_import
+7 N dot_in_import dot_in_import
+8 N close_brace_in_import close_brace_in_import
+9 N 'type' 'type'
+10 N 'is' 'is'
+11 N '?' '?'
+12 N '{' '{'
+13 N ',' ','
+14 N '}' '}'
+15 N "'" "'"
+16 N '-' '-'
+17 N '+' '+'
+18 N 'not' 'not'
+19 N 'log' 'log'
+20 N 'sizeof' 'sizeof'
+21 N '*' '*'
+22 N '/' '/'
+23 N '%' '%'
+24 N '^' '^'
+25 N '=' '='
+26 N '/=' '/='
+27 N '<' '<'
+28 N '>' '>'
+29 N '<=' '<='
+30 N '>=' '>='
+31 N 'and' 'and'
+32 N 'or' 'or'
+33 N 'xor' 'xor'
+34 N '.' '.'
+35 N '[' '['
+36 N ']' ']'
+37 N '..' '..'
+38 N 'over' 'over'
+39 N '(' '('
+40 N 'as' 'as'
+41 N ')' ')'
+42 N '#' '#'
+43 N 'let' 'let'
+44 N 'val' 'val'
+45 N 'in' 'in'
+46 N '@' '@'
+47 N 'bits' 'bits'
+48 N 'signed' 'signed'
+49 N 'array' 'array'
+50 N 'of' 'of'
+51 N 'builtin' 'builtin'
+52 N 'new' 'new'
+53 N 'record' 'record'
+54 N ':' ':'
+55 N ';' ';'
+56 N 'end' 'end'
+57 N 'enumeration' 'enumeration'
+58 N 'constant' 'constant'
+59 N 'variable' 'variable'
+60 N 'multicast' 'multicast'
+61 N 'channel' 'channel'
+62 N 'sync' 'sync'
+63 N 'procedure' 'procedure'
+64 N 'active' 'active'
+65 N 'passive' 'passive'
+66 N 'input' 'input'
+67 N 'output' 'output'
+68 N 'parameter' 'parameter'
+69 N 'if' 'if'
+70 N 'then' 'then'
+71 N '|' '|'
+72 N 'else' 'else'
+73 N 'begin' 'begin'
+74 N 'continue' 'continue'
+75 N 'halt' 'halt'
+76 N 'local' 'local'
+77 N '->' '->'
+78 N '->!' '->!'
+79 N '<-' '<-'
+80 N ':=' ':='
+81 N '||' '||'
+82 N '||!' '||!'
+83 N 'loop' 'loop'
+84 N 'while' 'while'
+85 N 'also' 'also'
+86 N 'case' 'case'
+87 N 'for' 'for'
+88 N 'select' 'select'
+89 N 'select!' 'select!'
+90 N 'arbitrate' 'arbitrate'
+91 N 'print' 'print'
+92 N 'sink' 'sink'
+93 N 'function' 'function'
+94 N 'shared' 'shared'

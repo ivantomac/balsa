@@ -1,0 +1,31 @@
+(defines
+	(plural (> (param "width") 1)) ;; more than one
+	(width-even (quotient (param "width") 2))
+	(width-odd (quotient (+ (param "width") 1) 2))
+	(odd (not (= width-even width-odd)))
+)
+(nodes
+	("poutReq" 1 0 1)
+)
+(gates
+	(c-element (node "poutReq") (req (each "pout")))
+	(c-element (req0 "aout") (req0 "inp") (combine (dup width-odd (node "poutReq"))))
+	(c-element (req1 "aout") (req1 "inp") (combine (dup width-odd (node "poutReq"))))
+	(if plural
+		(gates
+			(c-element (req2 "aout") (req2 "inp") (combine (dup width-even (node "poutReq"))))
+			(c-element (req3 "aout") (req3 "inp") (combine (dup width-even (node "poutReq"))))
+		)
+	)
+)
+(connections
+	(connect (ack "aout") (ack "inp"))
+	(connect (req0 "aout") (ack0 (each "pout")))
+	(connect (req1 "aout") (ack1 (each "pout")))
+	(if plural
+		(gates
+			(connect (req2 "aout") (ack2 (each "pout")))
+			(connect (req3 "aout") (ack3 (each "pout")))
+		)
+	)
+)

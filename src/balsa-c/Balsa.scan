@@ -1,0 +1,156 @@
+/*
+	The Balsa Asynchronous Hardware Synthesis System
+	Copyright (C) 1995-2003 Department of Computer Science
+	The University of Manchester, Oxford Road, Manchester, UK, M13 9PL
+	
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+	`Balsa.scan'
+	Scanner for `balsa'
+	
+	$Id: Balsa.scan,v 1.10 2004/05/25 14:21:04 janinl Exp $
+*/
+
+SCANNER BalsaScan
+
+EXPORT
+{
+#include "arith.h"
+#include "flags.h"
+#include "Positions.h"
+#include "Errors.h"
+#include "implicants.h"
+#include "misc.h"
+#include "output.h"
+#include <Idents.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+	INSERT tScanAttribute
+}
+
+GLOBAL
+{ 
+	static unsigned commentNesting = 0; 
+	static unsigned preCommentStartState = 0;
+
+	INSERT ErrorAttribute
+
+	/* This is used as a scratch space for reading a lexeme */
+	static char lexeme [1024];
+
+	int hasEof = 0;
+
+/* Hack to perform correct tab handling */
+#undef yyTab
+#define yyTab		yyLineStart -= TabDistance - 1 -((unsigned char *)BalsaScan_TokenPtr-yyLineStart-1) % TabDistance
+}
+
+LOCAL
+{ BalsaScan_Attribute.Position.File = CurrentFile; }
+
+DEFAULT
+{ char badChar[2]; badChar[0] = *BalsaScan_TokenPtr; badChar[1] = '\0';
+	LOG_ERROR (IllegalCharacter, MakeIdent1 (badChar), BalsaScan_Attribute.Position); }
+
+EOF
+{ if (yyStartState == CMNT) LOG_ERROR (UnexpectedEOFInComment, NoIdent, BalsaScan_Attribute.Position); }
+
+DEFINE
+digit = {0-9} .
+decdigit = {_ 0-9} .
+nonzero = {1-9} .
+bindigit = {_ 0-1} .
+binxdigit = {_ 0-1 x X ?} .
+octdigit = {_ 0-7} .
+hexdigit = {_ 0-9 A-F a-f} .
+hexxdigit = {_ 0-9 A-F a-f x X ?} .
+letter = {a-z A-Z _} .
+stringchar = - {\n \"} .
+hyphen = {\-} .
+
+START CMNT IMPORT
+
+RULES
+
+NOT #CMNT#	"(--"			:-{ commentNesting++; preCommentStartState = yyStartState; yyStart (CMNT); }
+#CMNT#		"(--"			:-{ commentNesting++; }
+#CMNT#		"--)"			:-{ commentNesting--; if (!commentNesting) yyStart (preCommentStartState); }
+NOT #CMNT#	"--)"			:-{ if (!commentNesting) LOG_ERROR (BadCommentNesting, NoIdent, BalsaScan_Attribute.Position); }
+#CMNT#		"(" | "-" | - {\-(\t\n} + :-{} 
+
+#STD#	0 octdigit *			: {
+	BalsaScan_GetWord (lexeme);
+	BalsaScan_Attribute.literal.value = ReadBasedMP_INTFromString (lexeme, 8, false);
+	return literal;
+}
+#STD#	0 {xX} hexdigit +		: {
+	BalsaScan_GetWord (lexeme);
+	BalsaScan_Attribute.literal.value = ReadBasedMP_INTFromString (lexeme + 2, 16, false);
+	return literal;
+}
+#STD#	0 {bB} bindigit +		: {
+	BalsaScan_GetWord (lexeme);
+	BalsaScan_Attribute.literal.value = ReadBasedMP_INTFromString (lexeme + 2, 2, false);
+	return literal;
+}
+#STD#	nonzero decdigit *		: {
+	BalsaScan_GetWord (lexeme);
+	BalsaScan_Attribute.literal.value = ReadBasedMP_INTFromString (lexeme, 10, false);
+	return literal;
+}
+
+#STD#	0 {bB} bindigit * {xX?} binxdigit * : {
+	BalsaScan_GetWord (lexeme);
+	BalsaScan_Attribute.implicant.implicant = ReadImplicantFromString (lexeme + 2, 2); return implicant;
+}
+#STD#	0 {xX} hexdigit * {xX?} hexxdigit * : {
+	BalsaScan_GetWord (lexeme);
+	BalsaScan_Attribute.implicant.implicant = ReadImplicantFromString (lexeme + 2, 16); return implicant;
+}
+
+#STD#	\" stringchar * \"		: { BalsaScan_Attribute.string.string = StrNDup (BalsaScan_TokenPtr + 1, BalsaScan_TokenLength - 2);
+									return string; }
+
+#STD, IMPORT#	"--" ANY *		: { }
+\t								:-{ yyTab; }
+
+INSERT RULES #STD#
+
+#STD#	"import" :- {
+	/* IMPORT is used to make keywords into identifiers inside import paths */
+	yyStart (IMPORT);
+	return import_keyword;
+}
+
+#IMPORT# "." : { return dot_in_import; }
+#IMPORT# "[" : { return open_brace_in_import; }
+#IMPORT# "]" : { yyStart (STD); return close_brace_in_import; }
+
+#IMPORT#	letter (letter | digit | hyphen) *	: {
+	char nextChar = BalsaScan_TokenPtr[BalsaScan_TokenLength];
+	BalsaScan_TokenPtr[BalsaScan_TokenLength] = '\0';
+	BalsaScan_Attribute.ident.ident = MakeIdent1 (BalsaScan_TokenPtr);
+	BalsaScan_TokenPtr[BalsaScan_TokenLength] = nextChar;
+	return ident;
+}
+
+#STD#	letter (letter | digit) *	: {
+	char nextChar = BalsaScan_TokenPtr[BalsaScan_TokenLength];
+	BalsaScan_TokenPtr[BalsaScan_TokenLength] = '\0';
+	BalsaScan_Attribute.ident.ident = MakeIdent1 (BalsaScan_TokenPtr);
+	BalsaScan_TokenPtr[BalsaScan_TokenLength] = nextChar;
+	return ident;
+}

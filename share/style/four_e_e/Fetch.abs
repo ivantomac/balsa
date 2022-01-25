@@ -1,0 +1,24 @@
+(defines
+	(Fstyle (style-option "F" "conv"))
+)
+(nodes)
+(gates
+	(case Fstyle
+		(("conv")
+			(connect (ack "inp") (req "out"))
+			(connect (ack "out") (ack "activate"))
+		)
+		(else
+			(cell "t-element"
+				(ack "inp")
+				(ack "activate")
+				(req "out")
+				(ack "out")
+			)
+		)
+	)
+)
+(connections
+	(connect (req "activate") (req "inp"))
+	(connect (data "inp") (data "out"))
+)

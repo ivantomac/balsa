@@ -1,0 +1,30 @@
+(defines
+	(NAstyle (style-option "FV" "ovlp"))
+)
+(nodes
+	("partCD" (param "inputWidth") 0 1)
+	("cd" (case NAstyle (("ovlp") (if (> (param "inputWidth") 1) 1 0)) (else 1)) 0 1)
+	("inpAck" (case NAstyle (("ovlp") (if (> (param "inputWidth") 1) 1 0)) (else 0)) 0 1)
+)
+(gates
+	; do completion detection on the input.
+	(or (node "partCD") (req0 "inp") (req1 "inp"))
+	(case NAstyle
+		(("ovlp")
+			(if (> (param "inputWidth") 1)
+				(gates
+					(c-element (node "cd") (smash (slice 1 (- (param "inputWidth") 1) (node "partCD"))))
+					(c-element (ack "inp") (node "inpAck") (node "cd"))
+					(cell "t-element" (slice 0 1 (node "partCD")) (node "inpAck") (req "out") (ack "out"))
+				)
+				(cell "t-element" (slice 0 1 (node "partCD")) (ack "inp") (req "out") (ack "out"))
+			)
+		)
+		(else
+			(c-element (node "cd") (smash (node "partCD")))
+			(s-element (node "cd") (ack "inp") (req "out") (ack "out"))
+		)
+	)
+)
+(connections
+)

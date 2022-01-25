@@ -1,0 +1,84 @@
+(defines
+	(full-add-width (min (param "inputWidth") (param "outputWidth")))
+	(out-extend-width (- (param "outputWidth") full-add-width))
+	; Define cells according to style options:
+	(dual-rail-xor2
+		(case logic-type
+			(("ncl") "dual-rail-xor2-ncl")
+			(else "dual-rail-xor2")
+		)
+	)
+	(dual-rail-half-adder
+		(case logic-type
+			(("ncl") "dual-rail-half-adder-ncl")
+			(("balanced") "dual-rail-half-adder-bal")
+			(else "dual-rail-half-adder")
+		)
+	)
+)
+(nodes
+	("c1" (+ 1 full-add-width) 0 1)
+	("c0" (+ 1 full-add-width) 0 1)
+	("s1" 1 0 1)
+	("s0" 1 0 1)
+)
+(gates
+	(connect (req "out") (req "inp"))
+	(case (param "op")
+		(("Invert") ;; out = ~ inp
+			; invert input
+			(connect (slice 0 full-add-width (ack0 "inp")) (slice 0 full-add-width (ack1 "out")))
+			(connect (slice 0 full-add-width (ack1 "inp")) (slice 0 full-add-width (ack0 "out")))
+			; extend output if needed
+			(if (< 0 out-extend-width)
+				(if (= "true" (param "inputIsSigned"))
+					; sign-extend output
+					(gates
+						(connect (slice (- full-add-width 1) 1 (ack0 "inp"))
+							(smash (slice full-add-width out-extend-width (ack1 "out"))))
+						(connect (slice (- full-add-width 1) 1 (ack1 "inp"))
+							(smash (slice full-add-width out-extend-width (ack0 "out"))))
+					)
+					; unsigned input: extend out with 1s
+					(gates
+						(connect (req "out") (smash (slice full-add-width out-extend-width (ack1 "out"))))
+						(gnd (smash (slice full-add-width out-extend-width (ack0 "out"))))
+					)
+				)
+			)
+		)
+		(("Negate") ;; out = ~inp + 1
+			; connect inverted input to half-adder (incrementer)
+			(cell dual-rail-half-adder
+				(slice 0 full-add-width (ack1 "inp"))
+				(slice 0 full-add-width (ack0 "inp"))
+				(slice 0 full-add-width (node "c0"))
+				(slice 0 full-add-width (node "c1"))
+				(slice 1 full-add-width (node "c0"))
+				(slice 1 full-add-width (node "c1"))
+				(slice 0 full-add-width (ack0 "out"))
+				(slice 0 full-add-width (ack1 "out"))
+			)
+			; set c (lsb) to 1
+			(connect (req "out") (slice 0 1 (node "c1")))
+			(gnd (slice 0 1 (node "c0")))
+			; sign-extend output if needed
+			(if (< 0 out-extend-width)
+			    ; determine sign (S) of result and sign-extend output
+				; use [S = Cout xor ~inp (msb)] (incrementer is a special case of overflow)
+			    (gates
+					(cell dual-rail-xor2
+						(slice full-add-width 1 (node "c0")) 
+						(slice full-add-width 1 (node "c1")) 
+						(slice (- full-add-width 1) 1 (ack1 "inp"))
+						(slice (- full-add-width 1) 1 (ack0 "inp")) 
+						(node "s0")
+						(node "s1")
+					)
+					(connect (node "s1") (smash (slice full-add-width out-extend-width (ack1 "out"))))
+					(connect (node "s0") (smash (slice full-add-width out-extend-width (ack0 "out"))))
+				)
+			)
+		)
+	)
+)

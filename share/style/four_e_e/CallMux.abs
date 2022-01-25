@@ -1,0 +1,173 @@
+(defines
+	(CMstyle (style-option "CM" "safe"))
+	(buffer-tree (lambda (inp out num_out_wires index out_b)
+		(let
+			((nwo (eval num_out_wires))
+			)
+			(if (<= nwo 4)
+				`(gates
+					(connect ,inp (smash ,out))
+				)
+				(let 
+					((level (inexact->exact (truncate (div (log (- nwo 1)) (log 4)))))
+					 (bufdiv (expt 4 level))
+					 (num_bufs (/ nwo bufdiv))
+					 (num_rem (modulo nwo bufdiv))
+					 (ind (eval index))
+					 (ind1 (+ 1 (* 4 ind)))
+					 (ind2 (+ 2 (* 4 ind)))
+					 (ind3 (+ 3 (* 4 ind)))
+					 (ind4 (+ 4 (* 4 ind)))
+					)
+					(if (= num_bufs 1)
+						`(gates
+							(cell "suggested-buffer" (slice ,ind1 1 ,out_b) ,inp )
+							(macro buffer-tree (slice ,ind1 1 ,out_b) (slice 0 ,bufdiv ,out) ,bufdiv ,ind1 ,out_b)
+							(if (> ,num_rem 0)
+								(gates
+									(cell "suggested-buffer" (slice ,ind2 1 ,out_b) ,inp)
+								 	(macro buffer-tree (slice ,ind2 1 ,out_b) (slice ,bufdiv ,num_rem ,out) ,num_rem ,ind2 ,out_b)
+								)
+							)
+						)
+						(if (= num_bufs 2)
+							`(gates
+								(cell "suggested-buffer" (slice ,ind1 1 ,out_b) ,inp)
+								(macro buffer-tree (slice ,ind1 1 ,out_b) (slice 0 ,bufdiv ,out) ,bufdiv ,ind1 ,out_b)
+								(cell "suggested-buffer" (slice ,ind2 1 ,out_b) ,inp)
+								(macro buffer-tree (slice ,ind2 1 ,out_b) (slice ,bufdiv ,bufdiv ,out) ,bufdiv ,ind2 ,out_b)
+								(if (> ,num_rem 0)
+									(gates
+										(cell "suggested-buffer" (slice ,ind3 1 ,out_b) ,inp)
+									 	(macro buffer-tree (slice ,ind3 1 ,out_b) (slice (* 2 ,bufdiv) ,num_rem ,out) ,num_rem ,ind3 ,out_b)
+									)
+								)
+							)
+							(if (= num_bufs 3)
+								`(gates
+									(cell "suggested-buffer" (slice ,ind1 1 ,out_b) ,inp)
+									(macro buffer-tree (slice ,ind1 1 ,out_b) (slice 0 ,bufdiv ,out) ,bufdiv ,ind1 ,out_b)
+									(cell "suggested-buffer" (slice ,ind2 1 ,out_b) ,inp)
+									(macro buffer-tree (slice ,ind2 1 ,out_b) (slice ,bufdiv ,bufdiv ,out) ,bufdiv ,ind2 ,out_b)
+									(cell "suggested-buffer" (slice ,ind3 1 ,out_b) ,inp)
+									(macro buffer-tree (slice ,ind3 1 ,out_b) (slice (* 2 ,bufdiv) ,bufdiv ,out) ,bufdiv ,ind3 ,out_b)
+									(if (> ,num_rem 0)
+										(gates
+											(cell "suggested-buffer" (slice ,ind4 1 ,out_b) ,inp)
+											(macro buffer-tree (slice ,ind4 1 ,out_b) (slice (* 3 ,bufdiv) ,num_rem ,out) ,num_rem ,ind4 ,out_b)
+										)
+									)
+								)
+								(if (= num_bufs 4)
+									`(gates
+										(cell "suggested-buffer" (slice ,ind1 1 ,out_b) ,inp)
+										(macro buffer-tree (slice ,ind1 1 ,out_b) (slice 0 ,bufdiv ,out) ,bufdiv ,ind1 ,out_b)
+										(cell "suggested-buffer" (slice ,ind2 1 ,out_b) ,inp)
+										(macro buffer-tree (slice ,ind2 1 ,out_b) (slice ,bufdiv ,bufdiv ,out) ,bufdiv ,ind2 ,out_b)
+										(cell "suggested-buffer" (slice ,ind3 1 ,out_b) ,inp)
+										(macro buffer-tree (slice ,ind3 1 ,out_b) (slice (* 2 ,bufdiv) ,bufdiv ,out) ,bufdiv ,ind3 ,out_b)
+										(cell "suggested-buffer" (slice ,ind4 1 ,out_b) ,inp)
+										(macro buffer-tree (slice ,ind4 1 ,out_b) (slice (* 3 ,bufdiv) ,bufdiv ,out) ,bufdiv ,ind4 ,out_b)
+									)
+								)
+							)
+						)
+					)
+				)
+			)
+		)
+	))
+	(iterate-select (lambda (input-count-arg width sel buf-sel out-b)
+    	    (let
+        	((input-count (eval input-count-arg))
+	         (it-sel (lambda (ret count)
+        	    (if (= count input-count)
+                	(cons 'gates (reverse! ret))
+	                (it-sel
+        	            (cons
+                	        (list 'macro 'buffer-tree
+                        	    (list 'slice count 1 (list 'node (list 'bundle sel count)))
+	                            (list 'slice 0 width  (list 'node (list 'bundle buf-sel count)))
+        	                    width
+				    0
+                	            (list 'slice 0 width  (list 'node (list 'bundle out-b count)))
+                        	)
+	                        ret
+        	            )
+			    (+ count 1)
+                	)
+	            )
+        	)))
+	        (it-sel '() 0)
+	    )
+	))
+	
+	(inp-width (param "width"))
+	(inp-count (param "inputCount"))
+)
+(nodes
+	("muxOut" (param "width") 0 1)
+	("naout" 1 0 1)
+	("rout" (param "inputCount") 0 1)
+	("bufselect" (param "width") 0 (param "inputCount"))
+	("select" 1 0 (param "inputCount"))
+	("outb" (param "width") 0 (param "inputCount"))
+)
+(gates
+	(inv (node "naout") (ack "out"))
+
+	(case CMstyle
+		(("safe")
+			(cell "a-c3-element-u12"
+				(node "rout")
+				(combine (req (each "inp")))
+				(combine (dup (param "inputCount") (node "naout")))
+				(combine (node (each "select")))
+			)
+
+			(cell "assym-c-element-inv1"
+				(combine (ack (each "inp")))
+				(node "rout")
+				(combine (node (each "select")))
+			)
+			(or (req "out") (smash (node "rout")))
+
+			(and (combine (node (each "select"))) (combine (dup (param "inputCount") (node "naout"))) (combine (req (each "inp"))))
+
+			(macro iterate-select
+				inp-count
+				inp-width
+				"select"
+				"bufselect"
+				"outb"
+			)
+			(keeper-inv (data "out") (node "muxOut"))
+			(tri-inv
+			;;	(combine (dup-each (param "width") (node (each "select"))))
+				(combine (node (each "bufselect")))
+				(combine (data (each "inp")))
+				(combine (dup (param "inputCount") (node "muxOut")))
+			)
+		)
+		(else
+			(cell "e-element"
+				(combine (req (each "inp")))
+				(combine (ack (each "inp")))
+				(node "rout")
+				(combine (dup (param "inputCount") (ack "out")))
+			)
+			(or (req "out") (smash (node "rout")))
+
+			(and (combine (node (each "select"))) (combine (dup (param "inputCount") (node "naout"))) (combine (req (each "inp"))))
+
+			(keeper-inv (data "out") (node "muxOut"))
+			(tri-inv
+				(combine (dup-each (param "width") (node (each "select"))))
+			;;	(combine (node (each "bufselect")))
+				(combine (data (each "inp")))
+				(combine (dup (param "inputCount") (node "muxOut")))
+			)
+		)
+	)
+)
+(connections)

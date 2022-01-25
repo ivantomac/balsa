@@ -1,0 +1,27 @@
+(defines
+	(PARstyle (style-option "PAR" "ovlp"))
+)
+(nodes
+	("acks" (param "outputCount") 0 1)
+)
+(gates
+	(case PARstyle
+		(("conv")
+			(s-element
+				(combine (dup (param "outputCount") (req "activate")))
+				(node "acks")
+				(combine (req (each "activateOut")))
+				(combine (ack (each "activateOut")))
+			)
+		)
+		(else
+			(cell "t-element"
+				(combine (dup (param "outputCount") (req "activate")))
+				(node "acks")
+				(combine (req (each "activateOut")))
+				(combine (ack (each "activateOut")))
+			)
+		)
+	)
+	(c-element (ack "activate") (smash (node "acks")))
+)

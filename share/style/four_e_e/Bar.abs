@@ -1,0 +1,55 @@
+(defines
+	(guard-count (param "guardCount"))
+)
+(nodes
+	("bypass" (+ 1 guard-count) 0 1)
+	("outReq" guard-count 0 1)
+	("gId" guard-count 0 1)
+	("gr" 1 0 1)
+	("ga" 1 0 1)
+	("egr" 1 0 1)
+	("ega" 1 0 1)
+	("degr0" 1 0 1)
+	("degr1" 1 0 1)
+	("dga" 1 0 1)
+	("latchEnable" guard-count 0 1)
+	("eactr" 1 0 1)
+	("eacta" 1 0 1)
+)
+(gates
+	(c-element (node "ga") (ack (each "guardInput")))
+
+	(and (node "dga") (node "ga") (node "ga"))
+	(and (node "ega") (node "dga") (node "ga"))
+	
+	(cell "e-element" (req "guard") (ack "guard") (node "egr") (node "ega"))
+	
+	(and (node "degr0") (node "egr") (node "egr"))
+	(and (node "degr1") (node "degr0") (node "degr0"))
+	(or (node "gr") (node "egr") (node "degr1"))
+
+	(cell "e-element" (req "activate") (ack "activate") (node "eactr") (node "eacta"))
+	
+	(or (node "eacta") (ack (each "activateOut")) (slice guard-count 1 (node "bypass")))
+	(demux2
+		(slice 0 guard-count (node "bypass"))
+		(slice 1 guard-count (node "bypass"))
+		(node "outReq")
+		(node "gId")
+	)
+
+	(and (node "latchEnable") (combine (ack (each "guardInput"))) (combine (dup guard-count (node "egr"))))
+
+	(latch (node "latchEnable") (combine (data (each "guardInput"))) (node "gId"))
+	(or (data "guard") (smash (node "gId")))
+
+	(c-element
+		(combine (req (each "activateOut")))
+		(combine (dup guard-count (node "eactr")))
+		(node "outReq")
+	)
+)
+(connections
+	(connect (node "gr") (req (each "guardInput")))	
+	(connect (node "eactr") (slice 0 1 (node "bypass")))
+)

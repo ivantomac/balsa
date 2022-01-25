@@ -1,0 +1,6 @@
+(nodes)
+(gates)
+(connections
+	(connect (req "out") (ack "out"))
+	(constant (param "value") (data "out"))
+)

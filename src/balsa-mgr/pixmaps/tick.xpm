@@ -1,0 +1,21 @@
+/* XPM */
+static char *tick_xpm[] = {
+/* width height num_colors chars_per_pixel */
+"    11    9       5            1",
+/* colors */
+". c None",
+"# c #000000",
+"y c #333333",
+"i c #ffffff",
+"# c #9f9f9f",
+/* pixels */
+"........iii",
+".......iyyi",
+"......iyyi.",
+"iiii.iyyi..",
+"iyyyiyyi...",
+".iyyyyi....",
+"..iyyi.....",
+"...ii......",
+"...........",
+};
