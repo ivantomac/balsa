@@ -2,7 +2,7 @@
 
 bin_PROGRAMS = breeze-sim-debug
 
-INCLUDES = -I../../libs -I.. @GLIB_CFLAGS@ @GMODULE_CFLAGS@
+AM_CPPFLAGS = -I../../libs -I.. @GLIB_CFLAGS@ @GMODULE_CFLAGS@
 
 breeze_sim_debug_LDFLAGS = -export-dynamic
 

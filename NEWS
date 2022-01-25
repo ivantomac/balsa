@@ -1,6 +1,14 @@
 
 <For other changes, refer to the Balsa manual>
 
+2022-01-26 (ivantomac): Fixed a build problem
+
+	Fixed an issue where a call to realpath would
+	succeed but would still be treated as a failure.
+
+	Updated and regenerated Automake and Libtool
+	scripts.
+
 2008-04-01 (bardsley): balsa-netlist
 
 	Deprecated options -d, -p, -f.  balsa-netlist now never inserts Verilog `prototypes' and always replaces

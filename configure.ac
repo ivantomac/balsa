@@ -1,9 +1,11 @@
 dnl Process this file with autoconf to produce a configure script.
 
 # Initialisations
-AC_INIT(bin/balsa-config.in)
-AM_INIT_AUTOMAKE(balsa, 4.0)
-AM_CONFIG_HEADER(config.h)
+AC_INIT([balsa], [4.0])
+AC_CONFIG_MACRO_DIRS([m4])
+AC_CONFIG_SRCDIR([bin/balsa-config.in])
+AM_INIT_AUTOMAKE([gnu subdir-objects])
+AC_CONFIG_HEADERS([config.h])
 
 default_prefix=/usr/local/balsa
 
@@ -20,7 +22,6 @@ CFLAGS="-fPIC -fPIC -DPIC $CFLAGS"
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-AM_PROG_CC_STDC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
@@ -31,7 +32,7 @@ AC_PATH_PROG(LALR, lalr)
 AC_PATH_PROG(AST, ast)
 AC_PATH_PROG(NM, nm)
 
-AM_PROG_LIBTOOL
+LT_INIT
 
 dnl Optional binaries / search path on failure to find
 AC_PATH_PROG(GUILE, guile, guile)
@@ -53,7 +54,9 @@ AC_SUBST(formatguilibdir)
 AC_SUBST(formatguiincdir)
 
 dnl Checks for header files.
-AC_HEADER_STDC
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_CHECK_HEADERS(inttypes.h)
 
 AC_CHECK_SIZEOF(void *)
@@ -91,7 +94,7 @@ AC_CHECK_FUNCS(fcntl)
 AC_CHECK_FUNCS(fileno)
 AC_CHECK_FUNCS(getpid)
 
-AC_OUTPUT([Makefile
+AC_CONFIG_FILES([Makefile
 	doc/Makefile
 	extra/Makefile
 	extra/scintilla-wrapper/Makefile
@@ -135,3 +138,4 @@ AC_OUTPUT([Makefile
 	share/balsa/parts/Makefile
 	share/balsa/sim/Makefile]
 )
+AC_OUTPUT

@@ -2,7 +2,7 @@
 
 lib_LTLIBRARIES = libbalsasim.la
 
-INCLUDES = -I..
+AM_CPPFLAGS = -I..
 
 balsasimdir = $(includedir)/balsasim
 

@@ -4,7 +4,7 @@ SUBDIRS = pixmaps
 
 bin_PROGRAMS = breeze-sim-ctrl
 
-INCLUDES = @GTK_CFLAGS@ @GLIB_CFLAGS@ -I../libs
+AM_CPPFLAGS = @GTK_CFLAGS@ @GLIB_CFLAGS@ -I../libs
 
 breeze_sim_ctrl_LDADD = ../libs/breeze/libbreeze.la @GTK_LIBS@ @GLIB_LIBS@ -lm
 

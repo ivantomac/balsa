@@ -104,13 +104,22 @@ Ptrchar ExpandPathToFile (Ptrchar path, Ptrchar extension)
                 path_max = 4096;
             Ptrchar canonPath = g_new (char, path_max);
 
-            errno = 0;
-            realpath (path, canonPath);
-            if (errno != 0)
+            /* Checking errno here is unreliable as
+               realpath sometimes sets it even on success.
+               errno contains a valid error code only if
+               realpath returns NULL */
+            if (NULL == realpath (path, canonPath))
             {
                 fprintf (stderr, "can't canonicalise path to file `%s'\n", tryFile);
                 return NULL;
             }
+            /* Probably don't need to do this but at least
+               in this file Balsa was checking errno
+               instead of function result, as well as
+               setting errno to 0. Since realpath seems to
+               set it to something odd even on success,
+               it's safer to reset it */
+            errno = 0;
             ret = StrDup (canonPath);
 
             g_free (path);

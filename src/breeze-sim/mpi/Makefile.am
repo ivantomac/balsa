@@ -2,7 +2,7 @@
 
 bin_PROGRAMS = breeze-sim-mpi
 
-INCLUDES = -I../../libs -I.. @GLIB_CFLAGS@ -DMPI -DREORDERED_EVENT_DRIVEN_SCHEDULER `mpicc -showme:compile`
+AM_CPPFLAGS = -I../../libs -I.. @GLIB_CFLAGS@ -DMPI -DREORDERED_EVENT_DRIVEN_SCHEDULER `mpicc -showme:compile`
 
 breeze_sim_mpi_LDFLAGS = -export-dynamic `mpicc -showme:link`
 

@@ -2,7 +2,7 @@
 
 lib_LTLIBRARIES = libbreeze.la
 
-INCLUDES = -I.. @GLIB_CFLAGS@
+AM_CPPFLAGS = -I.. @GLIB_CFLAGS@
 
 breezedir = $(includedir)/breeze
 

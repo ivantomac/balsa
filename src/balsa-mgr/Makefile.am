@@ -2,8 +2,8 @@
 
 SUBDIRS = pixmaps
 
-INCLUDES = @GTK_CFLAGS@ @GMODULE_CFLAGS@ \
-	-I../libs -I../../extra/scintilla-wrapper/scintilla/include
+AM_CPPFLAGS = @GTK_CFLAGS@ @GMODULE_CFLAGS@ \
+	-I../libs -I../../extra/scintilla-wrapper/scintilla/include -Wno-error=format-security
 
 bin_PROGRAMS = balsa-mgr
 
@@ -48,7 +48,7 @@ balsa_mgr_SOURCES = \
 balsa_mgr_LDADD = ../libs/breeze/libbreeze.la ../libs/format/libformat.la ../../extra/scintilla-wrapper/.libs/libscintilla.a @GTK_LIBS@ @GTHREAD_LIBS@ @GMODULE_LIBS@
 
 ScintillaLexBalsa.o: ScintillaLexBalsa.cxx
-	g++ ${INCLUDES} ${CFLAGS} ${CXXFLAGS} ${CPPFLAGS} -I../../extra/scintilla-wrapper -Wno-char-subscripts -DGTK -DSCI_LEXER -c ScintillaLexBalsa.cxx
+	g++ ${INCLUDES} ${CFLAGS} ${CXXFLAGS} ${CPPFLAGS} -I../../extra/scintilla-wrapper -I../../extra/scintilla-wrapper/scintilla/include -Wno-char-subscripts -DGTK -DSCI_LEXER -c ScintillaLexBalsa.cxx
 
 lines:
 	$(top_srcdir)/bin/count-lines $(balsa_mgr_SOURCES)

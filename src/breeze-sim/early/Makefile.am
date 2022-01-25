@@ -2,7 +2,7 @@
 
 bin_PROGRAMS = breeze-sim-early
 
-INCLUDES = -I../../libs -I.. @GLIB_CFLAGS@ @GMODULE_CFLAGS@ -DEARLY_BACKEND
+AM_CPPFLAGS = -I../../libs -I.. @GLIB_CFLAGS@ @GMODULE_CFLAGS@ -DEARLY_BACKEND
 
 breeze_sim_early_LDFLAGS = -export-dynamic
 

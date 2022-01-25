@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-INCLUDES = -I..
+AM_CPPFLAGS = -I..
 
 formatlibdir = @formatlibdir@
 formatincdir = @formatincdir@
