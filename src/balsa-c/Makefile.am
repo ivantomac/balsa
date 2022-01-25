@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-AM_CPPFLAGS = @GLIB_CFLAGS@ -Wall -Wno-char-subscripts -Wno-unused-label -Wno-error=format-security
+AM_CPPFLAGS = @GLIB_CFLAGS@ -Wall -Wno-char-subscripts -Wno-unused-label -Wno-format-security
 
 bin_PROGRAMS = balsa-c
 

@@ -2,7 +2,7 @@
 
 bin_PROGRAMS = breeze-sim-fast
 
-AM_CPPFLAGS = -I../../libs -I.. @GLIB_CFLAGS@ @GMODULE_CFLAGS@ -DREORDERED_EVENT_DRIVEN_SCHEDULER -Wno-error=format-security
+AM_CPPFLAGS = -I../../libs -I.. @GLIB_CFLAGS@ @GMODULE_CFLAGS@ -DREORDERED_EVENT_DRIVEN_SCHEDULER -Wno-format-security
 
 breeze_sim_fast_LDFLAGS = -export-dynamic
 

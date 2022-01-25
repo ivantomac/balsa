@@ -3,7 +3,7 @@
 SUBDIRS = pixmaps
 
 AM_CPPFLAGS = @GTK_CFLAGS@ @GMODULE_CFLAGS@ \
-	-I../libs -I../../extra/scintilla-wrapper/scintilla/include -Wno-error=format-security
+	-I../libs -I../../extra/scintilla-wrapper/scintilla/include -Wno-format-security
 
 bin_PROGRAMS = balsa-mgr
 

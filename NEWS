@@ -1,6 +1,13 @@
 
 <For other changes, refer to the Balsa manual>
 
+2022-01-26 (ivantomac): Added NixOS build scripts
+
+	Changed -Wno-error=format-security to
+	-Wno-format-security.
+
+	Added default.nix, flake.nix and shell.nix.
+
 2022-01-26 (ivantomac): Fixed a build problem
 
 	Fixed an issue where a call to realpath would

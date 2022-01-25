@@ -412,7 +412,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = pixmaps
 AM_CPPFLAGS = @GTK_CFLAGS@ @GMODULE_CFLAGS@ \
-	-I../libs -I../../extra/scintilla-wrapper/scintilla/include -Wno-error=format-security
+	-I../libs -I../../extra/scintilla-wrapper/scintilla/include -Wno-format-security
 
 interface_files = balsa-mgr.glade balsa-mgr.gladep
 EXTRA_DIST = $(interface_files)
