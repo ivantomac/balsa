@@ -43,7 +43,7 @@ if [ $# -eq 0 ]; then
 
 	ls -1 ${BALSAHOME}/share/config/ | while read file
 	do
-		/bin/echo -n "    $file: "
+		echo -n "    $file: "
 		cat ${BALSAHOME}/share/config/$file
 	done
 	echo

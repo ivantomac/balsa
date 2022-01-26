@@ -408,7 +408,7 @@
 					(if decodeNencode input-width output-width) decodeNencode)))
 			(system (string-append "balsa-espresso " input-file-name " " output-file-name))
 			(let ((sop (gen-make-sop-for-espresso-file output-file-name)))
-				(system (string-append "/bin/rm -f " input-file-name " " output-file-name))
+				(system (string-append "rm -f " input-file-name " " output-file-name))
 				sop
 			)
 		 ))
@@ -498,7 +498,7 @@
 				(system (string-append "balsa-espresso " input-file-name " " output-file-name))
 			)
 			(let ((sop (gen-make-mofn-sop-for-espresso-file output-file-name num-input-slices)))
-				(system (string-append "/bin/rm -f " input-file-name " " output-file-name))
+				(system (string-append "rm -f " input-file-name " " output-file-name))
 				sop
 			)
 		 ))

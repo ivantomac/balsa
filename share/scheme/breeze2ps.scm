@@ -704,7 +704,7 @@
 		 ; prune-file/run-dot : helper procedures for later stuff
 		 (prune-file (lambda (filename)
 			(if (not breeze2ps-keep-dot-files)
-				(system (string-append "/bin/rm -f " filename))
+				(system (string-append "rm -f " filename))
 			)
 		 ))
 		 (run-dot (lambda (dot-file ps-file)

@@ -34,7 +34,7 @@ fi
 
 if [ -z "${ESPRESSO}" ]; then
 	echo "Cannot find Espresso. Using cat(1)!"
-	ESPRESSO=/bin/cat
+	ESPRESSO=cat
 fi
 
 ${ESPRESSO} $1 > $2
