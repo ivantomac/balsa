@@ -1,5 +1,5 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = common
+SUBDIRS = common example minimal xilinx
 
 lines:

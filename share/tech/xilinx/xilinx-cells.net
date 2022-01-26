@@ -1,0 +1,342 @@
+;;;
+;;; `xilinx-cells.net' 
+;;; Xilinx Common Cells
+;;;
+;;; 02 Jun 2004, Sam Taylor
+;;; 21 Jul 1999, Andrew Bardsley
+;;;
+
+
+(circuit "AND2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "AND2B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "AND2B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "AND3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "AND3B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "AND3B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "AND3B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "AND4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "AND4B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "AND4B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "AND4B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "AND4B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "AND5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "AND5B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "AND5B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "AND5B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "AND5B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "AND5B5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+
+(circuit "NAND2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "NAND2B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "NAND2B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "NAND3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "NAND3B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "NAND3B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "NAND3B3" (ports
+     ("o" output 1)("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "NAND4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "NAND4B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "NAND4B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "NAND4B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "NAND4B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "NAND5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "NAND5B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "NAND5B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "NAND5B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "NAND5B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "NAND5B5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+
+(circuit "OR2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "OR2B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "OR2B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "OR3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "OR3B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "OR3B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "OR3B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "OR4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "OR4B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "OR4B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "OR4B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "OR4B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "OR5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "OR5B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "OR5B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "OR5B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "OR5B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "OR5B5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+     
+(circuit "NOR1" (ports
+     ("o" output 1) ("i" input 1)) (nets) (instances))
+(circuit "NOR2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "NOR2B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "NOR2B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "NOR3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "NOR3B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "NOR3B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "NOR3B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "NOR4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "NOR4B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "NOR4B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "NOR4B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "NOR4B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "NOR5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "NOR5B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "NOR5B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "NOR5B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "NOR5B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "NOR5B5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+
+(circuit "XOR2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "XOR2B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "XOR2B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "XOR3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "XOR3B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "XOR3B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "XOR3B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "XOR4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "XOR4B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "XOR4B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "XOR4B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "XOR4B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "XOR5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "XOR5B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "XOR5B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "XOR5B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "XOR5B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "XOR5B5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+
+(circuit "XNOR2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "XNOR2B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "XNOR2B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)) (nets) (instances))
+(circuit "XNOR3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "XNOR3B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "XNOR3B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "XNOR3B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1)
+     ("i2" input 1)) (nets) (instances))
+(circuit "XNOR4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "XNOR4B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "XNOR4B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "XNOR4B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "XNOR4B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1)) (nets) (instances))
+(circuit "XNOR5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "XNOR5B1" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "XNOR5B2" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "XNOR5B3" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "XNOR5B4" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+(circuit "XNOR5B5" (ports
+     ("o" output 1) ("i0" input 1) ("i1" input 1) ("i2" input 1)
+     ("i3" input 1) ("i4" input 1)) (nets) (instances))
+
+(circuit "GND" (ports
+     ("g" output 1)) (nets) (instances))
+(circuit "VCC" (ports
+     ("p" output 1)) (nets) (instances))
+
+(circuit "INV" (ports
+	("o" output 1) ("i" input 1)) (nets) (instances))
+
+(circuit "BUF" (ports
+	("o" output 1) ("i" input 1)) (nets) (instances))
+
+(circuit "BUFF" (ports
+	("Z" output 1) ("A" input 1)) (nets) (instances) (attributes (feedthrough (1 0))))
+
+(circuit "FD" (ports  ("q" output 1) ("c" input 1) ("d" input 1)) (nets) (instances))
+(circuit "FDC" (ports ("q" output 1) ("c" input 1) ("clr" input 1)
+     ("d" input 1)) (nets) (instances))
+(circuit "FDCE" (ports ("q" output 1) ("c" input 1) ("ce" input 1) ("clr" input 1)
+     ("d" input 1)) (nets) (instances))

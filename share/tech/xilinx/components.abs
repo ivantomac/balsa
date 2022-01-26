@@ -1,0 +1,222 @@
+;;;
+;;;	`components.abs'
+;;;	Breeze primitive components for technology xilinx
+;;;
+;;; 10 Aug 2001, Andrew Bardsley
+;;;
+
+(primitive-part "Variable"
+	(parameters
+		("width" (named-type "cardinal"))
+		("readPortCount" (named-type "cardinal"))
+		("name" (string) not-used)
+		("specification" (string))
+	)
+	(ports
+		(port "write" passive input (numeric-type #f (param "width")))
+		(arrayed-port "read" passive output (variable-array-type (numeric-type #f (param "width")) 0 (param "readPortCount") (param "specification")) 0 (param "readPortCount"))
+	)
+	(symbol
+		(centre-string (param "name"))
+	)
+	(implementation
+		(style "four_b_rb" (include style "four_b_rb" "Variable"))
+		(style "dual_b"
+			(defines
+			)
+			(nodes
+				("ldata" (param "width") 0 2)
+				("store" (param "width") 0 2)
+				("wackt" (param "width") 0 1)
+				("wackf" (param "width") 0 1)
+				("wack" (param "width") 0 1)
+				("one" 1 0 1)
+				("readReq" 1 0 (param "readPortCount"))
+			)
+			(gates
+				; storage section
+				(vcc (node "one"))
+				; Flipflop: use a DFF with clear (xilinx FDC component)
+				(cell "edge-dff-clr"
+					(node (bundle "ldata" 1)) (req1 "write")
+					(req0 "write")
+					(combine (dup (param "width") (node "one")))
+				)
+				; invert Q outputs
+				(inv (node (bundle "ldata" 0)) (node (bundle "ldata" 1)))
+				; write ack signal generation
+				(nand (node "wackt") (req1 "write") (node (bundle "ldata" 1)))
+				(nand (node "wackf") (req0 "write") (node (bundle "ldata" 0)))
+				(nand (node "wack") (node "wackt") (node "wackf"))
+				; completion detection on writes
+				(c-element (ack "write") (smash (node "wack")))
+				; read ports
+				(connect (combine (node (each "ldata"))) (combine (node (each "store"))))
+				(connect (combine (req (each "read"))) (combine (node (each "readReq"))))
+				(macro dual-rail-connect-read-ports (param "width") (param "readPortCount") (param "specification") "store" "readReq") 
+			)
+			(connections)
+		)
+		(style "one_of_2_4" (include style "one_of_2_4" "Variable"))
+	)
+)
+
+(primitive-part "CaseFetch"
+	(parameters
+		("width" (named-type "cardinal"))
+		("indexWidth" (named-type "cardinal"))
+		("inputCount" (named-type "cardinal"))
+		("specification" (string))
+	)
+	(ports
+		(port "out" passive output (numeric-type #f (param "width")))
+		(port "index" active input (numeric-type #f (param "indexWidth")))
+		(arrayed-port "inp" active input (numeric-type #f (param "width")) 0 (param "inputCount"))
+	)
+	(symbol
+		(centre-string "@->" (param "specification"))
+	)
+	(implementation
+		(style "four_b_rb"
+			(nodes
+				("t" (param "indexWidth") 0 1)
+				("c" (param "indexWidth") 0 1)
+				("outputreq" 1 0 1)
+				("latchedIndex" (param "indexWidth") 0 1)
+				("muxOut" (param "width") 0 (param "inputCount"))
+				("elseAck" 1 0 1)
+			)
+			(gates
+				(s-element (req "out") (node "outputreq") (req "index") (ack "index"))
+				(cell "edge-dff"
+					(combine (dup (param "indexWidth") (ack "index")))
+					(data "index")
+					(node "latchedIndex")
+				)
+				(demux2 (combine (dup (param "indexWidth") (node "outputreq"))) (node "c") (node "t") (node "latchedIndex"))
+				(if (complete-encoding? (param "specification") (param "indexWidth"))
+					(gates
+						(decode and-or (param "specification") (node "c") (node "t") (req (each "inp")))
+						(or (ack "out") (ack (each "inp")))
+					)
+					(gates
+						(decode and-or (param "specification") (node "c") (node "t") (req (each "inp")) (node "elseAck"))
+						(or (ack "out") (ack (each "inp")) (node "elseAck"))
+					)
+				)
+				(nand
+					(combine (node (each "muxOut")))
+					(combine (dup-each (param "width") (ack (each "inp"))))
+					(combine (data (each "inp")))
+				)
+				(nand
+					(data "out")
+					(node (each "muxOut"))
+				)
+			)
+		)
+		(style "dual_b" (include style "dual_b" "CaseFetch"))
+		(style "one_of_2_4" (include style "one_of_2_4" "CaseFetch"))
+	)
+)
+
+(primitive-part "PassivatorPush"
+    (parameters
+        ("width" (named-type "cardinal"))
+        ("outputCount" (named-type "cardinal"))
+    )
+    (ports
+        (arrayed-port "out" passive output (numeric-type #f (param "width")) 0 (param "outputCount"))
+        (port "inp" passive input (numeric-type #f (param "width")))
+    )
+    (symbol
+        (centre-string ".")
+    )
+    (implementation
+        (style "four_b_rb"
+			(defines
+				(PPstyle (assoc "PP" style-options))
+				(PPstyle (if PPstyle (cdr PPstyle) "broad"))
+			)
+			(nodes
+				("stl" (case PPstyle (("broad") 1) (else 0)) 0 1)
+				("lti" (case PPstyle (("broad") 1) (else 0)) 0 1)
+				("ltb" (case PPstyle (("broad") 1) (else 0)) 0 1)
+				("brin" (case PPstyle (("broad") 1) (else 0)) 0 1)
+				("lrin" (case PPstyle (("broad") 1) (else 0)) 0 1)
+				("ldata" (case PPstyle (("broad") (param "width")) (else 0)) 0 1)
+			)
+			(gates
+				(case PPstyle
+					(("conv")
+                        (c-element (ack "inp") (req "inp") (req (each "out")))
+                        (connect (data "inp") (data (each "out")))
+                        (connect (ack "inp") (ack (each "out")))
+					)
+					(else
+						(c-element (node "lti") (req (each "out")))
+						(connect (node "brin") (node "ltb"))
+						(cell "edge-dff"
+							(combine (dup (param "width") (node "ltb")))
+							(data "inp")
+							(node "ldata")
+						)
+						(c-element (node "brin") (req "inp") (node "lti"))
+						(c-element (node "lrin") (req "inp") (node "ltb"))
+						(or (ack "inp") (node "lrin") (node "brin"))
+						(and (node "stl") (node "lrin") (node "brin"))
+                        (connect (node "ldata") (data (each "out")))
+                        (connect (node "stl") (ack (each "out")))
+					)
+				)
+			)
+			(connections
+			)
+        )
+        (style "dual_b" (include style "dual_b" "PassivatorPush"))
+        (style "one_of_2_4" (include style "one_of_2_4" "PassivatorPush"))
+    )
+)
+
+(primitive-part
+    "BuiltinVariable"
+    (parameters
+        ("readPortCount" (named-type "cardinal"))
+        ("name" (string) not-used)
+    )
+    (ports
+        (port "write" passive input (numeric-type #f 64))
+        (arrayed-port "read" passive output (numeric-type #f 64) 0 (param "readPortCount")) 
+    )
+    (symbol
+        (centre-string (param "name"))
+    )
+    (implementation
+    	(style "four_b_rb"
+			(nodes
+				("writeReq" 1 0 1)
+				("nWriteReq" 1 0 1)
+				("data" 64 0 1)
+			)
+			(gates
+				(inv (node "writeReq") (req "write"))
+				(inv (ack "write") (node "writeReq"))
+				(cell "edge-dff"
+					(combine (dup 64 (node "writeReq")))
+					(data "write")
+					(node "data")
+				)
+				(connect (node "data") (data (each "read")))
+				(inv (node "nWriteReq") (node "writeReq"))
+				(unarrayed-cell "builtin-unref" (node "nWriteReq") (data "write"))
+			)
+			(connections
+				(connect (combine (req (each "read"))) (combine (ack (each "read"))))
+			)
+		)
+    	(style "dual_b" (include style "dual_b" "BuiltinVariable"))
+    	(style "one_of_2_4" (include style "one_of_2_4" "BuiltinVariable"))
+    )
+)
+
+(include tech "common" "components")

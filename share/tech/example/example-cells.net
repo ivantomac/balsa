@@ -1,0 +1,60 @@
+;;;
+;;; `example-cells.net' 
+;;; Example tech. cell prototypes
+;;;
+;;; 9 Aug 2001, Andrew Bardsley
+;;;
+;;; $Id: example-cells.net,v 1.2 2003/09/03 00:38:10 bardslea Exp $
+;;;
+
+(circuit "AND2" (ports ("out" output 1) ("in0" input 1) ("in1" input 1)) (nets) (instances))
+(circuit "AND3" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("in2" input 1)) (nets) (instances))
+(circuit "AND4" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("in2" input 1) ("in3" input 1))
+	(nets) (instances))
+
+(circuit "OR2" (ports ("out" output 1) ("in0" input 1) ("in1" input 1)) (nets) (instances))
+(circuit "OR3" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("in2" input 1)) (nets) (instances))
+(circuit "OR4" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("in2" input 1) ("in3" input 1))
+	(nets) (instances))
+
+(circuit "NAND2" (ports ("out" output 1) ("in0" input 1) ("in1" input 1)) (nets) (instances))
+(circuit "NAND3" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("in2" input 1)) (nets) (instances))
+(circuit "NAND4" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("in2" input 1) ("in3" input 1))
+	(nets) (instances))
+
+(circuit "NOR2" (ports ("out" output 1) ("in0" input 1) ("in1" input 1)) (nets) (instances))
+(circuit "NOR3" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("in2" input 1)) (nets) (instances))
+(circuit "NOR4" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("in2" input 1) ("in3" input 1))
+	(nets) (instances))
+
+(circuit "XOR2" (ports ("out" output 1) ("in0" input 1) ("in1" input 1)) (nets) (instances))
+(circuit "XNOR2" (ports ("out" output 1) ("in0" input 1) ("in1" input 1)) (nets) (instances))
+
+(circuit "C2" (ports ("out" output 1) ("in0" input 1) ("in1" input 1)) (nets) (instances))
+(circuit "C2R" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("reset" input 1)) (nets) (instances))
+(circuit "C3" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("in2" input 1)) (nets) (instances))
+
+(circuit "INV" (ports ("out" output 1) ("in" input 1)) (nets) (instances))
+(circuit "BUF" (ports ("out" output 1) ("in" input 1)) (nets) (instances))
+(circuit "BUFF" (ports ("Z" output 1) ("A" input 1)) (nets) (instances) (attributes (feedthrough (1 0))
+	(gates 0)))
+
+(circuit "LATCH" (ports ("enable" input 1) ("in" input 1) ("out" output 1)) (nets) (instances))
+
+(circuit "MUX2" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("sel" input 1)) (nets) (instances))
+(circuit "NMUX2" (ports ("out" output 1) ("in0" input 1) ("in1" input 1) ("sel" input 1)) (nets) (instances))
+
+(circuit "DEMUX2" (ports ("in" input 1) ("out0" output 1) ("out1" output 1) ("sel" input 1)) (nets) (instances))
+
+(circuit "MUTEX" (ports	("inA" input 1)	("inB" input 1)	("outA" output 1) ("outB" output 1)) (nets)	(instances))
+
+(circuit "NKEEP" (ports ("nout" output 1) ("in" input 1)) (nets) (instances))
+
+(circuit "TRIBUF" (ports ("enable" input 1) ("in" input 1) ("out" output 1)) (nets) (instances))
+(circuit "TRIINV" (ports ("enable" input 1) ("in" input 1) ("out" output 1)) (nets) (instances))
+
+(circuit "NC2P" (ports ("out" output 1) ("ins" input 1) ("inp" input 1)) (nets) (instances))
+(circuit "C2N" (ports ("out" output 1) ("ins" input 1) ("inn" input 1)) (nets) (instances))
+
+(circuit "VDD" (ports ("one" output 1)) (nets) (instances))
+(circuit "GND" (ports ("zero" output 1)) (nets) (instances))

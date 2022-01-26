@@ -18122,7 +18122,7 @@ then :
 fi
 
 
-ac_config_files="$ac_config_files Makefile doc/Makefile extra/Makefile extra/scintilla-wrapper/Makefile bin/Makefile bin/balsa-config bin/balsa-local-script bin/balsa-espresso bin/balsa-make-builtin-lib bin/balsa-scheme-script bin/balsa-scheme-shell src/Makefile src/libs/Makefile src/libs/format/Makefile src/libs/balsasim/Makefile src/libs/breeze/Makefile src/balsa-c/Makefile src/balsa-file-test/Makefile src/balsa-mgr/Makefile src/balsa-mgr/pixmaps/Makefile src/breeze-sim/Makefile src/breeze-sim/fast/Makefile src/breeze-sim/debug/Makefile src/breeze-sim/early/Makefile src/breeze-sim/mpi/Makefile src/breeze-sim-ctrl/Makefile src/breeze-sim-ctrl/pixmaps/Makefile share/Makefile share/scheme/Makefile share/scheme/base.scm share/scheme/base-local.scm share/scheme/globals.scm share/tech/Makefile share/tech/common/Makefile share/style/Makefile share/style/dual_b/Makefile share/style/four_b_rb/Makefile share/style/four_e_e/Makefile share/style/one_of_2_4/Makefile share/balsa/Makefile share/balsa/types/Makefile share/balsa/parts/Makefile share/balsa/sim/Makefile"
+ac_config_files="$ac_config_files Makefile doc/Makefile extra/Makefile extra/scintilla-wrapper/Makefile bin/Makefile bin/balsa-config bin/balsa-local-script bin/balsa-espresso bin/balsa-make-builtin-lib bin/balsa-scheme-script bin/balsa-scheme-shell src/Makefile src/libs/Makefile src/libs/format/Makefile src/libs/balsasim/Makefile src/libs/breeze/Makefile src/balsa-c/Makefile src/balsa-file-test/Makefile src/balsa-mgr/Makefile src/balsa-mgr/pixmaps/Makefile src/breeze-sim/Makefile src/breeze-sim/fast/Makefile src/breeze-sim/debug/Makefile src/breeze-sim/early/Makefile src/breeze-sim/mpi/Makefile src/breeze-sim-ctrl/Makefile src/breeze-sim-ctrl/pixmaps/Makefile share/Makefile share/scheme/Makefile share/scheme/base.scm share/scheme/base-local.scm share/scheme/globals.scm share/tech/Makefile share/tech/common/Makefile share/tech/example/Makefile share/tech/minimal/Makefile share/tech/xilinx/Makefile share/style/Makefile share/style/dual_b/Makefile share/style/four_b_rb/Makefile share/style/four_e_e/Makefile share/style/one_of_2_4/Makefile share/balsa/Makefile share/balsa/types/Makefile share/balsa/parts/Makefile share/balsa/sim/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -19266,6 +19266,9 @@ do
     "share/scheme/globals.scm") CONFIG_FILES="$CONFIG_FILES share/scheme/globals.scm" ;;
     "share/tech/Makefile") CONFIG_FILES="$CONFIG_FILES share/tech/Makefile" ;;
     "share/tech/common/Makefile") CONFIG_FILES="$CONFIG_FILES share/tech/common/Makefile" ;;
+    "share/tech/example/Makefile") CONFIG_FILES="$CONFIG_FILES share/tech/example/Makefile" ;;
+    "share/tech/minimal/Makefile") CONFIG_FILES="$CONFIG_FILES share/tech/minimal/Makefile" ;;
+    "share/tech/xilinx/Makefile") CONFIG_FILES="$CONFIG_FILES share/tech/xilinx/Makefile" ;;
     "share/style/Makefile") CONFIG_FILES="$CONFIG_FILES share/style/Makefile" ;;
     "share/style/dual_b/Makefile") CONFIG_FILES="$CONFIG_FILES share/style/dual_b/Makefile" ;;
     "share/style/four_b_rb/Makefile") CONFIG_FILES="$CONFIG_FILES share/style/four_b_rb/Makefile" ;;

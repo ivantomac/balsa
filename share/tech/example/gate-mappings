@@ -1,0 +1,257 @@
+;;;
+;;;	`gate-mappings'
+;;; Abstract->concrete gate mappings, for example cells
+;;;
+;;; 9 Aug 2001, Andrew Bardsley
+;;;
+;;; $Id: gate-mappings,v 1.9 2003/09/21 19:46:49 bardslea Exp $
+;;;
+
+;;; This file has lists of (abs-gate-name default-real-gate . weighted-real-gates)
+;;;	The default real gate is used where nodal load management is not used and has the form:
+;;;		(gate-name . pin-mappings)
+;;;	The weighted-real-gates have the form:
+;;;		(output-drive gate-name . pin-mappings)
+;;; The pin-mappings are lists of integers mapping abstract gate pin numbers to real gate pin
+;;;	numbers.  The integers correspond to abstract gate pin positions (0 based) and their position
+;;; to the position of that pin in the real gate. eg.
+;;;	(0 "q1and2d0" 2 1 0) is a drive 0 2-input and gate where pin 2 of the abstract gate (in2) is
+;;; pin 0 of the real gate.
+
+;;; and{n}: out,in1,in2...
+("and2" ("AND2" 0 1 2) (1 "AND2"))
+("and3" ("AND3" 0 1 2 3) (1 "AND3"))
+("and4" ("AND4" 0 1 2 3 4) (1 "AND4"))
+
+;;; nand{n}: out,in1,in2...
+("nand2" ("NAND2" 0 1 2) (1 "NAND2"))
+("nand3" ("NAND3" 0 1 2 3) (1 "NAND3"))
+("nand4" ("NAND4" 0 1 2 3 4) (1 "NAND4"))
+
+;;; or{n}: out,in1,in2...
+("or2" ("OR2" 0 1 2) (1 "OR2"))
+("or3" ("OR3" 0 1 2 3) (1 "OR3"))
+("or4" ("OR4" 0 1 2 3 4) (1 "OR4"))
+
+;;; nor{n}: out,in1,in2...
+("nor2" ("NOR2" 0 1 2) (1 "NOR2"))
+("nor3" ("NOR3" 0 1 2 3) (1 "NOR3"))
+("nor4" ("NOR4" 0 1 2 3 4) (1 "NOR4"))
+
+;;; xor2: out,in1,in2
+("xor2" ("XOR2" 0 1 2) (1 "XOR2"))
+
+;;; xnor2: out,in1,in2
+("xnor2" ("XNOR2" 0 1 2) (1 "XOR2"))
+
+;;; inv: out,in
+("inv" ("INV" 0 1) (1 "INV"))
+
+;;; NB. connect is a logical buffer
+;;; connect: out,in 
+("connect" ("BUFF" 0 1) (1 "BUFF"))
+
+;;; NB. buff is a logical buffer not a driving buffer
+;;; buff: out,in
+("buff" ("BUFF" 0 1) (1 "BUFF"))
+
+;;; NB. buf is a driving buffer not a logical buffer
+;;; buf: out,in
+("buf" ("BUF" 0 1) (1 "BUF"))
+
+;;; NB. suggested-buffers are place holders for proper buffer insertion
+;;; suggested-buffers should be driving buffers not logical buffers
+;;; suggested-bufffer: out,in
+("suggested-buffer" ("BUF" 0 1) (1 "BUF"))
+
+;;; builtin-unref: trigger,inp
+;;; Reduce reference count of previous written value of inp on a write
+("builtin-unref" ("BALSA_UNREF" 0 1) (1 "BALSA_UNREF"))
+
+;;; mux2: out,in0,in1,sel
+("mux2" ("MUX2" 0 1 2 3) (1 "MU2"))
+
+;;; nmux2: out,in0,in1,sel
+("nmux2" ("NMUX2" 0 1 2 3) (1 "IMU2"))
+
+;;; c-element{n}: out,in1,in2...
+("c-element2" ("C2" 0 1 2) (1 "C2"))
+("c-element3" ("C3" 0 1 2 3) (1 "C3"))
+("c-element2-with-reset" ("C2RI" 0 1 2) (1 "C2RI"))
+
+;;; s-element: rin,ain,rout,aout
+("s-element" ("BALSA_SELEM" 0 1 2 3) (1 "BALSA_SELEM"))
+
+;;; t-element: rin,ain,rout,aout
+("t-element" ("BALSA_TELEM" 0 1 2 3) (1 "BALSA_TELEM"))
+
+;;; t-element-with-reset: rin,ain,rout,aout,initialise
+("t-element-with-reset" ("BALSA_TELEMR" 0 1 2 3) (1 "BALSA_TELEMR"))
+
+;;; latch: enable,in,out
+("latch" ("LATCH" 0 1 2) (1 "LATCH"))
+
+;;; adder: nStart,A,B,nCVi,Ci,nCVo,Co,sum
+("adder" ("BALSA_FA" 0 1 2 3 4 5 6 7) (1 "BALSA_FA"))
+("single-rail-full-adder" ("BALSA_FA" 0 1 2 3 4 5 6 7) (1 "BALSA_FA"))
+
+;;; demux2: in,out0,out1,sel
+("demux2" ("DEMUX2" 0 1 2 3) (1 "DEMUX2"))
+
+;;; keeper-inv: nout,in
+("keeper-inv" ("NKEEP" 0 1) (1 "NKEEP"))
+
+;;; tri-buffer: enable,in,out
+("tri-buffer" ("TRIBUF" 0 1 2) (1 "TRIBUF"))
+
+;;; tri-inv : enable,in,nout
+("tri-inv" ("TRIINV" 0 1 2) (1 "TRIINV"))
+
+;;; mutex: inA,inB,outA,outB
+;;; mutual exclusion unit
+("mutex" ("MUTEX" 0 1 2 3) (1 "MUTEX"))
+
+;;; set-reset-flip-flop: s, r, q, nq
+;;; S-R flip-flop
+("set-reset-flip-flop" ("BALSA_SRFF" 0 1 2 3) (1 "BALSA_SRFF"))
+
+;;; ---8<---
+
+("and-or21" ("AO21" 0 1 2 3) (1 "AO21"))
+("and-or22" ("AO22" 0 1 2 3 4) (1 "AO22"))
+("and-or-invert22" ("AOI22" 0 1 2 3 4) (1 "AOI22"))
+("and-or222" ("AO222" 0 1 2 3 4 5 6) (1 "AO222"))
+("and-or-invert222" ("AOI222" 0 1 2 3 4 5 6) (1 "AOI222"))
+("inverted-c-element" ("NC2" 0 1 2) (1 "NC2"))
+("inverted-assym-c-element" ("NC2P" 0 1 2) (1 "NC2P"))
+("assym-c-element" ("AC2" 0 1 2) (1 "AC2"))
+("th22" ("TH22" 0 1 2) (1 "TH22"))
+("th33" ("TH33" 0 1 2 3) (1 "TH33"))
+("th23" ("TH23" 0 1 2 3) (1 "TH23"))
+("th23w2" ("TH23W2" 0 1 2 3) (1 "TH23W2"))
+("th24" ("TH24" 0 1 2 3 4) (1 "TH24"))
+("th24w2" ("TH24W2" 0 1 2 3 4) (1 "TH24W2"))
+("th24w22" ("TH24W22" 0 1 2 3 4) (1 "TH24W22"))
+("th33w2" ("TH33W2" 0 1 2 3) (1 "TH33W2"))
+("th34" ("TH34" 0 1 2 3 4) (1 "TH34"))
+("th34w2" ("TH34W2" 0 1 2 3 4) (1 "TH34W2"))
+("th34w22" ("TH34W22" 0 1 2 3 4) (1 "TH34W22"))
+("dual-rail-and2" ("DRAND2" 0 1 2 3 4 5) (1 "DRAND2"))
+("dual-rail-and2-bal" ("DRAND2BAL" 0 1 2 3 4 5) (1 "DRAND2BAL"))
+("dual-rail-and2-ncl" ("DRAND2NCL" 0 1 2 3 4 5) (1 "DRAND2NCL"))
+("dual-rail-or2" ("DROR2" 0 1 2 3 4 5) (1 "DROR2"))
+("dual-rail-or2-bal" ("DROR2BAL" 0 1 2 3 4 5) (1 "DROR2BAL"))
+("dual-rail-or2-ncl" ("DROR2NCL" 0 1 2 3 4 5) (1 "DROR2NCL"))
+("dual-rail-nor2" ("DRNOR2" 0 1 2 3 4 5) (1 "DRNOR2"))
+("dual-rail-nor2-ncl" ("DRNOR2NCL" 0 1 2 3 4 5) (1 "DRNOR2NCL"))
+("dual-rail-xor2" ("DRXOR2" 0 1 2 3 4 5) (1 "DRXOR2"))
+("dual-rail-xor2-ncl" ("DRXOR2NCL" 0 1 2 3 4 5) (1 "DRXOR2NCL"))
+("dual-rail-ao21" ("DRAO21" 0 1 2 3 4 5 6 7) (1 "DRAO21"))
+("dual-rail-ao21-bal" ("DRAO21BAL" 0 1 2 3 4 5 6 7) (1 "DRAO21BAL"))
+("dual-rail-ao21-ncl" ("DRAO21NCL" 0 1 2 3 4 5 6 7) (1 "DRAO21NCL"))
+("dual-rail-ineq-comp" ("DRINEQCOMP" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "DRINEQCOMP"))
+("dual-rail-ineq-comp-bal" ("DRINEQCOMPBAL" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "DRINEQCOMPBAL"))
+("dual-rail-ineq-comp-ncl" ("DRINEQCOMPNCL" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "DRINEQCOMPNCL"))
+("dual-rail-mux2" ("DRMUX2" 0 1 2 3 4 5 6 7) (1 "DRMUX2"))
+("dual-rail-mux2-ncl" ("DRMUX2NCL" 0 1 2 3 4 5 6 7) (1 "DRMUX2NCL"))
+("dual-rail-half-adder" ("DRHA" 0 1 2 3 4 5 6 7) (1 "DRHA"))
+("dual-rail-half-adder-bal" ("DRHABAL" 0 1 2 3 4 5 6 7) (1 "DRHABAL"))
+("dual-rail-half-adder-ncl" ("DRHANCL" 0 1 2 3 4 5 6 7) (1 "DRHANCL"))
+("dual-rail-full-adder" ("DRFA" 0 1 2 3 4 5 6 7 8 9) (1 "DRFA"))
+("dual-rail-full-adder-bal" ("DRFABAL" 0 1 2 3 4 5 6 7 8 9) (1 "DRFABAL"))
+("dual-rail-dims-adder" ("DRDIMSFA" 0 1 2 3 4 5 6 7 8 9) (1 "DRDIMSFA"))
+("dual-rail-ncl-adder" ("DRNCLFA" 0 1 2 3 4 5 6 7 8 9) (1 "DRNCLFA"))
+("dual-rail-full-adder-primed" ("DRFAP" 0 1 2 3 4 5 6 7) (1 "DRFAP"))
+("dual-rail-full-adder-primed-bal" ("DRFAPBAL" 0 1 2 3 4 5 6 7) (1 "DRFAPBAL"))
+("dual-rail-full-adder-primed-ncl" ("DRFAPNCL" 0 1 2 3 4 5 6 7) (1 "DRFAPNCL"))
+("dual-rail-dims-subtracter" ("DRDIMSFS" 0 1 2 3 4 5 6 7 8 9) (1 "DRDIMSFS"))
+("dual-rail-ncl-subtracter" ("DRNCLFS" 0 1 2 3 4 5 6 7 8 9) (1 "DRNCLFS"))
+("one-of-four-half-adder" ("OOFHA" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "OOFHA"))
+("one-of-four-dims-carry-adder" ("OOFDIMSCA" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "OOFDIMSCA"))
+("one-of-four-ncl-carry-adder" ("OOFNCLCA" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "OOFNCLCA"))
+("oof_dims_ca_se" ("OOFDIMSCASE" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "OOFDIMSCASE"))
+("one-of-four-dims-carry-adder-overflow" ("OOFNCLCASE" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "OOFNCLCASE"))
+("one-of-four-full-adder" ("OOFFA" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "OOFFA"))
+("one-of-four-dims-full-adder" ("OOFDIMSFA" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "OOFDIMSFA"))
+("one-of-four-dims-full-adder-overflow" ("OOFDIMSFASE" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17) (1 "OOFDIMSFASE"))
+("one-of-four-dims-subtracter" ("OOFDIMSFS" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "OOFDIMSFS"))
+("one-of-four-ncl-full-adder" ("OOFNCLFA" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "OOFNCLFA"))
+("one-of-four-ncl-full-adder-overflow" ("OOFNCLFASE" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17) (1 "OOFNCLFASE"))
+("one-of-four-ncl-subtracter" ("OOFNCLFS" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "OOFNCLFS"))
+("one-of-four-dims-primed-carry-adder" ("OOFDIMSPCA" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "OOFDIMSPCA"))
+("one-of-four-ncl-primed-carry-adder" ("OOFNCLPCA" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "OOFNCLPCA"))
+("one-of-four-dims-primed-carry-adder-overflow" ("OOFDIMSPCASE" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "OOFDIMSPCASE"))
+("one-of-four-ncl-primed-carry-adder-overflow" ("OOFNCLPCASE" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "OOFNCLPCASE"))
+("one-of-four-dual-rail-dims-carry-adder" ("OOFDRDIMSCA" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "OOFDRDIMSCA"))
+("one-of-four-dual-rail-ncl-carry-adder" ("OOFDRNCLCA" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "OOFDRNCLCA"))
+("one-of-four-dual-rail-dims-carry-adder-overflow" ("OOFDRDIMSCASE" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "OOFDRDIMSCASE"))
+("one-of-four-dual-rail-ncl-carry-adder-overflow" ("OOFDRNCLCASE" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "OOFDRNCLCASE"))
+("one-of-four-dual-rail-dims-primed-carry-adder" ("OOFDRDIMSPCA" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "OOFDRDIMSPCA"))
+("one-of-four-dual-rail-ncl-primed-carry-adder" ("OOFDRNCLPCA" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "OOFDRNCLPCA"))
+("one-of-four-dual-rail-dims-primed-carry-adder-overflow" ("OOFDRDIMSPCASE" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "OOFDRDIMSPCASE"))
+("one-of-four-dual-rail--ncl-primed-carry-adder-overflow" ("OOFDRNCLPCASE" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "OOFDRNCLPCASE"))
+("one-of-four-dims-and2" ("OOFDIMSAND2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "OOFDIMSAND2"))
+("one-of-four-ncl-and2" ("OOFNCLAND2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "OOFNCLAND2"))
+("one-of-four-dims-or2" ("OOFDIMSOR2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "OOFDIMSOR2"))
+("one-of-four-ncl-or2" ("OOFNCLOR2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "OOFNCLOR2"))
+("one-of-four-dims-xor2" ("OOFDIMSXOR2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "OOFDIMSXOR2"))
+("one-of-four-ncl-xor2" ("OOFNCLXOR2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "OOFNCLXOR2"))
+("oof_dims_equal" ("OOFDIMSEQUAL" 0 1 2 3 4 5 6 7 8 9) (1 "OOFDIMSEQUAL"))
+("oof_ncl_equal" ("OOFNCLEQUAL" 0 1 2 3 4 5 6 7 8 9) (1 "OOFNCLEQUAL"))
+("oof_dr_dims_equal" ("OOFDRDIMSEQUAL" 0 1 2 3 4 5 6 7 8 9) (1 "OOFDRDIMSEQUAL"))
+("oof_dr_ncl_equal" ("OOFDRNCLEQUAL" 0 1 2 3 4 5 6 7 8 9) (1 "OOFDRNCLEQUAL"))
+("one-of-four-dims-equal" ("OOFDIMSEQUAL" 0 1 2 3 4 5 6 7 8 9) (1 "OOFDIMSEQUAL"))
+("one-of-four-dims-inequal" ("OOFDIMSINEQUAL" 0 1 2 3 4 5 6 7 8 9) (1 "OOFDIMSINEQUAL"))
+("one-of-four-dual-rail-dims-equal" ("OOFDRDIMSEQUAL" 0 1 2 3 4 5 6 7 8 9) (1 "OOFDRDIMSEQUAL"))
+("one-of-four-dual-rail-dims-inequal" ("OOFDRDIMSINEQUAL" 0 1 2 3 4 5 6 7) (1 "OOFDRDIMSINEQUAL"))
+("one-of-four-ncl-inequal" ("OOFNCLINEQUAL" 0 1 2 3 4 5 6 7 8 9) (1 "OOFNCLINEQUAL"))
+("oof_dr_dims_inequal" ("OOFDRDIMSINEQUAL" 0 1 2 3 4 5 6 7) (1 "OOFDRDIMSINEQUAL"))
+("one-of-four-dual-rail-ncl-inequal" ("OOFDRNCLINEQUAL" 0 1 2 3 4 5 6 7) (1 "OOFDRNCLINEQUAL"))
+("one-of-four-dims-comp" ("OOFDIMSCOMP" 0 1 2 3 4 5 6 7 8 9 10) (1 "OOFDIMSCOMP"))
+("one-of-four-ncl-comp" ("OOFNCLCOMP" 0 1 2 3 4 5 6 7 8 9 10) (1 "OOFNCLCOMP"))
+("oof_dr_dims_ineq_comp" ("OOFDRDIMSINEQCOMP" 0 1 2 3 4 5 6 7 8) (1 "OOFDRDIMSINEQCOMP"))
+("oof_dr_ncl_ineq_comp" ("OOFDRNCLINEQCOMP" 0 1 2 3 4 5 6 7 8) (1 "OOFDRNCLINEQCOMP"))
+("oof_dr_dims_ineq_sgn_comp" ("OOFDRDIMSINEQSGNCOMP" 0 1 2 3 4 5 6 7 8) (1 "OOFDRDIMSINEQSGNCOMP"))
+("oof_dr_ncl_ineq_sgn_comp" ("OOFDRNCLINEQSGNCOMP" 0 1 2 3 4 5 6 7 8) (1 "OOFDRNCLINEQSGNCOMP"))
+("one-of-four-dims-less-than" ("OOFDIMSLT" 0 1 2 3 4 5 6 7 8 9) (1 "OOFDIMSLT"))
+("one-of-four-ncl-less-than" ("OOFNCLLT" 0 1 2 3 4 5 6 7 8 9) (1 "OOFNCLLT"))
+("one-of-four-dims-greater-than" ("OOFDIMSGT" 0 1 2 3 4 5 6 7 8 9) (1 "OOFDIMSGT"))
+("one-of-four-ncl-greater-than" ("OOFNCLGT" 0 1 2 3 4 5 6 7 8 9) (1 "OOFNCLGT"))
+("one-of-four-dual-rail-dims-less-than" ("OOFDRDIMSLT" 0 1 2 3 4 5 6 7) (1 "OOFDRDIMSLT"))
+("one-of-four-dual-rail-ncl-less-than" ("OOFDRNCLLT" 0 1 2 3 4 5 6 7) (1 "OOFDRNCLLT"))
+("one-of-four-dual-rail-dims-greater-than" ("OOFDRDIMSGT" 0 1 2 3 4 5 6 7) (1 "OOFDRDIMSGT"))
+("one-of-four-dual-rail-ncl-greater-than" ("OOFDRNCLGT" 0 1 2 3 4 5 6 7) (1 "OOFDRNCLGT"))
+("dual-rail-dims-comp" ("DRDIMSCOMP" 0 1 2 3 4 5 6) (1 "DRDIMSCOMP"))
+("dual-rail-ncl-comp" ("DRNCLCOMP" 0 1 2 3 4 5 6) (1 "DRNCLCOMP"))
+("dual-rail-dims-less-than" ("DRDIMSLT" 0 1 2 3 4 5) (1 "DRDIMSLT"))
+("dual-rail-ncl-less-than" ("DRNCLLT" 0 1 2 3 4 5) (1 "DRNCLLT"))
+("dual-rail-dims-greater-than" ("DRDIMSGT" 0 1 2 3 4 5) (1 "DRDIMSGT"))
+("dual-rail-ncl-greater-than" ("DRNCLGT" 0 1 2 3 4 5) (1 "DRNCLGT"))
+("one-of-three-dual-rail-dims-comp" ("DROOTDIMSCOMP" 0 1 2 3 4 5 6) (1 "DROOTDIMSCOMP"))
+("one-of-three-dual-rail-ncl-comp" ("DROOTNCLCOMP" 0 1 2 3 4 5 6) (1 "DROOTNCLCOMP"))
+("one-of-three-dims-comp" ("OOTDIMSCOMP" 0 1 2 3 4 5 6 7 8) (1 "OOTDIMSCOMP"))
+("one-of-three-ncl-comp" ("OOTNCLCOMP" 0 1 2 3 4 5 6 7 8) (1 "OOTNCLCOMP"))
+("dual-rail-latch" ("DRLATCH" 0 1 2 3 4) (1 "DRLATCH"))
+("dual-rail-spacer-latch" ("DRSPACERLATCH" 0 1 2 3 4) (1 "DRSPACERLATCH"))
+("dual-rail-ncl-latch" ("DRNCLLATCH" 0 1 2 3 4) (1 "DRNCLLATCH"))
+("dual-rail-true-ncl-latch" ("DRTNCLLATCH" 0 1 2 3 4 5) (1 "DRTNCLLATCH"))
+("one-of-four-latch" ("OOFLATCH" 0 1 2 3 4 5 6 7 8) (1 "OOFLATCH"))
+("one-of-four-ncl-latch" ("OOFNCLLATCH" 0 1 2 3 4 5 6 7 8) (1 "OOFNCLLATCH"))
+("one-of-four-true-ncl-reg" ("OOFTNCLLATCH" 0 1 2 3 4 5 6 7 8 9) (1 "OOFTNCLLATCH"))
+
+;;; inv-with-reset : nout,in (implicit global reset signal)
+("inv-with-reset" ("NOR2R" 0 1) (1 "NOR2R"))
+
+;;; AB 2007, synchronous examples
+
+;;; sr-sd-ao-ff-clocked
+("sr-sd-ao-ff-clocked" ("SRFFSDC" 0 1 2) (1 "SRFFSDC"))
+
+;;; d-flip-flop-clocked
+("d-flip-flop-clocked" ("DFF" 0 1 2) (1 "DFF"))
+
+;;; binary-adder
+("binary-adder" ("ADDER" 0 1 2 3 4) (1 "ADDER"))
+
+("give-clock" ("GIVE_CLOCK" 0) (1 "GIVE_CLOCK"))
+("give-initialise" ("GIVE_INIT" 0) (1 "GIVE_INIT"))

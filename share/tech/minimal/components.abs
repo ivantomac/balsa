@@ -1,0 +1,136 @@
+;;;
+;;;	`components.abs'
+;;;	Breeze primitive components for minimal technology
+;;;
+;;; 10 Aug 2001, Andrew Bardsley
+;;;
+
+
+(primitive-part "CallMux"
+	(parameters
+		("width" (named-type "cardinal"))
+		("inputCount" (named-type "cardinal"))
+	)
+	(ports
+		(arrayed-port "inp" passive input (numeric-type #f (param "width")) 0 (param "inputCount"))
+		(port "out" active output (numeric-type #f (param "width")))
+	)
+	(symbol
+		(centre-string ">- ->")
+	)
+	(implementation
+		(style "four_b_rb"
+			(nodes
+				("muxOut" (param "width") 0 1)
+				("select" 1 0 1)
+				("nselect" 1 0 1)
+				("nwaySelect" (param "inputCount") 0 1)
+				("nwayMuxOut" (param "width") 0 (param "inputCount"))
+			)
+			(gates
+				(case (param "inputCount")
+					((2)
+						(cell "set-reset-flip-flop"
+							(req (bundle "inp" 1))
+							(req (bundle "inp" 0))
+							(node "select")
+							(node "nselect")
+						)
+						(and
+							(combine (ack (each "inp")))
+							(combine (node "nselect") (node "select"))
+							(combine (dup 2 (ack "out")))
+						)
+						(mux2 (req "out") (req (each "inp")) (node "select"))
+						(mux2 (data "out") (data (each "inp")) (combine (dup (param "width") (node "select"))))
+					)
+					(else
+						(or (req "out") (req (each "inp")))
+						(c-element
+							(combine (ack (each "inp")))
+							(combine (req (each "inp")))
+							(combine (dup (param "inputCount") (ack "out")))
+						)
+						(or
+							(node "nwaySelect")
+							(combine (ack (each "inp")))
+							(combine (req (each "inp")))
+						)
+						(nand
+							(combine (node (each "nwayMuxOut")))
+							(combine (data (each "inp")))
+							(combine (dup-each (param "width") (smash (node "nwaySelect"))))
+						)
+						(nand
+							(data "out")
+							(node (each "nwayMuxOut"))
+						)
+					)
+				)
+			)
+		)
+		(style "dual_b" (include style "dual_b" "CallMux"))
+		(style "one_of_2_4" (include style "one_of_2_4" "CallMux"))
+	)
+)
+
+(primitive-part "CaseFetch"
+	(parameters
+		("width" (named-type "cardinal"))
+		("indexWidth" (named-type "cardinal"))
+		("inputCount" (named-type "cardinal"))
+		("specification" (string))
+	)
+	(ports
+		(port "out" passive output (numeric-type #f (param "width")))
+		(port "index" active input (numeric-type #f (param "indexWidth")))
+		(arrayed-port "inp" active input (numeric-type #f (param "width")) 0 (param "inputCount"))
+	)
+	(symbol
+		(centre-string "@->" (param "specification"))
+	)
+	(implementation
+		(style "four_b_rb"
+			(nodes
+				("t" (param "indexWidth") 0 1)
+				("c" (param "indexWidth") 0 1)
+				("outputreq" 1 0 1)
+				("latchedIndex" (param "indexWidth") 0 1)
+				("muxOut" (param "width") 0 (param "inputCount"))
+				("elseAck" 1 0 1)
+			)
+			(gates
+				(s-element (req "out") (node "outputreq") (req "index") (ack "index"))
+				(latch
+					(combine (dup (param "indexWidth") (req "index")))
+					(data "index")
+					(node "latchedIndex")
+				)
+				(demux2 (combine (dup (param "indexWidth") (node "outputreq"))) (node "c") (node "t") (node "latchedIndex"))
+				(if (complete-encoding? (param "specification") (param "indexWidth"))
+					(gates
+						(decode and-or (param "specification") (node "c") (node "t") (req (each "inp")))
+						(or (ack "out") (ack (each "inp")))
+					)
+					(gates
+						(decode and-or (param "specification") (node "c") (node "t") (req (each "inp")) (node "elseAck"))
+						(or (ack "out") (ack (each "inp")) (node "elseAck"))
+					)
+				)
+				(nand
+					(combine (node (each "muxOut")))
+					(combine (dup-each (param "width") (ack (each "inp"))))
+					(combine (data (each "inp")))
+				)
+				(nand
+					(data "out")
+					(node (each "muxOut"))
+				)
+			)
+		)
+		(style "dual_b" (include style "dual_b" "CaseFetch"))
+		(style "one_of_2_4" (include style "one_of_2_4" "CaseFetch"))
+	)
+)
+
+(include tech "common" "components")

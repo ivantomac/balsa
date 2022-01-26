@@ -1,0 +1,220 @@
+;;;
+;;;	`gate-mappings'
+;;; Abstract->concrete gate mappings, for Xilinx 'Generic' technology
+;;;
+;;; 02 Jun 2004, Sam Taylor
+;;; 02 Jul 1999, Andrew Bardsley
+;;;
+
+;;; This file has lists of (abs-gate-name default-real-gate . weighted-real-gates)
+;;;	The default real gate is used where nodal load management is not used and has the form:
+;;;		(gate-name . pin-mappings)
+;;;	The weighted-real-gates have the form:
+;;;		(output-drive gate-name . pin-mappings)
+;;; The pin-mappings are lists of integers mapping abstract gate pin numbers to real gate pin
+;;;	numbers.  The integers correspond to abstract gate pin positions (0 based) and their position
+;;; to the position of that pin in the real gate. eg.
+;;;	(0 "q1and2d0" 2 1 0) is a drive 0 2-input and gate where pin 2 of the abstract gate (in2) is
+;;; pin 0 of the real gate.
+
+;;; and{n}: out,in1,in2...
+("and2" ("AND2" 0 1 2) (1 "AND2"))
+("and3" ("AND3" 0 1 2 3) (1 "AND3"))
+("and4" ("AND4" 0 1 2 3 4) (1 "AND4"))
+("and5" ("AND5" 0 1 2 3 4 5) (1 "AND5"))
+
+;;; nand{n}: out,in1,in2...
+("nand2" ("NAND2" 0 1 2) (1 "NAND2"))
+("nand3" ("NAND3" 0 1 2 3) (1 "NAND3"))
+("nand4" ("NAND4" 0 1 2 3 4) (1 "NAND4"))
+("nand5" ("NAND5" 0 1 2 3 4 5) (1 "NAND5"))
+
+;;; or{n}: out,in1,in2...
+("or2" ("OR2" 0 1 2) (1 "OR2"))
+("or3" ("OR3" 0 1 2 3) (1 "OR3"))
+("or4" ("OR4" 0 1 2 3 4) (1 "OR4"))
+("or5" ("OR5" 0 1 2 3 4 5) (1 "OR5"))
+
+;;; nor{n}: out,in1,in2...
+("nor2" ("NOR2" 0 1 2) (1 "NOR2"))
+("nor3" ("NOR3" 0 1 2 3) (1 "NOR3"))
+("nor4" ("NOR4" 0 1 2 3 4) (1 "NOR4"))
+("nor5" ("NOR5" 0 1 2 3 4 5) (1 "NOR5"))
+
+;;; xor2: out,in1,in2
+("xor2" ("XOR2" 0 1 2) (1 "XOR2"))
+
+;;; xnor2: out,in1,in2
+("xnor2" ("XNOR2" 0 1 2) (1 "XNOR2"))
+
+;;; inv: out,in
+("inv" ("INV" 0 1) (1 "INV"))
+
+;;; NB. connect is a logical buffer
+;;; connect: out,in 
+("connect" ("BUFF" 0 1) (1 "BUFF"))
+
+;;; NB. buff is a logical buffer not a driving buffer
+;;; buff: out,in
+("buff" ("BUFF" 0 1) (1 "BUFF"))
+
+;;; NB. buf is a driving buffer not a logical buffer
+;;; buf: out,in
+("buf" ("BUF" 0 1) (1 "BUF") (2 "BU2") (3 "BU3") (4 "BU4") (8 "BU8"))
+
+;;; NB. suggested-buffers are place holders for proper buffer insertion
+;;; suggested-buffers should be driving buffers not logical buffers
+;;; suggested-bufffer: out,in
+("suggested-buffer" ("BUF" 0 1) (1 "BUF"))
+
+;;; builtin-unref: trigger,inp
+;;; Reduce reference count of previous written value of inp on a write
+("builtin-unref" ("BALSA_UNREF" 0 1) (1 "BALSA_UNREF"))
+
+;;; latch: in,out,enable
+("latch" ("FD" 2 0 1) (1 "FD"))
+
+;;; Edge-Triggered Flip Flop
+("edge-dff" ("FD" 2 0 1) (1 "FD"))
+;;; Edge Triggered Flip Flop with async clear
+("edge-dff-clr" ("FDC" 0 1 2 3) (1 "FDC"))
+
+("adder" ("balsa_fa" 0 1 2 3 4 5 6 7) (1 "balsa_fa"))
+
+;;; mutex: inA,inB,outA,outB
+;;; mutual exclusion unit
+("mutex" ("mutex1" 2 3 0 1) (1 "mutex1"))
+
+;;; Helper Cells
+("and-or21" ("ao21" 0 1 2 3) (1 "ao21"))
+("and-or22" ("ao22" 0 1 2 3 4) (1 "ao22"))
+("and-or-invert22" ("aoi22" 0 1 2 3 4) (1 "aoi22"))
+("and-or222" ("ao222" 0 1 2 3 4 5 6) (1 "ao222"))
+("and-or-invert222" ("aoi222" 0 1 2 3 4 5 6) (1 "aoi222"))
+("set-reset-flip-flop" ("srff" 0 1 2 3) (1 "srff"))
+("mux2" ("mux2" 0 1 2 3) (1 "mux2"))
+("nmux2" ("nmux2" 0 1 2 3) (1 "nmux2"))
+("single-rail-full-adder" ("balsa_fa" 0 1 2 3 4 5 6 7) (1 "balsa_fa"))
+("c-element2" ("c2" 0 1 2) (1 "c2"))
+("c-element3" ("c3" 0 1 2 3) (1 "c3"))
+("inverted-c-element" ("nc2" 0 1 2) (1 "nc2"))
+("inverted-assym-c-element" ("nc2p" 0 1 2) (1 "nc2p"))
+("assym-c-element" ("ac2" 0 1 2) (1 "ac2"))
+("demux2" ("demux2" 0 1 2 3) (1 "demux2"))
+("s-element" ("selem" 0 1 2 3) (1 "selem"))
+("t-element" ("telem" 0 1 2 3) (1 "telem"))
+("t-element-with-reset" ("telemr" 0 1 2 3) (1 "telemr"))
+("th22" ("th22" 0 1 2) (1 "th22"))
+("th33" ("th33" 0 1 2 3) (1 "th33"))
+("th23" ("th23" 0 1 2 3) (1 "th23"))
+("th23w2" ("th23w2" 0 1 2 3) (1 "th23w2"))
+("th24" ("th24" 0 1 2 3 4) (1 "th24"))
+("th24w2" ("th24w2" 0 1 2 3 4) (1 "th24w2"))
+("th24w22" ("th24w22" 0 1 2 3 4) (1 "th24w22"))
+("th33w2" ("th33w2" 0 1 2 3) (1 "th33w2"))
+("th34" ("th34" 0 1 2 3 4) (1 "th34"))
+("th34w2" ("th34w2" 0 1 2 3 4) (1 "th34w2"))
+("th34w22" ("th34w22" 0 1 2 3 4) (1 "th34w22"))
+("dual-rail-and2" ("dr_and2" 0 1 2 3 4 5) (1 "dr_and2"))
+("dual-rail-and2-bal" ("dr_and2_bal" 0 1 2 3 4 5) (1 "dr_and2_bal"))
+("dual-rail-and2-ncl" ("dr_and2_ncl" 0 1 2 3 4 5) (1 "dr_and2_ncl"))
+("dual-rail-or2" ("dr_or2" 0 1 2 3 4 5) (1 "dr_or2"))
+("dual-rail-or2-bal" ("dr_or2_bal" 0 1 2 3 4 5) (1 "dr_or2_bal"))
+("dual-rail-or2-ncl" ("dr_or2_ncl" 0 1 2 3 4 5) (1 "dr_or2_ncl"))
+("dual-rail-nor2" ("dr_nor2" 0 1 2 3 4 5) (1 "dr_nor2"))
+("dual-rail-nor2-ncl" ("dr_nor2_ncl" 0 1 2 3 4 5) (1 "dr_nor2_ncl"))
+("dual-rail-xor2" ("dr_xor2" 0 1 2 3 4 5) (1 "dr_xor2"))
+("dual-rail-xor2-ncl" ("dr_xor2_ncl" 0 1 2 3 4 5) (1 "dr_xor2_ncl"))
+("dual-rail-ao21" ("dr_ao21" 0 1 2 3 4 5 6 7) (1 "dr_ao21"))
+("dual-rail-ao21-bal" ("dr_ao21_bal" 0 1 2 3 4 5 6 7) (1 "dr_ao21_bal"))
+("dual-rail-ao21-ncl" ("dr_ao21_ncl" 0 1 2 3 4 5 6 7) (1 "dr_ao21_ncl"))
+("dual-rail-ineq-comp" ("dr_ineq_comp" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "dr_ineq_comp"))
+("dual-rail-ineq-comp-bal" ("dr_ineq_comp_bal" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "dr_ineq_comp_bal"))
+("dual-rail-ineq-comp-ncl" ("dr_ineq_comp_ncl" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "dr_ineq_comp_ncl"))
+("dual-rail-mux2" ("dr_mux2" 0 1 2 3 4 5 6 7) (1 "dr_mux2"))
+("dual-rail-mux2-ncl" ("dr_mux2_ncl" 0 1 2 3 4 5 6 7) (1 "dr_mux2_ncl"))
+("dual-rail-half-adder" ("dr_ha" 0 1 2 3 4 5 6 7) (1 "dr_ha"))
+("dual-rail-half-adder-bal" ("dr_ha_bal" 0 1 2 3 4 5 6 7) (1 "dr_ha_bal"))
+("dual-rail-half-adder-ncl" ("dr_ha_ncl" 0 1 2 3 4 5 6 7) (1 "dr_ha_ncl"))
+("dual-rail-full-adder" ("dr_fa" 0 1 2 3 4 5 6 7 8 9) (1 "dr_fa"))
+("dual-rail-full-adder-bal" ("dr_fa_bal" 0 1 2 3 4 5 6 7 8 9) (1 "dr_fa_bal"))
+("dual-rail-dims-adder" ("dr_dims_fa" 0 1 2 3 4 5 6 7 8 9) (1 "dr_dims_fa"))
+("dual-rail-ncl-adder" ("dr_ncl_fa" 0 1 2 3 4 5 6 7 8 9) (1 "dr_ncl_fa"))
+("dual-rail-full-adder-primed" ("dr_fa_p" 0 1 2 3 4 5 6 7) (1 "dr_fa_p"))
+("dual-rail-full-adder-primed-bal" ("dr_fa_p_bal" 0 1 2 3 4 5 6 7) (1 "dr_fa_p_bal"))
+("dual-rail-full-adder-primed-ncl" ("dr_fa_p_ncl" 0 1 2 3 4 5 6 7) (1 "dr_fa_p_ncl"))
+("dual-rail-dims-subtracter" ("dr_dims_fs" 0 1 2 3 4 5 6 7 8 9) (1 "dr_dims_fs"))
+("dual-rail-ncl-subtracter" ("dr_ncl_fs" 0 1 2 3 4 5 6 7 8 9) (1 "dr_ncl_fs"))
+("one-of-four-half-adder" ("oof_ha" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "oof_ha"))
+("one-of-four-dims-carry-adder" ("oof_dims_ca" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "oof_dims_ca"))
+("one-of-four-ncl-carry-adder" ("oof_ncl_ca" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "oof_ncl_ca"))
+("oof_dims_ca_se" ("oof_dims_ca_se" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "oof_dims_ca_se"))
+("one-of-four-dims-carry-adder-overflow" ("oof_ncl_ca_se" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "oof_ncl_ca_se"))
+("one-of-four-full-adder" ("oof_fa" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "oof_fa"))
+("one-of-four-dims-full-adder" ("oof_dims_fa" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "oof_dims_fa"))
+("one-of-four-dims-full-adder-overflow" ("oof_dims_fa_se" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17) (1 "oof_dims_fa_se"))
+("one-of-four-dims-subtracter" ("oof_dims_fs" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "oof_dims_fs"))
+("one-of-four-ncl-full-adder" ("oof_ncl_fa" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "oof_ncl_fa"))
+("one-of-four-ncl-full-adder-overflow" ("oof_ncl_fa_se" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17) (1 "oof_ncl_fa_se"))
+("one-of-four-ncl-subtracter" ("oof_ncl_fs" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "oof_ncl_fs"))
+("one-of-four-dims-primed-carry-adder" ("oof_dims_pca" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "oof_dims_pca"))
+("one-of-four-ncl-primed-carry-adder" ("oof_ncl_pca" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "oof_ncl_pca"))
+("one-of-four-dims-primed-carry-adder-overflow" ("oof_dims_pca_se" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "oof_dims_pca_se"))
+("one-of-four-ncl-primed-carry-adder-overflow" ("oof_ncl_pca_se" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "oof_ncl_pca_se"))
+("one-of-four-dual-rail-dims-carry-adder" ("oof_dr_dims_ca" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "oof_dr_dims_ca"))
+("one-of-four-dual-rail-ncl-carry-adder" ("oof_dr_ncl_ca" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "oof_dr_ncl_ca"))
+("one-of-four-dual-rail-dims-carry-adder-overflow" ("oof_dr_dims_ca_se" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "oof_dr_dims_ca_se"))
+("one-of-four-dual-rail-ncl-carry-adder-overflow" ("oof_dr_ncl_ca_se" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "oof_dr_ncl_ca_se"))
+("one-of-four-dual-rail-dims-primed-carry-adder" ("oof_dr_dims_pca" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "oof_dr_dims_pca"))
+("one-of-four-dual-rail-ncl-primed-carry-adder" ("oof_dr_ncl_pca" 0 1 2 3 4 5 6 7 8 9 10 11 12 13) (1 "oof_dr_ncl_pca"))
+("one-of-four-dual-rail-dims-primed-carry-adder-overflow" ("oof_dr_dims_pca_se" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "oof_dr_dims_pca_se"))
+("one-of-four-dual-rail--ncl-primed-carry-adder-overflow" ("oof_dr_ncl_pca_se" 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) (1 "oof_dr_ncl_pca_se"))
+("one-of-four-dims-and2" ("oof_dims_and2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "oof_dims_and2"))
+("one-of-four-ncl-and2" ("oof_ncl_and2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "oof_ncl_and2"))
+("one-of-four-dims-or2" ("oof_dims_or2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "oof_dims_or2"))
+("one-of-four-ncl-or2" ("oof_ncl_or2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "oof_ncl_or2"))
+("one-of-four-dims-xor2" ("oof_dims_xor2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "oof_dims_xor2"))
+("one-of-four-ncl-xor2" ("oof_ncl_xor2" 0 1 2 3 4 5 6 7 8 9 10 11) (1 "oof_ncl_xor2"))
+("oof_dims_equal" ("oof_dims_equal" 0 1 2 3 4 5 6 7 8 9) (1 "oof_dims_equal"))
+("oof_ncl_equal" ("oof_ncl_equal" 0 1 2 3 4 5 6 7 8 9) (1 "oof_ncl_equal"))
+("oof_dr_dims_equal" ("oof_dr_dims_equal" 0 1 2 3 4 5 6 7 8 9) (1 "oof_dr_dims_equal"))
+("oof_dr_ncl_equal" ("oof_dr_ncl_equal" 0 1 2 3 4 5 6 7 8 9) (1 "oof_dr_ncl_equal"))
+("one-of-four-dims-equal" ("oof_dims_equal" 0 1 2 3 4 5 6 7 8 9) (1 "oof_dims_equal"))
+("one-of-four-dims-inequal" ("oof_dims_inequal" 0 1 2 3 4 5 6 7 8 9) (1 "oof_dims_inequal"))
+("one-of-four-dual-rail-dims-equal" ("oof_dr_dims_equal" 0 1 2 3 4 5 6 7 8 9) (1 "oof_dr_dims_equal"))
+("one-of-four-dual-rail-dims-inequal" ("oof_dr_dims_inequal" 0 1 2 3 4 5 6 7) (1 "oof_dr_dims_inequal"))
+("one-of-four-ncl-inequal" ("oof_ncl_inequal" 0 1 2 3 4 5 6 7 8 9) (1 "oof_ncl_inequal"))
+("oof_dr_dims_inequal" ("oof_dr_dims_inequal" 0 1 2 3 4 5 6 7) (1 "oof_dr_dims_inequal"))
+("one-of-four-dual-rail-ncl-inequal" ("oof_dr_ncl_inequal" 0 1 2 3 4 5 6 7) (1 "oof_dr_ncl_inequal"))
+("one-of-four-dims-comp" ("oof_dims_comp" 0 1 2 3 4 5 6 7 8 9 10) (1 "oof_dims_comp"))
+("one-of-four-ncl-comp" ("oof_ncl_comp" 0 1 2 3 4 5 6 7 8 9 10) (1 "oof_ncl_comp"))
+("oof_dr_dims_ineq_comp" ("oof_dr_dims_ineq_comp" 0 1 2 3 4 5 6 7 8) (1 "oof_dr_dims_ineq_comp"))
+("oof_dr_ncl_ineq_comp" ("oof_dr_ncl_ineq_comp" 0 1 2 3 4 5 6 7 8) (1 "oof_dr_ncl_ineq_comp"))
+("oof_dr_dims_ineq_sgn_comp" ("oof_dr_dims_ineq_sgn_comp" 0 1 2 3 4 5 6 7 8) (1 "oof_dr_dims_ineq_sgn_comp"))
+("oof_dr_ncl_ineq_sgn_comp" ("oof_dr_ncl_ineq_sgn_comp" 0 1 2 3 4 5 6 7 8) (1 "oof_dr_ncl_ineq_sgn_comp"))
+("one-of-four-dims-less-than" ("oof_dims_lt" 0 1 2 3 4 5 6 7 8 9) (1 "oof_dims_lt"))
+("one-of-four-ncl-less-than" ("oof_ncl_lt" 0 1 2 3 4 5 6 7 8 9) (1 "oof_ncl_lt"))
+("one-of-four-dims-greater-than" ("oof_dims_gt" 0 1 2 3 4 5 6 7 8 9) (1 "oof_dims_gt"))
+("one-of-four-ncl-greater-than" ("oof_ncl_gt" 0 1 2 3 4 5 6 7 8 9) (1 "oof_ncl_gt"))
+("one-of-four-dual-rail-dims-less-than" ("oof_dr_dims_lt" 0 1 2 3 4 5 6 7) (1 "oof_dr_dims_lt"))
+("one-of-four-dual-rail-ncl-less-than" ("oof_dr_ncl_lt" 0 1 2 3 4 5 6 7) (1 "oof_dr_ncl_lt"))
+("one-of-four-dual-rail-dims-greater-than" ("oof_dr_dims_gt" 0 1 2 3 4 5 6 7) (1 "oof_dr_dims_gt"))
+("one-of-four-dual-rail-ncl-greater-than" ("oof_dr_ncl_gt" 0 1 2 3 4 5 6 7) (1 "oof_dr_ncl_gt"))
+("dual-rail-dims-comp" ("dr_dims_comp" 0 1 2 3 4 5 6) (1 "dr_dims_comp"))
+("dual-rail-ncl-comp" ("dr_ncl_comp" 0 1 2 3 4 5 6) (1 "dr_ncl_comp"))
+("dual-rail-dims-less-than" ("dr_dims_lt" 0 1 2 3 4 5) (1 "dr_dims_lt"))
+("dual-rail-ncl-less-than" ("dr_ncl_lt" 0 1 2 3 4 5) (1 "dr_ncl_lt"))
+("dual-rail-dims-greater-than" ("dr_dims_gt" 0 1 2 3 4 5) (1 "dr_dims_gt"))
+("dual-rail-ncl-greater-than" ("dr_ncl_gt" 0 1 2 3 4 5) (1 "dr_ncl_gt"))
+("one-of-three-dual-rail-dims-comp" ("dr_oot_dims_comp" 0 1 2 3 4 5 6) (1 "dr_oot_dims_comp"))
+("one-of-three-dual-rail-ncl-comp" ("dr_oot_ncl_comp" 0 1 2 3 4 5 6) (1 "dr_oot_ncl_comp"))
+("one-of-three-dims-comp" ("oot_dims_comp" 0 1 2 3 4 5 6 7 8) (1 "oot_dims_comp"))
+("one-of-three-ncl-comp" ("oot_ncl_comp" 0 1 2 3 4 5 6 7 8) (1 "oot_ncl_comp"))
+("dual-rail-latch" ("dr_latch" 0 1 2 3 4) (1 "dr_latch"))
+("dual-rail-spacer-latch" ("dr_spacer_latch" 0 1 2 3 4) (1 "dr_spacer_latch"))
+("dual-rail-ncl-latch" ("dr_ncl_latch" 0 1 2 3 4) (1 "dr_ncl_latch"))
+("dual-rail-true-ncl-latch" ("dr_tncl_latch" 0 1 2 3 4 5) (1 "dr_tncl_latch"))
+("one-of-four-latch" ("oof_latch" 0 1 2 3 4 5 6 7 8) (1 "oof_latch"))
+("one-of-four-ncl-latch" ("oof_ncl_latch" 0 1 2 3 4 5 6 7 8) (1 "oof_ncl_latch"))
+("one-of-four-true-ncl-reg" ("oof_tncl_latch" 0 1 2 3 4 5 6 7 8 9) (1 "oof_tncl_latch"))
+("inv-with-reset" ("nor2_reset" 0 1) (1 "nor2_reset"))

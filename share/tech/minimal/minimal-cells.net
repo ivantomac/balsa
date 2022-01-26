@@ -1,0 +1,9 @@
+;;;
+;;; `minimal-cells.net' 
+;;; Minimal tech. cell prototypes
+;;;
+;;; 24 May 2007, Andrew Bardsley
+;;;
+;;;
+
+(circuit "NOR2" (ports ("out" output 1) ("in0" input 1) ("in1" input 1)) (nets) (instances)(attributes (transistors 4)))

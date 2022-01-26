@@ -128,6 +128,9 @@ AC_CONFIG_FILES([Makefile
 	share/scheme/globals.scm
 	share/tech/Makefile
 	share/tech/common/Makefile
+	share/tech/example/Makefile
+	share/tech/minimal/Makefile
+	share/tech/xilinx/Makefile
 	share/style/Makefile
 	share/style/dual_b/Makefile
 	share/style/four_b_rb/Makefile

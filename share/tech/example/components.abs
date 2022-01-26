@@ -1,0 +1,10 @@
+;;;
+;;;	`components.abs'
+;;;	Breeze primitive components for technology verilog
+;;;
+;;; 10 Aug 2001, Andrew Bardsley
+;;;
+;;;	$Id: components.abs,v 1.6 2002/03/13 15:18:50 bardslea Exp $
+;;;
+
+(include tech "common" "components")
